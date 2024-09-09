@@ -1,106 +1,172 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+  <q-layout view="hHh lpR fFf">
+    <q-header class="bg-primary text-white" elevated height-hint="98">
       <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
+        <q-btn dense flat icon="menu" round @click="toggleLeftDrawer" />
 
         <q-toolbar-title>
-          Quasar App
+          <q-avatar>
+            <img alt="favicon" src="icon.png" />
+          </q-avatar>
+          建國中學班代大會議事系統
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <q-btn flat icon="fullscreen" @click="toggleFullscreen" />
+        <q-btn
+          v-if="!loggedIn"
+          align="right"
+          dense
+          flat
+          icon="login"
+          round
+          @click="loginDialogOpen = true"
+          >登入
+        </q-btn>
+        <q-btn
+          v-if="loggedIn"
+          align="right"
+          dense
+          flat
+          icon="logout"
+          round
+          @click="logout()"
+          >登出
+        </q-btn>
       </q-toolbar>
     </q-header>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-    >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
+    <q-drawer v-model="leftDrawerOpen" bordered show-if-above side="left">
+      <q-list class="menu-list fit column">
+        <div v-for="endpoint of endpoints" :key="endpoint.name">
+          <q-item
+            v-if="endpoint.role == undefined || role >= endpoint.role.valueOf()"
+            v-ripple
+            :active="selected === endpoint.name"
+            :to="endpoint.url"
+            @click="changeSelected(endpoint.name)"
+          >
+            <q-item-section avatar>
+              <q-icon :name="endpoint.icon" />
+            </q-item-section>
 
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-        />
+            <q-item-section>
+              <q-item-label>{{ endpoint.name }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </div>
+        <q-space />
+
+        <q-item v-if="!loggedIn" clickable @click="loginDialogOpen = true">
+          <q-item-section avatar>
+            <q-icon name="login" />
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>登入</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item
+          v-if="loggedIn && loggedInUser !== null && loggedInUser !== undefined"
+        >
+          <q-item-section v-if="loggedInUser.photoURL !== null" avatar>
+            <q-avatar>
+              <img :src="loggedInUser.photoURL" />
+            </q-avatar>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ loggedInUser.displayName }}</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item v-if="loggedIn" clickable @click="logout()">
+          <q-item-section avatar>
+            <q-icon name="logout" />
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>登出</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
     <q-page-container>
       <router-view />
+      <LoginDialog v-model="loginDialogOpen" />
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
+import { computed, ref, watch } from 'vue';
+import {
+  getUserClaims,
+  init,
+  isLoggedIn,
+  logout,
+  updateCustomClaims,
+} from 'src/ts/auth';
+import { Role } from 'src/ts/models.ts';
+import { useCurrentUser } from 'vuefire';
+import LoginDialog from 'components/LoginDialog.vue';
 
-defineOptions({
-  name: 'MainLayout'
-});
-
-const linksList: EssentialLinkProps[] = [
+init();
+let leftDrawerOpen = ref(false);
+let endpoints = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
+    name: '帳號管理',
+    url: '/accounts',
+    icon: 'badge',
+    role: Role.Chair,
   },
   {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
+    name: '會議管理',
+    url: '/meetings',
+    icon: 'groups',
+    role: Role.Secre,
   },
   {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
+    name: '主持會議',
+    url: '/meeting_host',
+    icon: 'forum',
+    role: Role.ViceChair,
+  },
+  {
+    name: '加入會議',
+    url: '/punch_in',
     icon: 'chat',
-    link: 'https://chat.quasar.dev'
   },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
 ];
+let selected = ref('Account Information');
+let loginDialogOpen = ref(false);
+const loggedIn = computed(() => isLoggedIn());
+const loggedInUser = useCurrentUser();
+const role = ref(0);
+watch(
+  loggedInUser,
+  async (user) => {
+    if (user) {
+      await updateCustomClaims();
+      role.value = getUserClaims().role;
+    } else {
+      role.value = 0;
+    }
+  },
+  { deep: true },
+);
 
-const leftDrawerOpen = ref(false);
-
-function toggleLeftDrawer () {
+function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
+}
+
+function changeSelected(name: string) {
+  selected.value = name;
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    document.documentElement.requestFullscreen();
+  }
 }
 </script>

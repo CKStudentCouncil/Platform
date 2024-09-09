@@ -1,0 +1,187 @@
+<template>
+  <q-page>
+    <q-tabs align="left">
+      <q-route-tab :to="`/meeting_host`" label="開會" />
+      <q-route-tab
+        v-if="selectedMeeting"
+        :to="`/meeting_host/${(selectedMeeting! as any).id}`"
+        label="開放簽到"
+      />
+      <q-route-tab
+        v-if="selectedMeeting"
+        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`"
+        label="審理議案"
+      />
+    </q-tabs>
+    <q-tabs align="left">
+      <q-route-tab
+        v-if="selectedMeeting"
+        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`"
+        label="議程"
+      />
+      <q-route-tab
+        v-if="selectedMeeting && selectedProposal"
+        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda/${selectedProposal.id}`"
+        label="議案"
+      />
+      <q-route-tab
+        v-if="selectedMeeting && selectedProposal && activeVotableId"
+        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda/${selectedProposal.id}/vote/${activeVotableId}`"
+        label="投票"
+      />
+    </q-tabs>
+    <div v-if="selectedProposal" class="row q-pa-md q-gutter-xl">
+      <div class="col-5">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">{{ selectedProposal.title }}</div>
+          </q-card-section>
+          <q-separator />
+          <q-card-section>
+            <div class="text-subtitle1">
+              提案人：{{ selectedProposal.proposer }}
+            </div>
+            <div>{{ selectedProposal.content }}</div>
+          </q-card-section>
+          <q-separator />
+          <q-card-section>
+            <div class="text-subtitle1">附件：</div>
+            <q-list>
+              <q-item
+                v-for="attachment of selectedProposal.attachments"
+                :key="attachment"
+                v-ripple
+                :href="attachment"
+                clickable
+                target="_blank"
+              >
+                <q-item-section>{{ attachment }}</q-item-section>
+                <q-item-section side>
+                  <q-icon name="visibility" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card-section>
+          <q-separator />
+          <q-card-actions>
+            <q-btn
+              color="negative"
+              flat
+              icon="stop"
+              label="結束議案"
+              @click="endProposal"
+            />
+          </q-card-actions>
+        </q-card>
+      </div>
+      <div class="col-5">
+        <q-btn
+          :to="`/meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`"
+          color="primary"
+          icon="settings"
+          label="管理投票案件"
+        />
+        <q-card
+          v-for="votable of votables.sort((a, b) => a.order - b.order)"
+          :key="votable.order"
+          :class="
+            activeVotableId == votable.id ? 'bg-green-1 q-mt-sm' : 'q-mt-sm'
+          "
+        >
+          <q-card-section>
+            <div class="text-h6">{{ votable.question }}</div>
+          </q-card-section>
+          <q-separator />
+          <q-card-section>
+            <div>選項：{{ votable.choices.join('、') }}</div>
+          </q-card-section>
+          <q-separator />
+          <q-card-actions>
+            <q-btn
+              color="primary"
+              flat
+              label="開始投票"
+              @click="selectVotable(votable)"
+            />
+          </q-card-actions>
+        </q-card>
+      </div>
+    </div>
+  </q-page>
+</template>
+
+<script lang="ts" setup>
+import { doc, updateDoc } from 'firebase/firestore';
+import {
+  getMeeting,
+  getProposal,
+  rawMeetingCollection,
+  rawProposalCollection,
+  votableCollection,
+} from 'src/ts/models.ts';
+import { useRoute, useRouter } from 'vue-router';
+import { Notify } from 'quasar';
+import { ref, watch } from 'vue';
+
+const route = useRoute();
+const selectedMeeting = getMeeting(route.params.id as string);
+const selectedProposal = getProposal(
+  route.params.id as string,
+  route.params.proposalId as string,
+);
+let activeVotableId = ref(null as string | null);
+watch(
+  selectedProposal,
+  (selectedProposal) => {
+    if (selectedProposal && selectedProposal.activeVotable) {
+      activeVotableId.value = selectedProposal.activeVotable;
+    }
+  },
+  { deep: true },
+);
+const votables = votableCollection(
+  route.params.id as string,
+  route.params.proposalId as string,
+);
+const router = useRouter();
+
+async function selectVotable(votable: any) {
+  try {
+    await updateDoc(
+      doc(
+        rawProposalCollection(route.params.id as string),
+        route.params.proposalId as string,
+      ),
+      {
+        activeVotable: votable.id,
+      },
+    );
+    await router.push(
+      `/meeting_host/${route.params.id}/agenda/${route.params.proposalId}/vote/${votable.id}`,
+    );
+  } catch (e) {
+    console.error(e);
+    Notify.create({
+      message: '開始審理失敗',
+      color: 'negative',
+    });
+  }
+}
+
+async function endProposal() {
+  try {
+    await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
+      activeProposal: null,
+    });
+    await router.push(`/meeting_host/${route.params.id}/agenda`);
+  } catch (e) {
+    console.error(e);
+    Notify.create({
+      message: '結束議案失敗',
+      color: 'negative',
+    });
+  }
+}
+</script>
+
+<style scoped></style>
