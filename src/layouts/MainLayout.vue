@@ -122,7 +122,7 @@ let endpoints = [
     name: '會議管理',
     url: '/meetings',
     icon: 'groups',
-    role: Role.Secre,
+    role: Role.Secretary,
   },
   {
     name: '主持會議',

@@ -4,17 +4,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /meetings/{document=**} {
       allow read: if (request.auth != null);
-      allow write: if (request.auth != null) && ('token' in request.auth) && (request.auth.token.role >= 100);
-    //   allow update: if
-    // 		request.auth != null &&
-    // (
-    //   request.resource.data.winners.size() == resource.data.winners.size() + 1 // Ensure only one item was added.
-    //   &&
-    //   resource.data.winners == request.resource.data.winners[0:resource.data.winners.size()]
-    // );
-    }
-    match /meetings/{meetingId}/proposals/{proposalId}/votables/{votableId}/results/{chpice=**} {
       allow write: if (request.auth != null) && ('token' in request.auth) && (request.auth.token.role >= 50);
+      // TODO: better safety
     //   allow update: if
     // 		request.auth != null &&
     // (

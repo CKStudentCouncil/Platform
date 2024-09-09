@@ -11,10 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache packages
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          path: node_modules
+      - uses: actions/setup-node@v4
+        with:
+          # Version Spec of the version to use in SemVer notation.
+          # It also admits such aliases as lts, latest, nightly and canary builds
+          # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: '20.x'
+          cache: 'npm'
       - run: yarn install --frozen-lockfile
-      - run: npm install -g @quasar/cli
-      - run: quasar build
-      - run: mv dist/spa firebase/public
+      - run: yarn build
+      - run: mv dist/spa/* firebase/public/
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

@@ -5,6 +5,12 @@
     </div>
     <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
       <div class="text-h6">正在審理議案</div>
+      <q-btn
+        color="primary"
+        icon="chat"
+        label="請求發言"
+        @click="requestToSpeak()"
+      />
       <q-card>
         <q-card-section>
           <div class="text-h6">{{ activeProposal.value!.title }}</div>
@@ -79,6 +85,7 @@ import {
   getMeeting,
   getProposal,
   getVotable,
+  rawProposalCollection,
   rawVotableCollection,
   Votable,
 } from 'src/ts/models.ts';
@@ -131,6 +138,8 @@ watch(
       router.push('/punch_in');
     if (meeting.activeProposal) {
       activeProposalId.value = meeting.activeProposal;
+    } else {
+      activeProposalId.value = null;
     }
   },
   { deep: true },
@@ -140,6 +149,8 @@ watch(
   (prop) => {
     if (prop && prop.value) {
       activeVotableId.value = prop.value.activeVotable;
+    } else {
+      activeVotableId.value = null;
     }
   },
   { deep: true },
@@ -172,6 +183,27 @@ async function select(choice: string) {
     selectedChoice.value = null;
   } else {
     selectedChoice.value = choice;
+  }
+}
+
+async function requestToSpeak() {
+  try {
+    await updateDoc(
+      doc(rawProposalCollection(id.value as string), activeProposalId.value!),
+      {
+        speakRequests: arrayUnion(getUserClaims().clazz),
+      },
+    );
+    Notify.create({
+      message: '請求發言成功',
+      color: 'positive',
+    });
+  } catch (e) {
+    console.error(e);
+    Notify.create({
+      message: '請求發言失敗',
+      color: 'negative',
+    });
   }
 }
 </script>

@@ -53,7 +53,7 @@
               simpleLoginDialogOpen = true;
             "
           >
-            使用班級學號登入 (未來將停用)
+            使用班級學號登入
           </q-btn>
         </div>
       </q-card-section>

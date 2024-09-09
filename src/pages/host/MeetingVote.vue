@@ -70,7 +70,7 @@
             enter-active-class="animated heartBeat"
           >
             <q-chip removable @remove="removeVoter(choice, voter)"
-              >{{ voter }}
+              >{{ voter }} 班代
             </q-chip>
           </transition>
         </q-card-section>

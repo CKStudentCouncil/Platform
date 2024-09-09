@@ -19,17 +19,30 @@
           <vue-qrcode
             :options="{
               errorCorrectionLevel: 'Q',
-              width: Math.min(screenWidth, screenHeight) * 0.5,
+              width: Math.min(screenWidth, screenHeight) * 0.4,
             }"
             :value="`${currentHost}#/punch_in/${selectedMeeting!.punchInPasscode}`"
             tag="svg"
           ></vue-qrcode>
-          <img alt="Chen Fengyuan" class="qrcode__image" src="icon.png" />
+          <div class="text-h4">
+            簽到碼：{{ selectedMeeting!.punchInPasscode }}
+          </div>
+          <img alt="cksc" class="qrcode__image" src="icon.png" />
         </figure>
       </div>
       <div class="col-6">
         <h1>{{ selectedMeeting!.participants.length }}</h1>
         <div class="text-h6">人已簽到</div>
+        <transition
+          v-for="participant of selectedMeeting!.participants"
+          :key="participant"
+          appear
+          enter-active-class="animated heartBeat"
+        >
+          <q-chip removable @remove="removeParticipant(participant)"
+            >{{ participant }} 班代
+          </q-chip>
+        </transition>
       </div>
     </div>
   </q-page>
@@ -37,9 +50,9 @@
 
 <script lang="ts" setup>
 import { useDocument, useFirestore } from 'vuefire';
-import { doc } from 'firebase/firestore';
+import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
 import { useRoute } from 'vue-router';
-import { meetingConverter } from 'src/ts/models.ts';
+import { meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import VueQrcode from '@chenfengyuan/vue-qrcode';
 
 const db = useFirestore();
@@ -52,6 +65,12 @@ const selectedMeeting = useDocument(
 const currentHost = window.location.origin;
 const screenHeight = screen.height;
 const screenWidth = screen.width;
+
+async function removeParticipant(participant: string) {
+  await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
+    participants: arrayRemove(participant),
+  });
+}
 </script>
 
 <style scoped>

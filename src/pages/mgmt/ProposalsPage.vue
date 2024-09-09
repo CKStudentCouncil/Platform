@@ -86,6 +86,7 @@
         <q-input v-model="target.title" label="標題" />
         <q-input v-model="target.proposer" label="提案人" />
         <q-input v-model="target.content" label="內容" type="textarea" />
+        <div>附件：</div>
         <ListEditor v-model="target.attachments" />
       </q-card-section>
       <q-card-actions align="right">
@@ -127,6 +128,7 @@ let target = reactive(
     id: string;
     order: number;
     activeVotable?: string | null;
+    speakRequests: string[];
   },
 );
 const router = useRouter();
@@ -154,6 +156,7 @@ function edit(proposal: any) {
   target.order = proposal.order;
   target.id = proposal.id;
   target.activeVotable = proposal.activeVotable;
+  target.speakRequests = proposal.speakRequests;
   action.value = 'edit';
 }
 
@@ -164,6 +167,7 @@ function add() {
   target.title = '';
   target.order = proposals.value.length - 1;
   target.activeVotable = null;
+  target.speakRequests = [];
   action.value = 'add';
 }
 
@@ -208,6 +212,7 @@ async function submit() {
       title: target.title,
       order: target.order,
       activeVotable: target.activeVotable,
+      speakRequests: target.speakRequests,
     };
     if (action.value === 'edit') {
       await updateDoc(

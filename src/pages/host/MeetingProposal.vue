@@ -73,6 +73,30 @@
             />
           </q-card-actions>
         </q-card>
+        <q-card class="q-mt-md">
+          <q-card-section>
+            <div class="text-h6">發言清單</div>
+          </q-card-section>
+          <q-separator />
+          <q-card-section>
+            <q-list bordered>
+              <q-item
+                v-for="speaker of selectedProposal.speakRequests"
+                :key="speaker"
+              >
+                <q-item-section>{{ speaker }}</q-item-section>
+                <q-item-section side>
+                  <q-btn
+                    color="positive"
+                    flat
+                    icon="check"
+                    @click="removeSpeakRequest(speaker)"
+                  />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card-section>
+        </q-card>
       </div>
       <div class="col-5">
         <q-btn
@@ -111,7 +135,7 @@
 </template>
 
 <script lang="ts" setup>
-import { doc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
 import {
   getMeeting,
   getProposal,
@@ -120,7 +144,7 @@ import {
   votableCollection,
 } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
-import { Notify } from 'quasar';
+import { Notify, QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
 
 const route = useRoute();
@@ -181,6 +205,18 @@ async function endProposal() {
       color: 'negative',
     });
   }
+}
+
+async function removeSpeakRequest(speaker: string) {
+  await updateDoc(
+    doc(
+      rawProposalCollection(route.params.id as string),
+      route.params.proposalId as string,
+    ),
+    {
+      speakRequests: arrayRemove(speaker),
+    },
+  );
 }
 </script>
 

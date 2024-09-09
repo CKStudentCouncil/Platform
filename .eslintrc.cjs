@@ -15,7 +15,7 @@ module.exports = {
   env: {
     browser: true,
     es2021: true,
-    node: tr,
+    node: true,
   },
 
   // Rules order is important, please avoid shuffling them
@@ -62,7 +62,7 @@ module.exports = {
     __QUASAR_SSR_PWA__: 'readonly',
     process: 'readonly',
     Capacitor: 'readonly',
-    chrome: 'readonly'
+    chrome: 'readonly',
   },
 
   // add your custom rules here
@@ -84,6 +84,6 @@ module.exports = {
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': 'off'
+    '@typescript-eslint/no-unused-vars': 'off',
   },
 };

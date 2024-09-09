@@ -84,6 +84,7 @@ export interface Proposal extends DocumentType {
   title: string;
   content: string;
   order: number;
+  speakRequests: string[];
 }
 
 export function rawProposalCollection(meetingId: string) {
