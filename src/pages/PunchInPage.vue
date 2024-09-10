@@ -74,8 +74,9 @@ async function checkPunchedIn() {
 }
 
 async function onDetect(detectedCodes: any) {
+  console.log(detectedCodes);
   if (detectedCodes.length == 0) return;
-  const code = detectedCodes[0] as string;
+  const code = detectedCodes[0].data as string;
   if (!code.includes('#/punch_in/')) return;
   tempPasscode.value = code.split('#/punch_in/')[1];
   scanning.value = false;
