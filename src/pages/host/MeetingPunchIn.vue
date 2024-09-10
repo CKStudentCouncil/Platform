@@ -14,8 +14,22 @@
         <SignInQRCode :passcode="selectedMeeting!.punchInPasscode" />
       </div>
       <div class="col-6">
-        <h1>{{ selectedMeeting!.participants.length }}</h1>
+        <div style="display: table-row">
+          <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
+          <span class="text-h6" style="display: table-cell; vertical-align: bottom"
+            >/ {{ Math.round(totalMembers / 3) }} / {{ totalMembers }} (82 - {{ absences }} 位請假)</span
+          >
+        </div>
         <div class="text-h6">人已簽到</div>
+        <q-btn
+          v-if="selectedMeeting!.participants.length > Math.round(totalMembers / 3)"
+          color="positive"
+          flat
+          icon="check"
+          label="已達法定開會人數門檻"
+        />
+        <q-btn v-else color="negative" flat icon="close" label="未達法定開會人數門檻" />
+        <br />
         <transition
           v-for="participant of selectedMeeting!.participants"
           :key="participant"
@@ -35,16 +49,36 @@ import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
 import { useRoute } from 'vue-router';
 import { meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import SignInQRCode from 'components/QRPasscode.vue';
+import { computed, ref } from 'vue';
+import { getAllUsers } from 'src/ts/auth.ts';
 
 const db = useFirestore();
 const route = useRoute();
 const selectedMeeting = useDocument(doc(db, 'meetings', route.params.id as string).withConverter(meetingConverter));
+const totalMembers = ref(0);
+const absences = computed(() => {
+  const a = selectedMeeting?.value?.absences;
+  return a ? Object.keys(a).length : 0;
+});
 
 async function removeParticipant(participant: string) {
   await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
     participants: arrayRemove(participant),
   });
 }
+
+async function getRequirement() {
+  const users = (await getAllUsers()) as any;
+  let count = 0;
+  for (const user of users) {
+    if (user.role == 50) {
+      count++;
+    }
+  }
+  totalMembers.value = count + 1 - absences.value; // 副議長
+}
+
+getRequirement();
 </script>
 
 <style scoped></style>

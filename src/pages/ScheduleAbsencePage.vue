@@ -72,11 +72,9 @@ async function scheduleAbsence() {
     });
   }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {
-    absences: {
-      [getUserClaims().clazz]: {
-        reason: reason.value,
-        scheduledAt: new Date(),
-      },
+    ['absences.' + getUserClaims().clazz]: {
+      reason: reason.value,
+      scheduledAt: new Date(),
     },
   });
 }

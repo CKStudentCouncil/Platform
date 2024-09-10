@@ -14,11 +14,7 @@
               parentValue = false;
             "
           >
-            <svg
-              class="Bz112c Bz112c-E3DyYd"
-              style="width: 16px; height: 16px; margin-right: 8px"
-              viewBox="0 0 48 48"
-            >
+            <svg class="Bz112c Bz112c-E3DyYd" style="width: 16px; height: 16px; margin-right: 8px" viewBox="0 0 48 48">
               <path
                 d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"
                 data-darkreader-inline-fill=""
@@ -60,7 +56,7 @@
     </q-card>
   </q-dialog>
   <q-dialog v-model="simpleLoginDialogOpen">
-    <q-card>
+    <q-card @keyup.enter="simpleLogin">
       <q-card-section>
         <h5 class="q-ma-none">使用班級學號登入</h5>
       </q-card-section>
@@ -95,7 +91,9 @@ const schoolNumber = ref('');
 const clazz = ref('');
 
 function simpleLogin() {
-  loginWithCredentials(schoolNumber.value, clazz.value);
+  loginWithCredentials(schoolNumber.value, clazz.value).then(() => {
+    simpleLoginDialogOpen.value = false;
+  });
 }
 </script>
 

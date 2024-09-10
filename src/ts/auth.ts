@@ -86,36 +86,35 @@ export function login() {
     });
 }
 
-export function loginWithCredentials(schoolNumber: string, clazz: string) {
+export async function loginWithCredentials(schoolNumber: string, clazz: string) {
   Loading.show();
   const email = schoolNumber.startsWith('11100')
     ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
     : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
-  signInWithEmailAndPassword(auth, email, 'ck$c' + schoolNumber + '@' + clazz)
-    .then(() => {
-      console.log('Logged in successfully.');
-      loggedInUser.value = auth.currentUser;
-      Loading.hide();
-      Notify.create({
-        message: '登入成功',
-        color: 'positive',
-        icon: 'check_circle',
-        position: 'top',
-        timeout: 2000,
-      });
-    })
-    .catch((e) => {
-      console.error('Failed to log in.');
-      console.error(e);
-      Loading.hide();
-      Notify.create({
-        message: '登入失敗',
-        color: 'negative',
-        icon: 'report_problem',
-        position: 'top',
-        timeout: 2000,
-      });
+  try {
+    await signInWithEmailAndPassword(auth, email, 'ck$c' + schoolNumber + '@' + clazz);
+    console.log('Logged in successfully.');
+    loggedInUser.value = auth.currentUser;
+    Loading.hide();
+    Notify.create({
+      message: '登入成功',
+      color: 'positive',
+      icon: 'check_circle',
+      position: 'top',
+      timeout: 2000,
     });
+  } catch (e) {
+    console.error('Failed to log in.');
+    console.error(e);
+    Loading.hide();
+    Notify.create({
+      message: '登入失敗',
+      color: 'negative',
+      icon: 'report_problem',
+      position: 'top',
+      timeout: 2000,
+    });
+  }
 }
 
 export function logout() {
