@@ -47,6 +47,9 @@
             >
               <q-tooltip>選擇並管理提案</q-tooltip>
             </q-btn>
+            <q-btn class="text-amber-9 q-ml-sm q-mr-sm" icon="content_copy" round @click="copyLink(props.row)">
+              <q-tooltip>複製請假連結</q-tooltip>
+            </q-btn>
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
@@ -245,6 +248,15 @@ async function del(row: any) {
       message: '已刪除會議',
       color: 'positive',
     });
+  });
+}
+
+async function copyLink(row: any) {
+  const url = window.location.origin + '#/schedule_absence/' + row.id;
+  await navigator.clipboard.writeText(url);
+  Notify.create({
+    message: '已複製請假連結',
+    color: 'positive',
   });
 }
 </script>

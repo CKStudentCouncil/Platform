@@ -1,11 +1,8 @@
 import { collection, doc, Timestamp } from 'firebase/firestore';
-import {
-  firestoreDefaultConverter,
-  useCollection,
-  useDocument,
-  useFirestore,
-} from 'vuefire';
+import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import { FirestoreDataConverter } from '@firebase/firestore';
+
+const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
 
 export enum Role {
   Admin = 999,
@@ -41,25 +38,31 @@ export interface Meeting extends DocumentType {
   signedOff: string[];
   start: Date;
   stop?: Date;
+  absences: Record<string, Absence>;
+}
+
+interface Absence {
+  reason: string;
+  scheduledAt: Date;
 }
 
 export const meetingConverter: FirestoreDataConverter<Meeting | null> = {
   toFirestore(data: any) {
-    data.start = Timestamp.fromMillis(
-      data.start.valueOf() - 8 * 60 * 60 * 1000,
-    );
-    if (data.stop)
-      data.stop = Timestamp.fromMillis(
-        data.stop.valueOf() - 8 * 60 * 60 * 1000,
-      );
-    return firestoreDefaultConverter.toFirestore(data);
+    data.start = Timestamp.fromMillis(data.start.valueOf() - timezoneOffset);
+    if (data.stop) data.stop = Timestamp.fromMillis(data.stop.valueOf() - timezoneOffset);
+    for (const key in data.absences) {
+      data.absences[key].scheduledAt = Timestamp.fromMillis(data.absences[key].scheduledAt.valueOf() - timezoneOffset);
+    }
+    return firestoreDeaultConverter.toFirestore(data);
   },
   fromFirestore(snapshot, options) {
     const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
     if (!data) return null;
-    data.start = new Date(data.start.toMillis() + 8 * 60 * 60 * 1000);
-    if (data.stop)
-      data.stop = new Date(data.stop.toMillis() + 8 * 60 * 60 * 1000);
+    data.start = new Date(data.start.toMillis() + timezoneOffset);
+    if (data.stop) data.stop = new Date(data.stop.toMillis() + timezoneOffset);
+    for (const key in data.absences) {
+      data.absences[key].scheduledAt = new Date(data.absences[key].scheduledAt.toMillis() + timezoneOffset);
+    }
     return data as unknown as Meeting;
   },
 };
@@ -109,22 +112,13 @@ export interface Votable extends DocumentType {
 
 export function rawVotableCollection(meetingId: string, proposalId: string) {
   const db = useFirestore();
-  return collection(
-    db,
-    `meetings/${meetingId}/proposals/${proposalId}/votables`,
-  );
+  return collection(db, `meetings/${meetingId}/proposals/${proposalId}/votables`);
 }
 
 export function votableCollection(meetingId: string, proposalId: string) {
   return useCollection(rawVotableCollection(meetingId, proposalId));
 }
 
-export function getVotable(
-  meetingId: string,
-  proposalId: string,
-  votableId: string,
-) {
-  return useDocument(
-    doc(rawVotableCollection(meetingId, proposalId), votableId),
-  );
+export function getVotable(meetingId: string, proposalId: string, votableId: string) {
+  return useDocument(doc(rawVotableCollection(meetingId, proposalId), votableId));
 }

@@ -57,6 +57,11 @@ const routes: RouteRecordRaw[] = [
     children: [{ path: '', component: () => import('pages/ToolsPage.vue') }],
   },
   {
+    path: '/schedule_absence',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: ':id?', component: () => import('pages/ScheduleAbsencePage.vue') }],
+  },
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
