@@ -19,7 +19,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" bordered show-if-above side="left">
+    <q-drawer v-model="leftDrawerOpen" bordered show-if-above side="left" style="overflow: hidden">
       <q-list class="menu-list fit column">
         <div v-for="endpoint of endpoints" :key="endpoint.name">
           <q-item
@@ -38,6 +38,14 @@
             </q-item-section>
           </q-item>
         </div>
+        <div v-if="role >= Role.ViceChair">
+          <QRPasscode
+            v-for="meeting of activeMeetings"
+            :key="meeting!.name"
+            :passcode="meeting!.punchInPasscode"
+            :size="0.5"
+          />
+        </div>
         <q-space />
 
         <q-item v-if="!loggedIn" clickable @click="loginDialogOpen = true">
@@ -52,7 +60,7 @@
         <q-item v-if="loggedIn && loggedInUser !== null && loggedInUser !== undefined">
           <q-item-section v-if="loggedInUser.photoURL !== null" avatar>
             <q-avatar>
-              <img :src="loggedInUser.photoURL" />
+              <img :src="loggedInUser.photoURL" alt="profile picture" />
             </q-avatar>
           </q-item-section>
           <q-item-section>
@@ -81,9 +89,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { getUserClaims, init, isLoggedIn, logout, updateCustomClaims } from 'src/ts/auth';
-import { Role } from 'src/ts/models.ts';
-import { useCurrentUser } from 'vuefire';
+import { rawMeetingCollection, Role } from 'src/ts/models.ts';
+import { useCollection, useCurrentUser } from 'vuefire';
 import LoginDialog from 'components/LoginDialog.vue';
+import { query, where } from 'firebase/firestore';
+import QRPasscode from 'components/QRPasscode.vue';
 
 init();
 let leftDrawerOpen = ref(false);
@@ -151,4 +161,6 @@ function toggleFullscreen() {
     document.documentElement.requestFullscreen();
   }
 }
+
+const activeMeetings = useCollection(query(rawMeetingCollection(), where('active', '==', true)));
 </script>

@@ -1,38 +1,19 @@
 <template>
   <q-tabs align="left">
     <q-route-tab :to="`/meeting_host`" label="開會" />
-    <q-route-tab
-      v-if="activeMeeting"
-      :to="`/meeting_host/${activeMeeting!.id}`"
-      label="開放簽到"
-    />
-    <q-route-tab
-      v-if="activeMeeting"
-      :to="`/meeting_host/${activeMeeting!.id}/agenda`"
-      label="審理議案"
-    />
+    <q-route-tab v-if="activeMeeting" :to="`/meeting_host/${activeMeeting!.id}`" label="開放簽到" />
+    <q-route-tab v-if="activeMeeting" :to="`/meeting_host/${activeMeeting!.id}/agenda`" label="審理議案" />
   </q-tabs>
   <q-page class="q-gutter-sm" padding>
     <span v-if="activeMeeting != null">開會中：{{ activeMeeting.name }}</span>
-    <q-btn
-      v-if="activeMeeting != null"
-      color="negative"
-      flat
-      label="散會"
-      @click="adjourn()"
-    />
-    <q-select
-      v-model="meeting"
-      :option-label="(m) => m.name"
-      :options="meetings"
-      label="選擇會議"
-    />
+    <q-btn v-if="activeMeeting != null" color="negative" flat icon="stop" label="散會" @click="adjourn()" />
+    <q-select v-model="meeting" :option-label="(m) => m.name" :options="meetings" label="選擇會議" />
     <q-btn color="positive" label="開會" @click="go" />
   </q-page>
 </template>
 
 <script lang="ts" setup>
-import { Meeting, meetingCollection, meetingConverter } from 'src/ts/models.ts';
+import { Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
@@ -67,13 +48,10 @@ watch(
 async function go() {
   if (meeting.value) {
     try {
-      await updateDoc(
-        doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter),
-        {
-          active: true,
-          start: new Date(),
-        },
-      );
+      await updateDoc(doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter), {
+        active: true,
+        start: new Date(),
+      });
     } catch (e) {
       console.error(e);
       Notify.create({
@@ -91,15 +69,10 @@ async function go() {
 async function adjourn() {
   if (activeMeeting.value) {
     try {
-      await updateDoc(
-        doc(db, 'meetings', activeMeeting.value.id).withConverter(
-          meetingConverter,
-        ),
-        {
-          active: false,
-          end: new Date(),
-        },
-      );
+      await updateDoc(doc(rawMeetingCollection(), activeMeeting.value.id).withConverter(meetingConverter), {
+        active: false,
+        end: new Date(),
+      });
     } catch (e) {
       console.error(e);
       Notify.create({
