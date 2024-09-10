@@ -1,34 +1,36 @@
 <template>
-  <q-tabs align="left">
-    <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
-    <q-route-tab
-      :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`"
-      label="提案"
-    />
-    <q-route-tab
-      :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
-      label="投票案件"
-    />
-  </q-tabs>
-  <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
-  <q-page v-else padding>
-    <q-btn color="primary" icon="add" label="新增提案" style="margin-bottom: 10px" @click="add" />
-    <span class="q-ml-md">提示：可以直接拖拉提案方塊以重新排序</span>
-    <VueDraggable v-model="proposals" class="q-gutter-md" style="cursor: move" @update="rearrange()">
-      <ProposalDisplay
-        v-for="prop of sortedProposals"
-        :key="prop.order"
-        :class="selected == prop.id ? 'bg-green-1' : ''"
-        :proposal="prop"
-        editable
-        @del="del(prop.id)"
-        @edit="edit(prop)"
-        @select="
-          selected = prop.id;
-          $router.push(`/meetings/${$route.params.id}/proposals/${prop.id}/votables`);
-        "
+  <q-page>
+    <q-tabs align="left">
+      <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
+      <q-route-tab
+        :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`"
+        label="提案"
       />
-    </VueDraggable>
+      <q-route-tab
+        :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
+        label="投票案件"
+      />
+    </q-tabs>
+    <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
+    <div v-else class="q-ma-md">
+      <q-btn color="primary" icon="add" label="新增提案" style="margin-bottom: 10px" @click="add" />
+      <span class="q-ml-md">提示：可以直接拖拉提案方塊以重新排序</span>
+      <VueDraggable v-model="proposals" class="q-gutter-md" style="cursor: move" @update="rearrange()">
+        <ProposalDisplay
+          v-for="prop of sortedProposals"
+          :key="prop.order"
+          :class="selected == prop.id ? 'bg-green-1' : ''"
+          :proposal="prop"
+          editable
+          @del="del(prop.id)"
+          @edit="edit(prop)"
+          @select="
+            selected = prop.id;
+            $router.push(`/meetings/${$route.params.id}/proposals/${prop.id}/votables`);
+          "
+        />
+      </VueDraggable>
+    </div>
   </q-page>
   <q-dialog v-model="dialog" persistent>
     <q-card>

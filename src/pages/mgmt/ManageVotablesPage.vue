@@ -13,7 +13,8 @@
   <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
   <span v-if="$route.params.proposalId.length == 0">請先選擇一個提案</span>
   <q-page v-else padding>
-    <q-btn color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
+    <q-btn class="q-mr-md" color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
+    <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
     <span class="q-ml-md">提示：可以直接拖拉投票案件方塊以重新排序</span>
     <VueDraggable v-model="votables" class="q-gutter-md" style="cursor: move" @update="rearrange()">
       <q-card v-for="votable of sortedVotables" :key="votable.order">
@@ -200,6 +201,35 @@ async function rearrange() {
   Notify.create({
     message: '提案已重新排序',
     color: 'positive',
+  });
+}
+
+async function showResults() {
+  let r = '';
+  let count = 1;
+  for (const votable of votables.value) {
+    r += `<b>${count}. ${votable.question}</b><br>`;
+    let maxLen = 0;
+    let maxChoice = '';
+    for (const choice of votable.choices) {
+      if (!votable.results[choice]) {
+        r += `<b>${choice}</b>: 無；共 0 人<br>`;
+      }
+      const length = votable.results[choice].length;
+      r += `<b>${choice}</b>: ${votable.results[choice].join('、')}；共 ${length} 人<br>`;
+      if (length > maxLen) {
+        maxLen = length;
+        maxChoice = choice;
+      }
+    }
+    r += '表決結果：<b>' + maxChoice + '</b><br>';
+    count++;
+  }
+  Dialog.create({
+    title: '投票結果',
+    message: r,
+    html: true,
+    persistent: true,
   });
 }
 </script>
