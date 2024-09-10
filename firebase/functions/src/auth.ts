@@ -23,16 +23,25 @@ export async function checkRole(request: https.CallableContext, role: Role) {
 }
 
 export async function addUserWithRole(user: User) {
-  const result = await auth.createUser({
-    email: user.email,
-    emailVerified: true,
-    password: 'ck$c' + user.schoolNumber + '@' + user.clazz,
-    displayName: user.name,
-    disabled: false,
-  });
+  let result = null;
+  try {
+    result = await auth.getUserByEmail(user.email);
+  } catch (e) {
+    // user not found
+  }
+  if (!result) {
+    result = await auth.createUser({
+      email: user.email,
+      emailVerified: true,
+      password: 'ck$c' + user.schoolNumber + '@' + user.clazz,
+      displayName: user.name,
+      disabled: false,
+    });
+  }
   await auth.setCustomUserClaims(result.uid, {
     role: user.role,
     schoolNumber: user.schoolNumber,
+    seatNumber: user.seatNumber,
     clazz: user.clazz,
   });
   return result;
@@ -44,12 +53,7 @@ export async function editUserClaims(uid: string, user: User) {
     validClaims = {};
   }
   for (const key in user) {
-    if (
-      user[key as keyof User] != null &&
-      key != 'uid' &&
-      key != 'email' &&
-      key != 'name'
-    ) {
+    if (user[key as keyof User] != null && key != 'uid' && key != 'email' && key != 'name') {
       validClaims[key as keyof typeof validClaims] = user[key as keyof User];
     }
   }

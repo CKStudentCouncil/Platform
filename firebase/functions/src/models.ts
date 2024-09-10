@@ -13,4 +13,5 @@ export interface User {
   role: number;
   schoolNumber: string;
   clazz: string; // class, but to avoid internal keyword conflict
+  seatNumber: string;
 }

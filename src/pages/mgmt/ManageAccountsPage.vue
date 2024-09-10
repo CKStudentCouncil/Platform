@@ -34,6 +34,9 @@
           <q-td key="clazz">
             {{ props.row.clazz }}
           </q-td>
+          <q-td key="seatNumber">
+            {{ props.row.seatNumber }}
+          </q-td>
           <q-td key="role">
             {{ translateRole(props.row.role) }}
           </q-td>
@@ -61,6 +64,7 @@
         <q-input v-model="targetUser.name" :disable="action == 'edit'" :readonly="action == 'edit'" label="姓名" />
         <q-input v-model="targetUser.email" :disable="action == 'edit'" :readonly="action == 'edit'" label="Email" />
         <q-input v-model="targetUser.schoolNumber" label="學號" />
+        <q-input v-model="targetUser.seatNumber" label="座號" />
         <q-input v-model="targetUser.clazz" label="班級" />
         <q-select v-model="targetUser.role" :options="roleOptions" emit-value label="身分" />
       </q-card-section>
@@ -95,14 +99,15 @@ const columns = [
     sortable: true,
     align: 'left',
   },
-  { name: 'role', label: '身分', field: 'role', sortable: true, align: 'left' },
   {
-    name: 'email',
-    label: 'Email',
-    field: 'email',
+    name: 'seatNumber',
+    label: '座號',
+    field: 'clazz',
     sortable: true,
     align: 'left',
   },
+  { name: 'role', label: '身分', field: 'role', sortable: true, align: 'left' },
+  { name: 'email', label: 'Email', field: 'email', sortable: true, align: 'left' },
 ] as {
   name: string;
   label: string;
@@ -137,6 +142,7 @@ function customFilter(rows: readonly any[]): readonly any[] {
     return (
       String(row.schoolNumber).toLowerCase() +
       String(row.clazz).toLowerCase() +
+      String(row.seatNumber).toLowerCase() +
       String(row.name).toLowerCase() +
       String(row.email).toLowerCase() +
       translateRole(row.role).toLowerCase().toLowerCase()
@@ -176,6 +182,7 @@ function edit(row: any) {
   targetUser.name = row.name;
   targetUser.email = row.email;
   targetUser.schoolNumber = row.schoolNumber;
+  targetUser.seatNumber = row.seatNumber;
   targetUser.clazz = row.clazz;
   targetUser.role = row.role;
   targetUser.uid = row.uid;
@@ -186,6 +193,7 @@ function add() {
   targetUser.name = '';
   targetUser.email = '';
   targetUser.schoolNumber = '';
+  targetUser.seatNumber = '';
   targetUser.clazz = '';
   targetUser.role = 50;
   targetUser.uid = '';
@@ -194,7 +202,8 @@ function add() {
 function bulkAddUser() {
   Dialog.create({
     title: '批次新增帳號',
-    message: '請依照CSV格式 (姓名,學號,班級,Email) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代',
+    message:
+      '請依照CSV格式 (班級,座號,學號,姓名) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代，Email為學校Google帳號',
     prompt: {
       model: '',
       type: 'textarea',
@@ -205,13 +214,16 @@ function bulkAddUser() {
     const lines = data.split('\n');
     const users = [];
     for (const line of lines) {
-      const [name, schoolNumber, clazz, email] = line.split(',');
-      if (name && schoolNumber && clazz && email) {
+      const [clazz, seatNumber, schoolNumber, name] = line.split(',');
+      if (name && schoolNumber && clazz && seatNumber) {
         users.push({
-          name,
-          schoolNumber,
           clazz,
-          email,
+          seatNumber,
+          schoolNumber,
+          name,
+          email: schoolNumber.startsWith('11100')
+            ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
+            : `ck${schoolNumber}@gl.ck.tp.edu.tw`,
           role: 50,
         });
       } else {
@@ -249,6 +261,7 @@ async function submit() {
           role: targetUser.role,
           schoolNumber: targetUser.schoolNumber,
           clazz: targetUser.clazz,
+          seatNumber: targetUser.seatNumber,
         },
       });
     } else if (action.value === 'add') {

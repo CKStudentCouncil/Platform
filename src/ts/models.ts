@@ -17,6 +17,7 @@ export interface UserClaims {
   role: number;
   schoolNumber: string;
   clazz: string; // class, but to avoid internal keyword conflict
+  seatNumber: string;
 }
 
 export interface User {
@@ -26,6 +27,7 @@ export interface User {
   role?: number | undefined;
   schoolNumber?: string;
   clazz?: string; // class, but to avoid internal keyword conflict
+  seatNumber: string;
 }
 
 export interface Meeting extends DocumentType {

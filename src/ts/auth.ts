@@ -42,6 +42,7 @@ export async function updateCustomClaims() {
   loggedInUserClaims.role = claims.claims.role as number;
   loggedInUserClaims.schoolNumber = claims.claims.schoolNumber as string;
   loggedInUserClaims.clazz = claims.claims.clazz as string;
+  loggedInUserClaims.seatNumber = claims.claims.seatNumber as string;
 }
 
 export function isLoggedIn() {

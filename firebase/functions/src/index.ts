@@ -8,11 +8,12 @@
  */
 
 import * as admin from 'firebase-admin';
+//@formatter:on
 import { addUserWithRole, checkRole, editUserClaims } from './auth';
 import { onCall } from 'firebase-functions/v2/https';
 import { Role, User } from './models';
-
-admin.initializeApp();
+//@formatter:off
+admin.initializeApp(); // This is required to run before everything else
 
 // const db = admin.firestore();
 const globalFunctionOptions = { region: 'asia-east1' };
@@ -58,6 +59,7 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
       schoolNumber: user.customClaims?.schoolNumber,
       clazz: user.customClaims?.clazz,
       name: user.displayName,
+      seatNumber: user.customClaims?.seatNumber,
     };
   });
 });

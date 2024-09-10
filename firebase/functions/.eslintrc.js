@@ -9,7 +9,6 @@ module.exports = {
     'plugin:import/errors',
     'plugin:import/warnings',
     'plugin:import/typescript',
-    'prettier',
     'plugin:@typescript-eslint/recommended',
   ],
   parser: '@typescript-eslint/parser',

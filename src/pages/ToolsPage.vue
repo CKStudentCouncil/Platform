@@ -26,6 +26,7 @@ const choices = ref([
   { label: '姓名', value: 'name' },
   { label: 'Email', value: 'email' },
   { label: '學號', value: 'schoolNumber' },
+  { label: '座號', value: 'seatNumber' },
 ]);
 const from = ref(choices.value[0]);
 const to = ref(choices.value[1]);
