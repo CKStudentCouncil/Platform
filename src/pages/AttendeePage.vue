@@ -1,25 +1,16 @@
 <template>
   <q-page v-if="meeting" padding>
-    <div v-if="!activeProposal || !activeProposal.value" class="text-h6">
-      請等待會議主席開始審理議案
-    </div>
+    <div v-if="!activeProposal || !activeProposal.value" class="text-h6">請等待會議主席開始審理議案</div>
     <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
       <div class="text-h6">正在審理議案</div>
-      <q-btn
-        color="primary"
-        icon="chat"
-        label="請求發言"
-        @click="requestToSpeak()"
-      />
+      <q-btn color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
       <q-card>
         <q-card-section>
           <div class="text-h6">{{ activeProposal.value!.title }}</div>
         </q-card-section>
         <q-separator />
         <q-card-section>
-          <div class="text-subtitle1">
-            提案人：{{ activeProposal.value!.proposer }}
-          </div>
+          <div class="text-subtitle1">提案人：{{ activeProposal.value!.proposer }}</div>
           <div>{{ activeProposal.value!.content }}</div>
         </q-card-section>
         <q-separator />
@@ -45,9 +36,7 @@
       </q-card>
     </div>
     <div v-if="activeVotable && activeVotable.value">
-      <div class="text-h6">
-        請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改
-      </div>
+      <div class="text-h6">請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改</div>
       <q-card>
         <q-card-section>
           <div class="text-h4">{{ activeVotable.value.question }}</div>
@@ -60,10 +49,9 @@
             :class="
               'col q-mr-md text-h5' +
               (selectedChoice == choice ? ' bg-amber' : '') +
-              ((activeVotable.value.results[choice]
-                ? activeVotable.value.results[choice]
-                : []
-              ).includes(getUserClaims().clazz)
+              ((activeVotable.value.results[choice] ? activeVotable.value.results[choice] : []).includes(
+                getUserClaims().clazz,
+              )
                 ? ' bg-green'
                 : '')
             "
@@ -97,19 +85,13 @@ const id = ref(useRoute().params.id);
 const meeting = getMeeting(id.value as string);
 const activeProposalId = ref(null as string | null);
 const activeProposal = computed(() =>
-  activeProposalId.value == null
-    ? null
-    : getProposal(id.value as string, activeProposalId.value!),
+  activeProposalId.value == null ? null : getProposal(id.value as string, activeProposalId.value!),
 );
 const activeVotableId = ref(null as string | null);
 const activeVotable = computed(() =>
   activeVotableId.value == null
     ? null
-    : getVotable(
-        id.value as string,
-        activeProposalId.value!,
-        activeVotableId.value!,
-      ),
+    : getVotable(id.value as string, activeProposalId.value!, activeVotableId.value!),
 );
 const selectedChoice = ref(null as string | null);
 const router = useRouter();
@@ -121,6 +103,7 @@ const voted = computed(() => {
   }
   return false;
 });
+const speakRequests = ref([] as string[]);
 onMounted(() => {
   if (!id.value || id.value.length == 0) {
     router.push('/punch_in');
@@ -134,8 +117,7 @@ watch(
       router.push('/punch_in');
       return;
     }
-    if (!meeting.participants.includes(getUserClaims().clazz))
-      router.push('/punch_in');
+    if (!meeting.participants.includes(getUserClaims().clazz)) router.push('/punch_in');
     if (meeting.activeProposal) {
       activeProposalId.value = meeting.activeProposal;
     } else {
@@ -146,8 +128,18 @@ watch(
 );
 watch(
   activeProposal,
-  (prop) => {
+  (prop, prevProp) => {
     if (prop && prop.value) {
+      if (prevProp && prevProp.value) {
+        for (const speakRequest of prop.value.speakRequests) {
+          if (!speakRequests.value.includes(speakRequest)) {
+            Notify.create({
+              message: `${speakRequest} 班代請求發言`,
+              color: 'positive',
+            });
+          }
+        }
+      }
       activeVotableId.value = prop.value.activeVotable;
     } else {
       activeVotableId.value = null;
@@ -160,15 +152,10 @@ async function select(choice: string) {
   if (selectedChoice.value == choice) {
     try {
       const update = {} as any;
-      update[('results.' + choice) as keyof typeof update] = arrayUnion(
-        getUserClaims().clazz,
-      );
+      update[('results.' + choice) as keyof typeof update] = arrayUnion(getUserClaims().clazz);
       await updateDoc(
         doc(
-          rawVotableCollection(
-            id.value as string,
-            activeProposalId.value as string,
-          ),
+          rawVotableCollection(id.value as string, activeProposalId.value as string),
           activeVotableId.value as string,
         ),
         update,
@@ -188,12 +175,9 @@ async function select(choice: string) {
 
 async function requestToSpeak() {
   try {
-    await updateDoc(
-      doc(rawProposalCollection(id.value as string), activeProposalId.value!),
-      {
-        speakRequests: arrayUnion(getUserClaims().clazz),
-      },
-    );
+    await updateDoc(doc(rawProposalCollection(id.value as string), activeProposalId.value!), {
+      speakRequests: arrayUnion(getUserClaims().clazz),
+    });
     Notify.create({
       message: '請求發言成功',
       color: 'positive',

@@ -33,10 +33,15 @@
       <q-btn color="primary" flat label="編輯" @click="$emit('edit', proposal.id)" />
       <q-btn color="negative" flat label="刪除" @click="$emit('del', proposal.id)" />
     </q-card-actions>
+    <q-card-actions v-if="endable">
+      <q-btn color="negative" flat icon="stop" label="結束議案" @click="$emit('end', proposal.id)" />
+    </q-card-actions>
   </q-card>
 </template>
 
 <script lang="ts" setup>
+import { QBtn } from 'quasar';
+
 defineProps({
   proposal: {
     type: Object,
@@ -46,12 +51,17 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  endable: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 defineEmits<{
   select: [proposalId: string];
   edit: [proposalId: string];
   del: [proposalId: string];
+  end: [proposalId: string];
 }>();
 </script>
 

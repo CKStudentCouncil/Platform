@@ -41,20 +41,10 @@
             {{ props.row.email }}
           </q-td>
           <q-td key="actions" style="text-align: right">
-            <q-btn
-              class="text-yellow-9 q-ml-sm q-mr-sm"
-              icon="edit"
-              round
-              @click="edit(props.row)"
-            >
+            <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
-            <q-btn
-              class="text-red q-ml-sm q-mr-sm"
-              icon="delete"
-              round
-              @click="del(props.row)"
-            >
+            <q-btn class="text-red q-ml-sm q-mr-sm" icon="delete" round @click="del(props.row)">
               <q-tooltip>刪除</q-tooltip>
             </q-btn>
           </q-td>
@@ -68,26 +58,11 @@
         <h6 class="q-ma-none">編輯帳號</h6>
       </q-card-section>
       <q-card-section>
-        <q-input
-          v-model="targetUser.name"
-          :disable="action == 'edit'"
-          :readonly="action == 'edit'"
-          label="姓名"
-        />
-        <q-input
-          v-model="targetUser.email"
-          :disable="action == 'edit'"
-          :readonly="action == 'edit'"
-          label="Email"
-        />
+        <q-input v-model="targetUser.name" :disable="action == 'edit'" :readonly="action == 'edit'" label="姓名" />
+        <q-input v-model="targetUser.email" :disable="action == 'edit'" :readonly="action == 'edit'" label="Email" />
         <q-input v-model="targetUser.schoolNumber" label="學號" />
         <q-input v-model="targetUser.clazz" label="班級" />
-        <q-select
-          v-model="targetUser.role"
-          :options="roleOptions"
-          emit-value
-          label="身分"
-        />
+        <q-select v-model="targetUser.role" :options="roleOptions" emit-value label="身分" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="action = ''" />
@@ -169,11 +144,7 @@ function customFilter(rows: readonly any[]): readonly any[] {
   });
 }
 
-function customSort(
-  rows: readonly any[],
-  sortBy: string | undefined,
-  descending: boolean,
-) {
+function customSort(rows: readonly any[], sortBy: string | undefined, descending: boolean) {
   const data = [...rows];
   if (sortBy) {
     data.sort((a, b) => {
@@ -223,8 +194,7 @@ function add() {
 function bulkAddUser() {
   Dialog.create({
     title: '批次新增帳號',
-    message:
-      '請依照CSV格式 (姓名,學號,班級,Email) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代',
+    message: '請依照CSV格式 (姓名,學號,班級,Email) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代',
     prompt: {
       model: '',
       type: 'textarea',

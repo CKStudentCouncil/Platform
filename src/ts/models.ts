@@ -2,7 +2,7 @@ import { collection, doc, Timestamp } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import { FirestoreDataConverter } from '@firebase/firestore';
 
-const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+export const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000; // -480
 
 export enum Role {
   Admin = 999,
@@ -58,10 +58,10 @@ export const meetingConverter: FirestoreDataConverter<Meeting | null> = {
   fromFirestore(snapshot, options) {
     const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
     if (!data) return null;
-    data.start = new Date(data.start.toMillis() + timezoneOffset);
-    if (data.stop) data.stop = new Date(data.stop.toMillis() + timezoneOffset);
+    data.start = new Date(data.start.toMillis());
+    if (data.stop) data.stop = new Date(data.stop.toMillis());
     for (const key in data.absences) {
-      data.absences[key].scheduledAt = new Date(data.absences[key].scheduledAt.toMillis() + timezoneOffset);
+      data.absences[key].scheduledAt = new Date(data.absences[key].scheduledAt.toMillis());
     }
     return data as unknown as Meeting;
   },
@@ -83,7 +83,7 @@ export function getMeeting(id: string) {
 export interface Proposal extends DocumentType {
   attachments: string[];
   proposer: string;
-  activeVotable?: string;
+  activeVotable?: string | null;
   title: string;
   content: string;
   order: number;

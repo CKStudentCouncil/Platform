@@ -12,6 +12,7 @@
       :loading="Object.values(meetings).length === 0"
       :rows="Object.values(meetings)"
       :sort-method="customSort"
+      v-model:pagination="pagination"
       class="rounded-borders shadow-2 q-ma-md"
       color="primary"
       row-key="name"
@@ -33,7 +34,7 @@
             {{ props.row.name }}
           </q-td>
           <q-td key="start">
-            {{ props.row.start.toLocaleDateString() }}
+            {{ props.row.start.toLocaleString() }}
           </q-td>
           <q-td key="actions" style="text-align: right">
             <q-btn
@@ -79,7 +80,10 @@
           >臨時會議</span
         >
         <p class="q-mb-none">開會日期：</p>
-        <q-date v-model="targetMeeting.start" mask="YYYY-MM-DD" />
+        <div class="row q-gutter-md q-ml-none">
+          <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
+          <q-time v-model="targetMeeting.startTime" class="col" format24h mask="HH:mm:ss" />
+        </div>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="action = ''" />
@@ -122,7 +126,7 @@ const columns = [
 }[]; // Typescript magic requirements
 let search = ref('');
 let action = ref('');
-let targetMeeting = reactive({} as { id: string; name: string; start: string });
+let targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string });
 const db = useFirestore();
 let meetings = meetingCollection();
 const filter = computed(() => {
@@ -145,11 +149,12 @@ let selected = computed({
     }
   },
 });
+let pagination = ref({ sortBy: 'start', descending: true });
 
 function customFilter(rows: readonly any[]): readonly any[] {
   const lowerTerms = search.value.toLowerCase();
   return rows.filter((row: Meeting) => {
-    return (String(row.name).toLowerCase() + row.start.toLocaleDateString().toLowerCase()).includes(lowerTerms);
+    return (String(row.name).toLowerCase() + row.start.toLocaleString().toLowerCase()).includes(lowerTerms);
   });
 }
 
@@ -162,6 +167,9 @@ function customSort(rows: readonly any[], sortBy: string | undefined, descending
       if (sortBy == 'name') {
         // string sort
         return x[sortBy] > y[sortBy] ? 1 : x[sortBy] < y[sortBy] ? -1 : 0;
+      } else if (sortBy == 'start') {
+        // date sort
+        return x[sortBy].valueOf() - y[sortBy].valueOf();
       } else {
         // numeric sort
         return parseFloat(x[sortBy]) - parseFloat(y[sortBy]);
@@ -175,13 +183,15 @@ function edit(row: any) {
   action.value = 'edit';
   targetMeeting.id = row.id;
   targetMeeting.name = row.name;
-  targetMeeting.start = row.start.toISOString().split('T')[0];
+  targetMeeting.startDate = date.formatDate(row.start, 'YYYY-MM-DD');
+  targetMeeting.startTime = date.formatDate(row.start, 'HH:mm');
 }
 
 function add() {
   action.value = 'add';
   targetMeeting.name = '';
-  targetMeeting.start = new Date().toISOString().split('T')[0];
+  targetMeeting.startDate = date.formatDate(new Date(), 'YYYY-MM-DD');
+  targetMeeting.startTime = date.formatDate(new Date(), 'HH:mm:ss');
 }
 
 async function submit() {
@@ -190,10 +200,10 @@ async function submit() {
     if (action.value === 'edit') {
       await updateDoc(doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter), {
         name: targetMeeting.name,
-        start: new Date(targetMeeting.start),
+        start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm:ss'),
       });
     } else if (action.value === 'add') {
-      var d = new Date(targetMeeting.start);
+      const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm:ss');
 
       await setDoc(
         doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(
@@ -207,6 +217,7 @@ async function submit() {
           signedOff: [],
           start: d,
           activeProposal: null,
+          absences: {},
         } as unknown as Meeting,
       );
     }

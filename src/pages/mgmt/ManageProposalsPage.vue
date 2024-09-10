@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts" setup>
-import { proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
+import { Proposal, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { Dialog, Loading, Notify } from 'quasar';
@@ -65,18 +65,12 @@ import ProposalDisplay from 'components/ProposalDisplay.vue';
 let proposals = useRoute().params.id.length == 0 ? ref([]) : proposalCollection(useRoute().params.id as string);
 const sortedProposals = computed(() => proposals.value.toSorted((a, b) => a.order - b.order));
 let action = ref('');
-let target = reactive(
-  {} as {
-    attachments: string[];
-    content: string;
-    proposer: string;
-    title: string;
-    id: string;
-    order: number;
-    activeVotable?: string | null;
-    speakRequests: string[];
-  },
-);
+
+interface ProposalId extends Proposal {
+  id: string;
+}
+
+let target = reactive({} as ProposalId);
 const router = useRouter();
 let selected = computed({
   get: () => route.params.proposalId,
@@ -95,14 +89,7 @@ const db = useFirestore();
 const route = useRoute();
 
 function edit(proposal: any) {
-  target.attachments = proposal.attachments;
-  target.content = proposal.content;
-  target.proposer = proposal.proposer;
-  target.title = proposal.title;
-  target.order = proposal.order;
-  target.id = proposal.id;
-  target.activeVotable = proposal.activeVotable;
-  target.speakRequests = proposal.speakRequests;
+  target = { ...proposal };
   action.value = 'edit';
 }
 
@@ -114,6 +101,7 @@ function add() {
   target.order = proposals.value.length - 1;
   target.activeVotable = null;
   target.speakRequests = [];
+  target.id = '';
   action.value = 'add';
 }
 

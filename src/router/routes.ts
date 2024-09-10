@@ -4,20 +4,20 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/accounts',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/mgmt/AccountsPage.vue') }],
+    children: [{ path: '', component: () => import('pages/mgmt/ManageAccountsPage.vue') }],
   },
   {
     path: '/meetings',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: ':id?', component: () => import('pages/mgmt/MeetingsPage.vue') },
+      { path: ':id?', component: () => import('pages/mgmt/ManageMeetingsPage.vue') },
       {
         path: ':id?/proposals/:proposalId?',
-        component: () => import('pages/mgmt/ProposalsPage.vue'),
+        component: () => import('pages/mgmt/ManageProposalsPage.vue'),
       },
       {
         path: ':id?/proposals/:proposalId?/votables',
-        component: () => import('pages/mgmt/VotablesPage.vue'),
+        component: () => import('pages/mgmt/ManageVotablesPage.vue'),
       },
     ],
   },
