@@ -53,7 +53,7 @@ export const meetingConverter: FirestoreDataConverter<Meeting | null> = {
     for (const key in data.absences) {
       data.absences[key].scheduledAt = Timestamp.fromMillis(data.absences[key].scheduledAt.valueOf() - timezoneOffset);
     }
-    return firestoreDeaultConverter.toFirestore(data);
+    return firestoreDefaultConverter.toFirestore(data);
   },
   fromFirestore(snapshot, options) {
     const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
