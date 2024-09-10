@@ -1,14 +1,8 @@
 <template>
   <q-tabs align="left">
     <q-route-tab :to="'/meetings/' + selected" label="會議" />
-    <q-route-tab
-      :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`"
-      label="提案"
-    />
-    <q-route-tab
-      :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`"
-      label="投票案件"
-    />
+    <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
+    <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" label="投票案件" />
   </q-tabs>
   <q-page padding>
     <q-table
@@ -34,10 +28,7 @@
         </div>
       </template>
       <template v-slot:body="props">
-        <q-tr
-          :class="selected == props.row.id ? 'bg-green-1' : ''"
-          :props="props"
-        >
+        <q-tr :class="selected == props.row.id ? 'bg-green-1' : ''" :props="props">
           <q-td key="name">
             {{ props.row.name }}
           </q-td>
@@ -56,20 +47,10 @@
             >
               <q-tooltip>選擇並管理提案</q-tooltip>
             </q-btn>
-            <q-btn
-              class="text-yellow-9 q-ml-sm q-mr-sm"
-              icon="edit"
-              round
-              @click="edit(props.row)"
-            >
+            <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
-            <q-btn
-              class="text-red q-ml-sm q-mr-sm"
-              icon="delete"
-              round
-              @click="del(props.row)"
-            >
+            <q-btn class="text-red q-ml-sm q-mr-sm" icon="delete" round @click="del(props.row)">
               <q-tooltip>刪除</q-tooltip>
             </q-btn>
           </q-td>
@@ -107,14 +88,8 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { Meeting, meetingCollection, meetingConverter } from 'src/ts/models.ts';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  setDoc,
-  updateDoc,
-} from 'firebase/firestore';
+import { Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, Notify } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { generateRandomText } from 'src/ts/utils.ts';
@@ -171,18 +146,11 @@ let selected = computed({
 function customFilter(rows: readonly any[]): readonly any[] {
   const lowerTerms = search.value.toLowerCase();
   return rows.filter((row: Meeting) => {
-    return (
-      String(row.name).toLowerCase() +
-      row.start.toLocaleDateString().toLowerCase()
-    ).includes(lowerTerms);
+    return (String(row.name).toLowerCase() + row.start.toLocaleDateString().toLowerCase()).includes(lowerTerms);
   });
 }
 
-function customSort(
-  rows: readonly any[],
-  sortBy: string | undefined,
-  descending: boolean,
-) {
+function customSort(rows: readonly any[], sortBy: string | undefined, descending: boolean) {
   const data = [...rows];
   if (sortBy) {
     data.sort((a, b) => {
@@ -217,22 +185,17 @@ async function submit() {
   Loading.show();
   try {
     if (action.value === 'edit') {
-      await updateDoc(
-        doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter),
-        {
-          name: targetMeeting.name,
-          start: new Date(targetMeeting.start),
-        },
-      );
+      await updateDoc(doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter), {
+        name: targetMeeting.name,
+        start: new Date(targetMeeting.start),
+      });
     } else if (action.value === 'add') {
       var d = new Date(targetMeeting.start);
 
       await setDoc(
-        doc(
-          db,
-          'meetings',
-          date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6),
-        ).withConverter(meetingConverter),
+        doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(
+          meetingConverter,
+        ),
         {
           active: false,
           name: targetMeeting.name,
@@ -268,7 +231,7 @@ async function del(row: any) {
   }).onOk(async () => {
     Loading.show();
     try {
-      await deleteDoc(doc(collection(db, 'meetings'), row.id));
+      await deleteDoc(doc(rawMeetingCollection(), row.id));
     } catch (e) {
       console.error(e);
       Notify.create({

@@ -13,24 +13,10 @@
   <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
   <span v-if="$route.params.proposalId.length == 0">請先選擇一個提案</span>
   <q-page v-else padding>
-    <q-btn
-      color="primary"
-      icon="add"
-      label="新增投票案件"
-      style="margin-bottom: 10px"
-      @click="add"
-    />
+    <q-btn color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
     <span class="q-ml-md">提示：可以直接拖拉投票案件方塊以重新排序</span>
-    <VueDraggable
-      v-model="votables"
-      class="q-gutter-md"
-      style="cursor: move"
-      @update="rearrange()"
-    >
-      <q-card
-        v-for="votable of votables.sort((a, b) => a.order - b.order)"
-        :key="votable.order"
-      >
+    <VueDraggable v-model="votables" class="q-gutter-md" style="cursor: move" @update="rearrange()">
+      <q-card v-for="votable of sortedVotables" :key="votable.order">
         <q-card-section>
           <div class="text-h6">{{ votable.question }}</div>
         </q-card-section>
@@ -49,9 +35,7 @@
   <q-dialog v-model="dialog" persistent>
     <q-card>
       <q-card-section>
-        <h6 class="q-ma-none">
-          {{ action == 'edit' ? '編輯' : '新增' }}投票案件
-        </h6>
+        <h6 class="q-ma-none">{{ action == 'edit' ? '編輯' : '新增' }}投票案件</h6>
       </q-card-section>
       <q-card-section>
         <q-input v-model="target.question" label="問題" />
@@ -67,28 +51,20 @@
 
 <script lang="ts" setup>
 import { VueDraggable } from 'vue-draggable-plus';
-import { votableCollection } from 'src/ts/models.ts';
+import { rawVotableCollection, votableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { computed, reactive, ref } from 'vue';
 import { useFirestore } from 'vuefire';
 import { Dialog, Loading, Notify } from 'quasar';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  setDoc,
-  updateDoc,
-} from 'firebase/firestore';
+import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateRandomText } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 
 let votables =
   useRoute().params.id.length == 0 || useRoute().params.proposalId.length == 0
     ? ref([])
-    : votableCollection(
-        useRoute().params.id as string,
-        useRoute().params.proposalId as string,
-      );
+    : votableCollection(useRoute().params.id as string, useRoute().params.proposalId as string);
+const sortedVotables = computed(() => votables.value.toSorted((a, b) => a.order - b.order));
 let action = ref('');
 let target = reactive(
   {} as {
@@ -142,15 +118,7 @@ async function del(id: string) {
   }).onOk(async () => {
     Loading.show();
     try {
-      await deleteDoc(
-        doc(
-          collection(
-            useFirestore(),
-            `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`,
-          ),
-          id,
-        ),
-      );
+      await deleteDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as strin), id));
     } catch (e) {
       console.error(e);
       Notify.create({
@@ -178,20 +146,12 @@ async function submit() {
     };
     if (action.value === 'edit') {
       await updateDoc(
-        doc(
-          db,
-          `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`,
-          target.id,
-        ),
+        doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id),
         data,
       );
     } else if (action.value === 'add') {
       await setDoc(
-        doc(
-          db,
-          `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`,
-          generateRandomText(6),
-        ),
+        doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6)),
         data,
       );
     }
@@ -219,11 +179,7 @@ async function rearrange() {
     for (let i = 0; i < votables.value.length; i++) {
       tasks.push(
         updateDoc(
-          doc(
-            db,
-            `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`,
-            votables.value[i].id,
-          ),
+          doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, votables.value[i].id),
           {
             order: i,
           },
