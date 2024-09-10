@@ -252,7 +252,8 @@ async function del(row: any) {
 }
 
 async function copyLink(row: any) {
-  const url = window.location.origin + '#/schedule_absence/' + row.id;
+  const url =
+    window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
   await navigator.clipboard.writeText(url);
   Notify.create({
     message: '已複製請假連結',

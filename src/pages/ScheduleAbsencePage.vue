@@ -1,21 +1,19 @@
 <template>
   <q-page padding>
     <div v-if="!meeting.value" class="text-h5">載入中...</div>
-    <div v-if="meeting.value" class="q-gutter-md">
+    <div v-if="meeting.value">
       <div class="text-h5">{{ meeting.value.name }} 請假</div>
       <div class="text-h5">開會日期：{{ meeting.value.start.toLocaleDateString() }}</div>
       <q-input v-model="reason" label="請假原因" />
-      <q-btn
-        :label="meeting.value.absences[getUserClaims().clazz] ? '編輯請假原因' : '請假'"
-        color="primary"
-        @click="scheduleAbsence"
-      />
-      <q-btn
-        v-if="meeting.value.absences[getUserClaims().clazz]"
-        color="negative"
-        label="取消請假"
-        @click="cancelAbsence()"
-      />
+      <div v-if="meeting.value.absences && meeting.value.absences[getUserClaims().clazz]" class="q-gutter-md">
+        <div class="text-h6">
+          你已在 {{ meeting.value.absences[getUserClaims().clazz].scheduledAt.toLocaleString() }}
+          請假
+        </div>
+        <q-btn color="primary" label="編輯請假原因" @click="scheduleAbsence" />
+        <q-btn color="negative" label="取消請假" @click="cancelAbsence()" />
+      </div>
+      <q-btn v-else color="primary" label="請假" @click="scheduleAbsence" />
     </div>
   </q-page>
   <LoginDialog v-model="loginDialog" />
