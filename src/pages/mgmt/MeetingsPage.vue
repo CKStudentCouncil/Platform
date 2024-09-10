@@ -1,10 +1,10 @@
 <template>
-  <q-tabs align="left">
-    <q-route-tab :to="'/meetings/' + selected" label="會議" />
-    <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
-    <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" label="投票案件" />
-  </q-tabs>
-  <q-page padding>
+  <q-page>
+    <q-tabs align="left">
+      <q-route-tab :to="'/meetings/' + selected" label="會議" />
+      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
+      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" label="投票案件" />
+    </q-tabs>
     <q-table
       :columns="columns"
       :filter="filter"
@@ -12,7 +12,7 @@
       :loading="Object.values(meetings).length === 0"
       :rows="Object.values(meetings)"
       :sort-method="customSort"
-      class="rounded-borders shadow-2"
+      class="rounded-borders shadow-2 q-ma-md"
       color="primary"
       row-key="name"
       title="會議管理"
