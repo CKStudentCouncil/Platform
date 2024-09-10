@@ -4,9 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/accounts',
     component: () => import('layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('pages/mgmt/AccountsPage.vue') },
-    ],
+    children: [{ path: '', component: () => import('pages/mgmt/AccountsPage.vue') }],
   },
   {
     path: '/meetings',
@@ -46,16 +44,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/punch_in',
     component: () => import('layouts/MainLayout.vue'),
-    children: [
-      { path: ':passcode?', component: () => import('pages/PunchInPage.vue') },
-    ],
+    children: [{ path: ':passcode?', component: () => import('pages/PunchInPage.vue') }],
   },
   {
     path: '/attendee',
     component: () => import('layouts/MainLayout.vue'),
-    children: [
-      { path: ':id?', component: () => import('pages/AttendeePage.vue') },
-    ],
+    children: [{ path: ':id?', component: () => import('pages/AttendeePage.vue') }],
+  },
+  {
+    path: '/tools',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/ToolsPage.vue') }],
   },
   {
     path: '/',

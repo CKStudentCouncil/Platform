@@ -118,7 +118,7 @@ async function del(id: string) {
   }).onOk(async () => {
     Loading.show();
     try {
-      await deleteDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as strin), id));
+      await deleteDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as string), id));
     } catch (e) {
       console.error(e);
       Notify.create({

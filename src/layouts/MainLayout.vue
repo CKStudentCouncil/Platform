@@ -12,26 +12,10 @@
         </q-toolbar-title>
 
         <q-btn flat icon="fullscreen" @click="toggleFullscreen" />
-        <q-btn
-          v-if="!loggedIn"
-          align="right"
-          dense
-          flat
-          icon="login"
-          round
-          @click="loginDialogOpen = true"
+        <q-btn v-if="!loggedIn" align="right" dense flat icon="login" round @click="loginDialogOpen = true"
           >登入
         </q-btn>
-        <q-btn
-          v-if="loggedIn"
-          align="right"
-          dense
-          flat
-          icon="logout"
-          round
-          @click="logout()"
-          >登出
-        </q-btn>
+        <q-btn v-if="loggedIn" align="right" dense flat icon="logout" round @click="logout()">登出 </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -65,9 +49,7 @@
             <q-item-label>登入</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item
-          v-if="loggedIn && loggedInUser !== null && loggedInUser !== undefined"
-        >
+        <q-item v-if="loggedIn && loggedInUser !== null && loggedInUser !== undefined">
           <q-item-section v-if="loggedInUser.photoURL !== null" avatar>
             <q-avatar>
               <img :src="loggedInUser.photoURL" />
@@ -98,13 +80,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import {
-  getUserClaims,
-  init,
-  isLoggedIn,
-  logout,
-  updateCustomClaims,
-} from 'src/ts/auth';
+import { getUserClaims, init, isLoggedIn, logout, updateCustomClaims } from 'src/ts/auth';
 import { Role } from 'src/ts/models.ts';
 import { useCurrentUser } from 'vuefire';
 import LoginDialog from 'components/LoginDialog.vue';
@@ -134,6 +110,12 @@ let endpoints = [
     name: '加入會議',
     url: '/punch_in',
     icon: 'chat',
+  },
+  {
+    name: '工具',
+    url: '/tools',
+    icon: 'construction',
+    role: Role.Secretary,
   },
 ];
 let selected = ref('Account Information');
