@@ -17,7 +17,7 @@
         <div style="display: table-row">
           <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
           <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-            >/ {{ Math.round(totalMembers / 3) }} / {{ totalMembers }} (82 - {{ absences }} 位請假)</span
+            >/ {{ Math.round(totalMembers / 5) }} / {{ totalMembers }} (82 - {{ absences }} 位請假)</span
           >
         </div>
         <div class="text-h6">人已簽到</div>
@@ -75,7 +75,7 @@ async function getRequirement() {
       count++;
     }
   }
-  totalMembers.value = count + 1 - absences.value; // 副議長
+  totalMembers.value = count + 2 - absences.value; // +議長副議長
 }
 
 getRequirement();
