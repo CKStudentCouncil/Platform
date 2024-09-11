@@ -44,27 +44,32 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/punch_in',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: ':passcode?', component: () => import('pages/PunchInPage.vue') }],
+    children: [{ path: ':passcode?', component: () => import('pages/attendee/PunchInPage.vue') }],
   },
   {
     path: '/attendee',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: ':id?', component: () => import('pages/AttendeePage.vue') }],
+    children: [{ path: ':id?', component: () => import('pages/attendee/AttendeePage.vue') }],
   },
   {
     path: '/tools',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/ToolsPage.vue') }],
+    children: [{ path: '', component: () => import('pages/mgmt/ToolsPage.vue') }],
   },
   {
     path: '/schedule_absence',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: ':id?', component: () => import('pages/ScheduleAbsencePage.vue') }],
+    children: [{ path: ':id?', component: () => import('pages/attendee/ScheduleAbsencePage.vue') }],
   },
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+  },
+  {
+    path: '/about',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/AboutPage.vue') }],
   },
 
   // Always leave this as last one,

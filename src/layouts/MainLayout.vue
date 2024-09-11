@@ -127,6 +127,11 @@ let endpoints = [
     icon: 'construction',
     role: Role.Secretary,
   },
+  {
+    name: '關於',
+    url: '/about',
+    icon: 'info',
+  },
 ];
 let selected = ref('Account Information');
 let loginDialogOpen = ref(false);

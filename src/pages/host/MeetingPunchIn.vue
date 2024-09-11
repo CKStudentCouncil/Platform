@@ -17,12 +17,12 @@
         <div style="display: table-row">
           <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
           <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-            >/ {{ Math.round(totalMembers / 5) }} / {{ totalMembers }} (82 - {{ absences }} 位請假)</span
+            >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
           >
         </div>
         <div class="text-h6">人已簽到</div>
         <q-btn
-          v-if="selectedMeeting!.participants.length > Math.round(totalMembers / 3)"
+          v-if="selectedMeeting!.participants.length > Math.ceil((totalMembers - absences) / 5)"
           color="positive"
           flat
           icon="check"
