@@ -44,17 +44,15 @@
 </template>
 
 <script lang="ts" setup>
-import { useDocument, useFirestore } from 'vuefire';
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
 import { useRoute } from 'vue-router';
-import { meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { getMeeting, rawMeetingCollection } from 'src/ts/models.ts';
 import SignInQRCode from 'components/QRPasscode.vue';
 import { computed, ref } from 'vue';
 import { getAllUsers } from 'src/ts/auth.ts';
 
-const db = useFirestore();
 const route = useRoute();
-const selectedMeeting = useDocument(doc(db, 'meetings', route.params.id as string).withConverter(meetingConverter));
+const selectedMeeting = getMeeting(route.params.id as string);
 const totalMembers = ref(0);
 const absences = computed(() => {
   const a = selectedMeeting?.value?.absences;

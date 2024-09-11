@@ -33,8 +33,23 @@
                 selectedVotable.results[choice] == undefined ? 0 : (selectedVotable.results[choice] as string[]).length
               }}
             </div>
-            <span style="vertical-align: bottom; display: table-cell"> 票</span>
+            <span style="vertical-align: bottom; display: table-cell"
+              >/ {{ Math.ceil(selectedMeeting!.participants.length / 2) }} 票</span
+            >
           </div>
+          <q-btn
+            v-if="
+              (selectedVotable.results[choice] == undefined
+                ? 0
+                : (selectedVotable.results[choice] as string[]).length) >=
+              Math.ceil(selectedMeeting!.participants.length / 2)
+            "
+            color="positive"
+            flat
+            icon="check"
+            label="已過出席半數"
+          />
+          <q-btn v-else color="negative" flat icon="close" label="未過出席半數" />
         </q-card-section>
         <q-separator />
         <q-card-section>
@@ -44,7 +59,7 @@
             appear
             enter-active-class="animated heartBeat"
           >
-            <q-chip removable @remove="removeVoter(choice, voter)">{{ voter }} 班代 </q-chip>
+            <q-chip removable @remove="removeVoter(choice, voter)">{{ voter }} 班代</q-chip>
           </transition>
         </q-card-section>
       </q-card>
