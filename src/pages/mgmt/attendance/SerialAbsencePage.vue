@@ -50,8 +50,7 @@ async function updateAttendance() {
     for (const i in participants) {
       if (!participants[i].includes(user.clazz) && !scheduledAbsences[i].includes(user.clazz)) {
         absence_map[user.clazz]++;
-      }
-      if (scheduledAbsences[i].includes(user.clazz)) {
+      } else {
         absence_map[user.clazz] = 0;
       }
     }
