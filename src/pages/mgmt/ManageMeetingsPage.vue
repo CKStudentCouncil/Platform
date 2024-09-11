@@ -64,12 +64,12 @@
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <q-input v-model="targetMeeting.name" label="會議名稱" />
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = '第次常務會議'">常務會議 </span>
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = '第次臨時會議'">臨時會議</span>
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${reign} 第次常務會議`">常務會議 </span>
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${reign} 第次臨時會議`">臨時會議</span>
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
-          <q-time v-model="targetMeeting.startTime" class="col" format24h mask="HH:mm:ss" />
+          <q-time v-model="targetMeeting.startTime" class="col" format24h mask="HH:mm" />
         </div>
       </q-card-section>
       <q-card-actions align="right">
@@ -121,6 +121,10 @@ let selected = computed({
   },
 });
 let pagination = ref({ sortBy: 'start', descending: true });
+const reign = computed(() => {
+  const date = new Date();
+  return `${date.getFullYear() - 1945}-${date.getMonth() > 7 || date.getMonth() < 1 ? '1' : '2'}`; // August to January
+});
 
 function edit(row: any) {
   action.value = 'edit';
@@ -143,10 +147,10 @@ async function submit() {
     if (action.value === 'edit') {
       await updateDoc(doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter), {
         name: targetMeeting.name,
-        start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm:ss'),
+        start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm'),
       });
     } else if (action.value === 'add') {
-      const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm:ss');
+      const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm');
 
       await setDoc(doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(meetingConverter), {
         active: false,

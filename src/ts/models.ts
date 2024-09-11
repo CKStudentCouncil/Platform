@@ -1,4 +1,4 @@
-import { collection, doc, Timestamp } from 'firebase/firestore';
+import { collection, doc, orderBy, query, Timestamp } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import { FirestoreDataConverter } from '@firebase/firestore';
 
@@ -75,7 +75,7 @@ export function rawMeetingCollection() {
 }
 
 export function meetingCollection() {
-  return useCollection(rawMeetingCollection());
+  return useCollection(query(rawMeetingCollection(), orderBy('start', 'desc')));
 }
 
 export function getMeeting(id: string) {
@@ -98,7 +98,7 @@ export function rawProposalCollection(meetingId: string) {
 }
 
 export function proposalCollection(meetingId: string) {
-  return useCollection(rawProposalCollection(meetingId));
+  return useCollection(query(rawProposalCollection(meetingId), orderBy('order')));
 }
 
 export function getProposal(meetingId: string, proposalId: string) {
@@ -118,7 +118,7 @@ export function rawVotableCollection(meetingId: string, proposalId: string) {
 }
 
 export function votableCollection(meetingId: string, proposalId: string) {
-  return useCollection(rawVotableCollection(meetingId, proposalId));
+  return useCollection(query(rawVotableCollection(meetingId, proposalId), orderBy('order')));
 }
 
 export function getVotable(meetingId: string, proposalId: string, votableId: string) {
