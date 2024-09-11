@@ -1,13 +1,8 @@
 import { useFirebaseAuth } from 'vuefire';
-import {
-  browserLocalPersistence,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  User,
-} from 'firebase/auth';
+import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, User } from 'firebase/auth';
 import { reactive, Ref, ref } from 'vue';
 import { Loading, Notify } from 'quasar';
+import * as models from 'src/ts/models.ts';
 import { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 
@@ -88,9 +83,7 @@ export function login() {
 
 export async function loginWithCredentials(schoolNumber: string, clazz: string) {
   Loading.show();
-  const email = schoolNumber.startsWith('11100')
-    ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
-    : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
+  const email = schoolNumber.startsWith('11100') ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw` : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
   try {
     await signInWithEmailAndPassword(auth, email, 'ck$c' + schoolNumber + '@' + clazz);
     console.log('Logged in successfully.');
@@ -142,6 +135,6 @@ export function translateRole(role: number | undefined) {
   return '未知';
 }
 
-export async function getAllUsers() {
-  return (await useFunction('getAllUsers')()).data;
+export async function getAllUsers(): Promise<models.User[]> {
+  return (await useFunction('getAllUsers')()).data as models.User[];
 }

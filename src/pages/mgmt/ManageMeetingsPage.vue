@@ -6,13 +6,11 @@
       <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" label="投票案件" />
     </q-tabs>
     <q-table
+      v-model:pagination="pagination"
       :columns="columns"
       :filter="filter"
-      :filter-method="customFilter"
       :loading="Object.values(meetings).length === 0"
       :rows="Object.values(meetings)"
-      :sort-method="customSort"
-      v-model:pagination="pagination"
       class="rounded-borders shadow-2 q-ma-md"
       color="primary"
       row-key="name"
@@ -21,7 +19,7 @@
       <template v-slot:top-right>
         <div class="row justify-end q-gutter-sm">
           <q-btn icon="add" @click="add">新增會議</q-btn>
-          <q-input v-model="search" debounce="300" dense label="搜尋">
+          <q-input v-model="filter" debounce="300" dense label="搜尋">
             <template v-slot:append>
               <q-icon name="search" />
             </template>
@@ -30,11 +28,8 @@
       </template>
       <template v-slot:body="props">
         <q-tr :class="selected == props.row.id ? 'bg-green-1' : ''" :props="props">
-          <q-td key="name">
-            {{ props.row.name }}
-          </q-td>
-          <q-td key="start">
-            {{ props.row.start.toLocaleString() }}
+          <q-td v-for="col in props.cols" :key="col.name" :props="props">
+            {{ col.value }}
           </q-td>
           <q-td key="actions" style="text-align: right">
             <q-btn
@@ -69,16 +64,8 @@
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <q-input v-model="targetMeeting.name" label="會議名稱" />
-        <span
-          style="color: gray; text-decoration: underline; cursor: pointer"
-          @click="targetMeeting.name = '第次常務會議'"
-          >常務會議
-        </span>
-        <span
-          style="color: gray; text-decoration: underline; cursor: pointer"
-          @click="targetMeeting.name = '第次臨時會議'"
-          >臨時會議</span
-        >
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = '第次常務會議'">常務會議 </span>
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = '第次臨時會議'">臨時會議</span>
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -97,43 +84,27 @@
 import { computed, reactive, ref } from 'vue';
 import { Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { date, Dialog, Loading, Notify } from 'quasar';
+import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { generateRandomText } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 
 const columns = [
-  {
-    name: 'name',
-    label: '會議名稱',
-    field: 'name',
-    sortable: true,
-    align: 'left',
-  },
+  { name: 'name', label: '會議名稱', field: 'name', sortable: true, align: 'left' },
   {
     name: 'start',
     label: '開會時間',
     field: 'start',
+    format: (val: Date) => val.toLocaleString(),
     sortable: true,
     align: 'left',
   },
-] as {
-  name: string;
-  label: string;
-  field: string;
-  sortable: boolean;
-  align: 'left';
-}[]; // Typescript magic requirements
-let search = ref('');
-let action = ref('');
-let targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string });
+] as QTableColumn[]; // Typescript magic requirements
+const filter = ref('');
+const action = ref('');
+const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string });
 const db = useFirestore();
 let meetings = meetingCollection();
-const filter = computed(() => {
-  return {
-    search: search,
-  };
-});
 const dialog = computed(() => {
   return action.value === 'edit' || action.value === 'add';
 });
@@ -150,34 +121,6 @@ let selected = computed({
   },
 });
 let pagination = ref({ sortBy: 'start', descending: true });
-
-function customFilter(rows: readonly any[]): readonly any[] {
-  const lowerTerms = search.value.toLowerCase();
-  return rows.filter((row: Meeting) => {
-    return (String(row.name).toLowerCase() + row.start.toLocaleString().toLowerCase()).includes(lowerTerms);
-  });
-}
-
-function customSort(rows: readonly any[], sortBy: string | undefined, descending: boolean) {
-  const data = [...rows];
-  if (sortBy) {
-    data.sort((a, b) => {
-      const x = descending ? b : a;
-      const y = descending ? a : b;
-      if (sortBy == 'name') {
-        // string sort
-        return x[sortBy] > y[sortBy] ? 1 : x[sortBy] < y[sortBy] ? -1 : 0;
-      } else if (sortBy == 'start') {
-        // date sort
-        return x[sortBy].valueOf() - y[sortBy].valueOf();
-      } else {
-        // numeric sort
-        return parseFloat(x[sortBy]) - parseFloat(y[sortBy]);
-      }
-    });
-  }
-  return data;
-}
 
 function edit(row: any) {
   action.value = 'edit';
@@ -205,21 +148,16 @@ async function submit() {
     } else if (action.value === 'add') {
       const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm:ss');
 
-      await setDoc(
-        doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(
-          meetingConverter,
-        ),
-        {
-          active: false,
-          name: targetMeeting.name,
-          participants: [],
-          punchInPasscode: generateRandomText(6),
-          signedOff: [],
-          start: d,
-          activeProposal: null,
-          absences: {},
-        } as unknown as Meeting,
-      );
+      await setDoc(doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(meetingConverter), {
+        active: false,
+        name: targetMeeting.name,
+        participants: [],
+        punchInPasscode: generateRandomText(6),
+        signedOff: [],
+        start: d,
+        activeProposal: null,
+        absences: {},
+      } as unknown as Meeting);
     }
   } catch (e) {
     console.error(e);
@@ -263,8 +201,7 @@ async function del(row: any) {
 }
 
 async function copyLink(row: any) {
-  const url =
-    window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
+  const url = window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
   await navigator.clipboard.writeText(url);
   Notify.create({
     message: '已複製請假連結',

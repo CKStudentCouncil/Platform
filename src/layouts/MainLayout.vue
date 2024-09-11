@@ -12,9 +12,7 @@
         </q-toolbar-title>
 
         <q-btn flat icon="fullscreen" @click="toggleFullscreen" />
-        <q-btn v-if="!loggedIn" align="right" dense flat icon="login" round @click="loginDialogOpen = true"
-          >登入
-        </q-btn>
+        <q-btn v-if="!loggedIn" align="right" dense flat icon="login" round @click="loginDialogOpen = true">登入 </q-btn>
         <q-btn v-if="loggedIn" align="right" dense flat icon="logout" round @click="logout()">登出 </q-btn>
       </q-toolbar>
     </q-header>
@@ -38,16 +36,10 @@
             </q-item-section>
           </q-item>
         </div>
-        <div v-if="role >= Role.ViceChair">
-          <QRPasscode
-            v-for="meeting of activeMeetings"
-            :key="meeting!.name"
-            :passcode="meeting!.punchInPasscode"
-            :size="0.5"
-          />
+        <div v-if="role >= Role.ViceChair" style="max-height: 30vh">
+          <QRPasscode v-for="meeting of activeMeetings" :key="meeting!.name" :passcode="meeting!.punchInPasscode" :size="0.5" />
         </div>
         <q-space />
-
         <q-item v-if="!loggedIn" clickable @click="loginDialogOpen = true">
           <q-item-section avatar>
             <q-icon name="login" />
@@ -103,6 +95,12 @@ let endpoints = [
     url: '/accounts',
     icon: 'badge',
     role: Role.Chair,
+  },
+  {
+    name: '出席狀況管理',
+    url: '/attendance',
+    icon: 'trending_up',
+    role: Role.Secretary,
   },
   {
     name: '會議管理',

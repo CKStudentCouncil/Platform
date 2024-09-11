@@ -3,10 +3,8 @@
     <q-table
       :columns="columns"
       :filter="filter"
-      :filter-method="customFilter"
       :loading="loading"
       :rows="Object.values(accounts)"
-      :sort-method="customSort"
       class="rounded-borders shadow-2"
       color="primary"
       row-key="email"
@@ -16,7 +14,7 @@
         <div class="row justify-end q-gutter-sm">
           <q-btn icon="add_to_photos" @click="bulkAddUser">批次新增帳號</q-btn>
           <q-btn icon="add" @click="add">新增單一帳號</q-btn>
-          <q-input v-model="search" debounce="300" dense label="搜尋">
+          <q-input v-model="filter" debounce="300" dense label="搜尋">
             <template v-slot:append>
               <q-icon name="search" />
             </template>
@@ -25,23 +23,8 @@
       </template>
       <template v-slot:body="props">
         <q-tr :props="props">
-          <q-td key="name">
-            {{ props.row.name }}
-          </q-td>
-          <q-td key="schoolNumber">
-            {{ props.row.schoolNumber }}
-          </q-td>
-          <q-td key="clazz">
-            {{ props.row.clazz }}
-          </q-td>
-          <q-td key="seatNumber">
-            {{ props.row.seatNumber }}
-          </q-td>
-          <q-td key="role">
-            {{ translateRole(props.row.role) }}
-          </q-td>
-          <q-td key="email">
-            {{ props.row.email }}
+          <q-td v-for="col in props.cols" :key="col.name" :props="props">
+            {{ col.value }}
           </q-td>
           <q-td key="actions" style="text-align: right">
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
@@ -81,40 +64,23 @@ import { computed, reactive, ref } from 'vue';
 import { User } from 'src/ts/models.ts';
 import { getAllUsers, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
-import { Dialog, Loading, Notify } from 'quasar';
+import { Dialog, Loading, Notify, QTableColumn } from 'quasar';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
+  { name: 'schoolNumber', label: '學號', field: 'schoolNumber', sortable: true, align: 'left' },
+  { name: 'clazz', label: '班級', field: 'clazz', sortable: true, align: 'left' },
+  { name: 'seatNumber', label: '座號', field: 'clazz', sortable: true, align: 'left' },
   {
-    name: 'schoolNumber',
-    label: '學號',
-    field: 'schoolNumber',
+    name: 'role',
+    label: '身分',
+    field: (row) => translateRole(row.role).toLowerCase(),
+    sort: (a, b, rowA, rowB) => rowA.role - rowB.role,
     sortable: true,
     align: 'left',
   },
-  {
-    name: 'clazz',
-    label: '班級',
-    field: 'clazz',
-    sortable: true,
-    align: 'left',
-  },
-  {
-    name: 'seatNumber',
-    label: '座號',
-    field: 'clazz',
-    sortable: true,
-    align: 'left',
-  },
-  { name: 'role', label: '身分', field: 'role', sortable: true, align: 'left' },
   { name: 'email', label: 'Email', field: 'email', sortable: true, align: 'left' },
-] as {
-  name: string;
-  label: string;
-  field: string;
-  sortable: boolean;
-  align: 'left';
-}[]; // Typescript magic requirements
+] as QTableColumn[];
 const roleOptions = [
   { label: '班代', value: 50 },
   { label: '秘書', value: 100 },
@@ -122,51 +88,14 @@ const roleOptions = [
   { label: '議長', value: 200 },
   { label: '管理員', value: 999 },
 ];
-let search = ref('');
-let loading = ref(true);
-let action = ref('');
-let targetUser = reactive({} as User);
-let accounts = reactive([] as User[]);
-const filter = computed(() => {
-  return {
-    search: search,
-  };
-});
+const loading = ref(true);
+const action = ref('');
+const targetUser = reactive({} as User);
+const accounts = reactive([] as User[]);
+const filter = ref('');
 const dialog = computed(() => {
   return action.value === 'edit' || action.value === 'add';
 });
-
-function customFilter(rows: readonly any[]): readonly any[] {
-  const lowerTerms = search.value.toLowerCase();
-  return rows.filter((row: User) => {
-    return (
-      String(row.schoolNumber).toLowerCase() +
-      String(row.clazz).toLowerCase() +
-      String(row.seatNumber).toLowerCase() +
-      String(row.name).toLowerCase() +
-      String(row.email).toLowerCase() +
-      translateRole(row.role).toLowerCase().toLowerCase()
-    ).includes(lowerTerms);
-  });
-}
-
-function customSort(rows: readonly any[], sortBy: string | undefined, descending: boolean) {
-  const data = [...rows];
-  if (sortBy) {
-    data.sort((a, b) => {
-      const x = descending ? b : a;
-      const y = descending ? a : b;
-      if (sortBy == 'name' || sortBy == 'email') {
-        // string sort
-        return x[sortBy] > y[sortBy] ? 1 : x[sortBy] < y[sortBy] ? -1 : 0;
-      } else {
-        // numeric sort
-        return parseFloat(x[sortBy]) - parseFloat(y[sortBy]);
-      }
-    });
-  }
-  return data;
-}
 
 async function load() {
   loading.value = true;
@@ -202,8 +131,7 @@ function add() {
 function bulkAddUser() {
   Dialog.create({
     title: '批次新增帳號',
-    message:
-      '請依照CSV格式 (班級,座號,學號,姓名) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代，Email為學校Google帳號',
+    message: '請依照CSV格式 (班級,座號,學號,姓名) 輸入，每行一筆資料，預設會將這些使用者的身分設為班代，Email為學校Google帳號',
     prompt: {
       model: '',
       type: 'textarea',
