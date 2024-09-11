@@ -44,6 +44,8 @@ async function updateAttendance() {
     participants.push(meeting.participants);
     scheduledAbsences.push(Object.keys(meeting.absences));
   }
+  participants.reverse();
+  scheduledAbsences.reverse(); // Default sorting order is latest first, so we need to reverse it
   for (const user of accounts.value!) {
     if (!user.clazz) continue;
     absence_map[user.clazz] = 0;
