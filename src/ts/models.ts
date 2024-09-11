@@ -1,8 +1,10 @@
-import { collection, doc, orderBy, query, Timestamp } from 'firebase/firestore';
+import { collection, doc, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import { FirestoreDataConverter } from '@firebase/firestore';
 
-export const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000; // -480
+const date = new Date();
+export const timezoneOffset = date.getTimezoneOffset() * 60 * 1000; // -480
+export const currentReign = `${date.getFullYear() - 1945}-${date.getMonth() > 7 || date.getMonth() < 1 ? '1' : '2'}`; // August to January
 
 export enum Role {
   Admin = 999,
@@ -41,6 +43,7 @@ export interface Meeting extends DocumentType {
   start: Date;
   stop?: Date;
   absences: Record<string, Absence>;
+  reign: string; // 79-1
 }
 
 interface Absence {
@@ -76,6 +79,10 @@ export function rawMeetingCollection() {
 
 export function meetingCollection() {
   return useCollection(query(rawMeetingCollection(), orderBy('start', 'desc')));
+}
+
+export function currentReignMeetingCollection() {
+  return useCollection(query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign)));
 }
 
 export function getMeeting(id: string) {

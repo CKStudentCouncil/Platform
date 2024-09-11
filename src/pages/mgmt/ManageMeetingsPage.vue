@@ -64,8 +64,13 @@
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <q-input v-model="targetMeeting.name" label="會議名稱" />
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${reign} 第次常務會議`">常務會議 </span>
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${reign} 第次臨時會議`">臨時會議</span>
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${currentReign} 第次常務會議`"
+          >常務會議
+        </span>
+        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${currentReign} 第次臨時會議`"
+          >臨時會議</span
+        >
+        <q-input v-model="targetMeeting.reign" label="屆數" />
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -82,7 +87,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { currentReign, Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
@@ -99,10 +104,11 @@ const columns = [
     sortable: true,
     align: 'left',
   },
+  { name: 'reign', label: '屆數', field: 'reign', sortable: true, align: 'left' },
 ] as QTableColumn[]; // Typescript magic requirements
 const filter = ref('');
 const action = ref('');
-const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string });
+const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string });
 const db = useFirestore();
 let meetings = meetingCollection();
 const dialog = computed(() => {
@@ -121,10 +127,6 @@ let selected = computed({
   },
 });
 let pagination = ref({ sortBy: 'start', descending: true });
-const reign = computed(() => {
-  const date = new Date();
-  return `${date.getFullYear() - 1945}-${date.getMonth() > 7 || date.getMonth() < 1 ? '1' : '2'}`; // August to January
-});
 
 function edit(row: any) {
   action.value = 'edit';
@@ -132,6 +134,7 @@ function edit(row: any) {
   targetMeeting.name = row.name;
   targetMeeting.startDate = date.formatDate(row.start, 'YYYY-MM-DD');
   targetMeeting.startTime = date.formatDate(row.start, 'HH:mm');
+  targetMeeting.reign = row.reign;
 }
 
 function add() {
@@ -139,6 +142,7 @@ function add() {
   targetMeeting.name = '';
   targetMeeting.startDate = date.formatDate(new Date(), 'YYYY-MM-DD');
   targetMeeting.startTime = date.formatDate(new Date(), 'HH:mm:ss');
+  targetMeeting.reign = currentReign;
 }
 
 async function submit() {
@@ -148,6 +152,7 @@ async function submit() {
       await updateDoc(doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter), {
         name: targetMeeting.name,
         start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm'),
+        reign: targetMeeting.reign,
       });
     } else if (action.value === 'add') {
       const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm');
@@ -161,6 +166,7 @@ async function submit() {
         start: d,
         activeProposal: null,
         absences: {},
+        reign: targetMeeting.reign,
       } as unknown as Meeting);
     }
   } catch (e) {

@@ -7,7 +7,7 @@
       <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
     </q-tabs>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="attendance" row-key="name" title="班代出席時數">
+      <q-table :columns="columns" :filter="filter" :rows="attendance" :title="`${currentReign} 班代出席時數`" row-key="name">
         <template v-slot:top-right>
           <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
             <template v-slot:append>
@@ -22,11 +22,11 @@
 
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
-import { meetingCollection, User } from 'src/ts/models.ts';
+import { currentReign, currentReignMeetingCollection, User } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 
 const accounts = ref(null as User[] | null);
-const meetings = meetingCollection();
+const meetings = currentReignMeetingCollection();
 const attendance = ref([] as AttendanceInfo[]);
 const filter = ref('');
 const columns = [
@@ -75,6 +75,7 @@ const columns = [
   format?: (value: any) => string;
   align: 'left';
 }[];
+
 interface AttendanceInfo {
   name: string;
   clazz: string;

@@ -70,7 +70,7 @@ const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
   { name: 'schoolNumber', label: '學號', field: 'schoolNumber', sortable: true, align: 'left' },
   { name: 'clazz', label: '班級', field: 'clazz', sortable: true, align: 'left' },
-  { name: 'seatNumber', label: '座號', field: 'clazz', sortable: true, align: 'left' },
+  { name: 'seatNumber', label: '座號', field: 'seatNumber', sortable: true, align: 'left' },
   {
     name: 'role',
     label: '身分',
