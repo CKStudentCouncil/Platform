@@ -24,6 +24,7 @@
 import { getAllUsers } from 'src/ts/auth.ts';
 import { currentReign, currentReignMeetingCollection, User } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
+import { QTableColumn } from 'quasar';
 
 const accounts = ref(null as User[] | null);
 const meetings = currentReignMeetingCollection();
@@ -67,14 +68,7 @@ const columns = [
     sortable: true,
     align: 'left',
   },
-] as {
-  name: string;
-  label: string;
-  field: string;
-  sortable: boolean;
-  format?: (value: any) => string;
-  align: 'left';
-}[];
+] as QTableColumn[];
 
 interface AttendanceInfo {
   name: string;

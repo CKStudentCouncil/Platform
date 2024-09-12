@@ -67,6 +67,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', component: () => import('pages/mgmt/attendance/AttendancePage.vue') },
       { path: 'serial_absence', component: () => import('pages/mgmt/attendance/SerialAbsencePage.vue') },
+      { path: 'scheduled_absence', component: () => import('pages/mgmt/attendance/SchedulesAbsencePage.vue') },
     ],
   },
   {

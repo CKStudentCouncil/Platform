@@ -2,17 +2,14 @@ import { boot } from 'quasar/wrappers';
 import { initializeApp } from 'firebase/app';
 import { useFirebaseApp, VueFire, VueFireAuth } from 'vuefire';
 import { Analytics, initializeAnalytics } from 'firebase/analytics';
-import {
-  getFunctions,
-  HttpsCallable,
-  httpsCallable,
-} from '@firebase/functions';
+import { getFunctions, HttpsCallable, httpsCallable } from '@firebase/functions';
+import VueGtag from 'vue-gtag';
 
 let analytics: Analytics | null = null;
 
 // "async" is optional;
 // more info on params: https://v2.quasar.dev/quasar-cli/boot-files
-export default boot(async ({ app }) => {
+export default boot(async ({ app, router }) => {
   // something to do
   const firebaseApp = initializeApp({
     apiKey: 'AIzaSyDVpsV2SN10S6Oirk6NWU0GZzWLHJ0TUyw',
@@ -28,6 +25,13 @@ export default boot(async ({ app }) => {
     firebaseApp,
     modules: [VueFireAuth()],
   });
+  app.use(
+    VueGtag,
+    {
+      config: { id: firebaseApp.options.measurementId! },
+    },
+    router,
+  );
 });
 
 export function useFunction(name: string): HttpsCallable {
