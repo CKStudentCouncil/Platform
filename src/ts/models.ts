@@ -81,8 +81,12 @@ export function meetingCollection() {
   return useCollection(query(rawMeetingCollection(), orderBy('start', 'desc')));
 }
 
+export function rawCurrentReignQuery() {
+  return query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign));
+}
+
 export function currentReignMeetingCollection() {
-  return useCollection(query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign)));
+  return useCollection(rawCurrentReignQuery());
 }
 
 export function getMeeting(id: string) {

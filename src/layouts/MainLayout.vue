@@ -145,6 +145,7 @@ watch(
     } else {
       role.value = 0;
     }
+    console.log('Updated user role: ' + role.value);
   },
   { deep: true },
 );
