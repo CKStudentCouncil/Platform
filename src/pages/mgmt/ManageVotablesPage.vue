@@ -1,10 +1,7 @@
 <template>
   <q-tabs align="left">
     <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
-    <q-route-tab
-      :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`"
-      label="提案"
-    />
+    <q-route-tab :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`" label="提案" />
     <q-route-tab
       :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
       label="投票案件"
@@ -146,15 +143,9 @@ async function submit() {
       results: target.results,
     };
     if (action.value === 'edit') {
-      await updateDoc(
-        doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id),
-        data,
-      );
+      await updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(
-        doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6)),
-        data,
-      );
+      await setDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6)), data);
     }
   } catch (e) {
     console.error(e);
@@ -179,12 +170,9 @@ async function rearrange() {
   try {
     for (let i = 0; i < votables.value.length; i++) {
       tasks.push(
-        updateDoc(
-          doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, votables.value[i].id),
-          {
-            order: i,
-          },
-        ),
+        updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, votables.value[i].id), {
+          order: i,
+        }),
       );
     }
     await Promise.all(tasks);
@@ -214,6 +202,7 @@ async function showResults() {
     for (const choice of votable.choices) {
       if (!votable.results[choice]) {
         r += `<b>${choice}</b>: 無；共 0 人<br>`;
+        continue;
       }
       const length = votable.results[choice].length;
       r += `<b>${choice}</b>: ${votable.results[choice].join('、')}；共 ${length} 人<br>`;
