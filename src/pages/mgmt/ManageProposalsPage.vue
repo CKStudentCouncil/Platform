@@ -92,6 +92,7 @@ const route = useRoute();
 
 function edit(proposal: any) {
   target = { ...proposal };
+  target.id = proposal.id;
   action.value = 'edit';
 }
 
