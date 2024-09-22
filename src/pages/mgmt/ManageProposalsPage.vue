@@ -141,14 +141,16 @@ async function submit() {
       content: target.content,
       proposer: target.proposer,
       title: target.title,
-      order: target.order,
-      activeVotable: target.activeVotable,
-      speakRequests: target.speakRequests,
     };
     if (action.value === 'edit') {
       await updateDoc(doc(db, `meetings/${route.params.id}/proposals`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(doc(db, `meetings/${route.params.id}/proposals`, generateRandomText(6)), data);
+      await setDoc(doc(db, `meetings/${route.params.id}/proposals`, generateRandomText(6)), {
+        ...data,
+        order: target.order,
+        activeVotable: target.activeVotable,
+        speakRequests: target.speakRequests,
+      });
     }
   } catch (e) {
     console.error(e);
