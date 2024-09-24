@@ -35,6 +35,7 @@ interface AbsenceInfo {
   clazz: string;
   name: string;
   scheduledAt: Date;
+  reason: string;
 }
 
 const filter = ref('');
@@ -62,6 +63,12 @@ const columns = [
     sortable: true,
     align: 'left',
   },
+  {
+    name: 'reason',
+    label: '原因',
+    field: 'reason',
+    align: 'left',
+  },
 ] as QTableColumn[];
 
 async function updateAbsences() {
@@ -77,6 +84,7 @@ async function updateAbsences() {
           clazz: user.clazz,
           name: user.name,
           scheduledAt: meeting.absences[user.clazz].scheduledAt,
+          reason: meeting.absences[user.clazz].reason,
         });
       }
     }
