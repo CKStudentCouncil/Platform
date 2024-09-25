@@ -43,6 +43,7 @@
         <q-input v-model="target.content" label="內容" type="textarea" />
         <div>附件：</div>
         <ListEditor v-model="target.attachments" />
+        <AttachmentUploader :filename-prefix="`${meeting?.name}_`" @uploaded="addAttachments" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="action = ''" />
@@ -53,7 +54,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Proposal, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
+import { getMeeting, Proposal, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { Dialog, Loading, Notify } from 'quasar';
@@ -63,7 +64,9 @@ import { VueDraggable } from 'vue-draggable-plus';
 import { generateRandomText } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
+import AttachmentUploader from 'components/AttachmentUploader.vue';
 
+let meeting = getMeeting(useRoute().params.id as string);
 let proposals = useRoute().params.id.length == 0 ? ref([]) : proposalCollection(useRoute().params.id as string);
 const sortedProposals = computed(() => proposals.value.toSorted((a, b) => a.order - b.order));
 let action = ref('');
@@ -196,6 +199,12 @@ async function rearrange() {
     message: '提案已重新排序',
     color: 'positive',
   });
+}
+
+function addAttachments(a: string[]) {
+  for (const attachment of a) {
+    target.attachments.push(attachment);
+  }
 }
 </script>
 
