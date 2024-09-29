@@ -250,7 +250,7 @@ async function exportAttendance(meeting: Meeting) {
       message: `
       <p>出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</p>
       <p>請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length} 人</p>
-      <p>未出席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</p>
+      <p>缺席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</p>
     `,
       persistent: true,
       html: true,
