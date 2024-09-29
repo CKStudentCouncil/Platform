@@ -6,9 +6,7 @@
       <div class="text-h5">開會時間：{{ meeting.value.start.toLocaleString() }}</div>
       <q-input v-model="reason" label="請假原因" />
       <div v-if="meeting.value.absences && meeting.value.absences[getUserClaims().clazz]" class="q-gutter-md">
-        <div class="text-h6">
-          你已在 {{ meeting.value.absences[getUserClaims().clazz].scheduledAt.toLocaleString() }} 請假
-        </div>
+        <div class="text-h6">你已在 {{ meeting.value.absences[getUserClaims().clazz].scheduledAt.toLocaleString() }} 請假</div>
         <q-btn color="primary" label="編輯請假原因" @click="scheduleAbsence" />
         <q-btn color="negative" label="取消請假" @click="cancelAbsence()" />
       </div>
@@ -65,11 +63,12 @@ async function updateAbsenceReason(meeting: any) {
 }
 
 async function scheduleAbsence() {
-  if (!reason.value || reason.value.length == 0) {
+  if (!reason.value || reason.value.length == 0 || reason.value.trim().length == 0) {
     Notify.create({
       message: '請填寫請假原因',
       color: 'negative',
     });
+    return;
   }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {
     ['absences.' + getUserClaims().clazz]: {

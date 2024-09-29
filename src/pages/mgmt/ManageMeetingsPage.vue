@@ -46,6 +46,9 @@
             <q-btn class="text-amber-9 q-ml-sm q-mr-sm" icon="content_copy" round @click="copyLink(props.row)">
               <q-tooltip>複製請假連結</q-tooltip>
             </q-btn>
+            <q-btn class="text-brown-9 q-ml-sm q-mr-sm" icon="ios_share" round @click="exportAttendance(props.row)">
+              <q-tooltip>匯出出席狀況</q-tooltip>
+            </q-btn>
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
@@ -87,12 +90,13 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { currentReign, Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { currentReign, Meeting, meetingCollection, meetingConverter, rawMeetingCollection, User } from 'src/ts/models.ts';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { generateRandomText } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
+import { getAllUsers } from 'src/ts/auth.ts';
 
 const columns = [
   { name: 'name', label: '會議名稱', field: 'name', sortable: true, align: 'left' },
@@ -217,6 +221,49 @@ async function copyLink(row: any) {
     message: '已複製請假連結',
     color: 'positive',
   });
+}
+
+async function exportAttendance(meeting: Meeting) {
+  Loading.show();
+  try {
+    const accounts = (await getAllUsers()) as User[];
+    const data = {
+      attended: [] as string[],
+      absent: [] as string[],
+      scheduledAbsence: [] as string[],
+    };
+    for (const account of accounts) {
+      const clazz = account.clazz ?? '';
+      if (data.attended.includes(clazz) || data.absent.includes(clazz) || data.scheduledAbsence.includes(clazz)) {
+        continue;
+      }
+      if (meeting.participants.includes(clazz)) {
+        data.attended.push(clazz);
+      } else if (Object.keys(meeting.absences).includes(clazz)) {
+        data.scheduledAbsence.push(clazz);
+      } else {
+        data.absent.push(clazz);
+      }
+    }
+    Dialog.create({
+      title: '出席狀況',
+      message: `
+      <p>出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</p>
+      <p>請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length} 人</p>
+      <p>未出席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</p>
+    `,
+      persistent: true,
+      html: true,
+    });
+  } catch (e) {
+    console.error(e);
+    Notify.create({
+      message: '匯出失敗',
+      color: 'negative',
+    });
+  } finally {
+    Loading.hide();
+  }
 }
 </script>
 
