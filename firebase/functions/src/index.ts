@@ -53,7 +53,7 @@ export const editUser = onCall(globalFunctionOptions, async (request) => {
 });
 
 export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
-  await checkRole(request, Role.Chair);
+  await checkRole(request, Role.Secretary); // They need this to export attendance
   const users = await admin.auth().listUsers();
   return users.users.map((user) => {
     return {
