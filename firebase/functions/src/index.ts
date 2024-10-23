@@ -9,12 +9,12 @@
 
 // @formatter:off
 import * as admin from 'firebase-admin';
+admin.initializeApp(); // This is required to run before everything else
 import {addUserWithRole, checkRole, editUserClaims} from './auth';
 import {onCall} from 'firebase-functions/v2/https';
 import {Role, User} from './models';
 import {drive_v3, google} from 'googleapis';
 import * as Stream from 'stream';
-admin.initializeApp(); // This is required to run before everything else
 // @formatter:on
 
 // const db = admin.firestore();
