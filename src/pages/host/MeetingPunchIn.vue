@@ -73,7 +73,7 @@ async function getRequirement() {
       count++;
     }
   }
-  totalMembers.value = count + 2 - absences.value; // +議長副議長
+  totalMembers.value = count + 2; // +議長副議長
 }
 
 getRequirement();
