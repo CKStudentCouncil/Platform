@@ -1,5 +1,5 @@
 <template>
-  <q-btn class="q-mb-md" color="primary" label="新增項目" @click="addItem" />
+  <q-btn class="q-ma-md" color="primary" label="新增項目" @click="addItem" />
   <q-list bordered>
     <VueDraggable v-model="parentValue" style="cursor: move">
       <q-item v-for="(item, index) in parentValue" :key="item" class="q-mb-sm">

@@ -44,10 +44,10 @@
       </div>
       <div class="col-5">
         <q-btn
-          :to="`/meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`"
           color="primary"
           icon="settings"
           label="管理投票案件"
+          @click="managingVotables = true"
         />
         <q-card
           v-for="votable of votables.sort((a, b) => a.order - b.order)"
@@ -69,6 +69,14 @@
       </div>
     </div>
   </q-page>
+  <q-dialog v-model="managingVotables">
+    <q-card>
+      <q-card-section>
+        <q-toolbar><q-space/><q-btn flat round dense icon="close" v-close-popup /></q-toolbar>
+        <ManageVotablesPage embed :proposal="route.params.proposalId as string" :meeting="route.params.id as string"/>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -84,6 +92,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Notify, QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
+import ManageVotablesPage from 'pages/mgmt/ManageVotablesPage.vue';
 
 const route = useRoute();
 const selectedMeeting = getMeeting(route.params.id as string);
@@ -100,6 +109,7 @@ watch(
 );
 const votables = votableCollection(route.params.id as string, route.params.proposalId as string);
 const router = useRouter();
+const managingVotables = ref(false);
 
 async function selectVotable(votable: any) {
   try {

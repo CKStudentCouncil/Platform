@@ -1,5 +1,5 @@
 <template>
-  <q-tabs align="left">
+  <q-tabs v-if="!embed" align="left">
     <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
     <q-route-tab :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`" label="提案" />
     <q-route-tab
@@ -7,8 +7,8 @@
       label="投票案件"
     />
   </q-tabs>
-  <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
-  <span v-if="$route.params.proposalId.length == 0">請先選擇一個提案</span>
+  <span v-if="$route.params.id.length == 0 && !embed">請先選擇一個會議</span>
+  <span v-if="$route.params.proposalId.length == 0 && !embed">請先選擇一個提案</span>
   <q-page v-else padding>
     <q-btn class="q-mr-md" color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
     <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
@@ -37,6 +37,7 @@
       </q-card-section>
       <q-card-section>
         <q-input v-model="target.question" label="問題" />
+        <q-btn @click="target.choices.push('是', '否')" color="primary">加入是/否</q-btn>
         <ListEditor v-model="target.choices" />
       </q-card-section>
       <q-card-actions align="right">
@@ -58,10 +59,30 @@ import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateRandomText } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 
+const router = useRouter();
+const props = defineProps({
+  meeting: {
+    type: String,
+    required: false,
+    default: '',
+  },
+  proposal: {
+    type: String,
+    required: false,
+    default: '',
+  },
+  embed: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+});
 let votables =
-  useRoute().params.id.length == 0 || useRoute().params.proposalId.length == 0
-    ? ref([])
-    : votableCollection(useRoute().params.id as string, useRoute().params.proposalId as string);
+  props.proposal.length == 0
+    ? useRoute().params.id.length == 0 || useRoute().params.proposalId.length == 0
+      ? ref([])
+      : votableCollection(useRoute().params.id as string, useRoute().params.proposalId as string)
+    : votableCollection(props.meeting as string, props.proposal as string);
 const sortedVotables = computed(() => votables.value.toSorted((a, b) => a.order - b.order));
 let action = ref('');
 let target = reactive(
@@ -73,10 +94,12 @@ let target = reactive(
     results: Record<string, string[]>;
   },
 );
-const router = useRouter();
 let selected = computed({
-  get: () => route.params.proposalId,
+  get: () => (props.proposal.length > 0 ? props.proposal : route.params.proposalId),
   set: (value) => {
+    if (props.embed) {
+      return;
+    }
     if (value === selected.value) {
       router.push({ params: { proposalId: '' } });
     } else {
