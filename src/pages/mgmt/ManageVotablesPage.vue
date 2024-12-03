@@ -14,7 +14,7 @@
     <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
     <span class="q-ml-md">提示：可以直接拖拉投票案件方塊以重新排序</span>
     <VueDraggable v-model="votables" class="q-gutter-md" style="cursor: move" @update="rearrange()">
-      <q-card v-for="votable of sortedVotables" :key="votable.order">
+      <q-card v-for="votable of votables" :key="votable.id">
         <q-card-section>
           <div class="text-h6">{{ votable.question }}</div>
         </q-card-section>
@@ -83,7 +83,6 @@ let votables =
       ? ref([])
       : votableCollection(useRoute().params.id as string, useRoute().params.proposalId as string)
     : votableCollection(props.meeting as string, props.proposal as string);
-const sortedVotables = computed(() => votables.value.toSorted((a, b) => a.order - b.order));
 let action = ref('');
 let target = reactive(
   {} as {

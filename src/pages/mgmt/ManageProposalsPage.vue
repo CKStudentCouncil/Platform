@@ -17,8 +17,8 @@
       <span class="q-ml-md">提示：可以直接拖拉提案方塊以重新排序</span>
       <VueDraggable v-model="proposals" class="q-gutter-md" style="cursor: move" @update="rearrange()">
         <ProposalDisplay
-          v-for="prop of sortedProposals"
-          :key="prop.order"
+          v-for="prop of proposals"
+          :key="prop.id"
           :class="selected == prop.id ? 'bg-green-1' : ''"
           :proposal="prop"
           editable
@@ -67,8 +67,7 @@ import ProposalDisplay from 'components/ProposalDisplay.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
 
 let meeting = getMeeting(useRoute().params.id as string);
-let proposals = useRoute().params.id.length == 0 ? ref([]) : proposalCollection(useRoute().params.id as string);
-const sortedProposals = computed(() => proposals.value.toSorted((a, b) => a.order - b.order));
+let proposals = proposalCollection(useRoute().params.id as string);
 let action = ref('');
 
 interface ProposalId extends Proposal {
@@ -94,7 +93,7 @@ const db = useFirestore();
 const route = useRoute();
 
 function edit(proposal: any) {
-  target = { ...proposal };
+  Object.assign(target, proposal);
   target.id = proposal.id;
   action.value = 'edit';
 }
