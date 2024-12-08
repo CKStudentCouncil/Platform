@@ -331,8 +331,22 @@ ${votables}
     result.secretaryName = data.accounts.filter((u) => u.role === Role.Secretary)[0].name.replace(/ck[0-9]*/, '');
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
-    await navigator.clipboard.writeText(JSON.stringify(result));
-    window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+    try{
+      await navigator.clipboard.writeText(JSON.stringify(result));
+      window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+    } catch (e) {
+      Dialog.create({
+        title: '起草會議記錄',
+        message: '請將以下內容複製到剪貼簿中，並按下確認：',
+        persistent: true,
+        ok: true,
+        prompt: {
+          model: JSON.stringify(result),
+        },
+      }).onOk(async (data: any) => {
+        window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+      });
+    }
   } catch (e) {
     console.error(e);
     Notify.create({
