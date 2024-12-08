@@ -337,7 +337,7 @@ ${votables}
     } catch (e) {
       Dialog.create({
         title: '起草會議記錄',
-        message: '請將以下內容複製到剪貼簿中，並按下確認：',
+        message: '請將以下內容「全選」並複製到剪貼簿中，再按下OK，於新打開的頁面中允許貼上：',
         persistent: true,
         ok: true,
         prompt: {
