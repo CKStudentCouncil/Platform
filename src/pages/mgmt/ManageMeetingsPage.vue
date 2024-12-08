@@ -49,6 +49,9 @@
             <q-btn class="text-brown-9 q-ml-sm q-mr-sm" icon="ios_share" round @click="exportAttendance(props.row)">
               <q-tooltip>匯出出席狀況</q-tooltip>
             </q-btn>
+            <q-btn class="text-brown-9 q-ml-sm q-mr-sm" icon="draw" round @click="exportMeetingRecord(props.row)">
+              <q-tooltip>起草會議記錄</q-tooltip>
+            </q-btn>
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
@@ -90,13 +93,24 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { currentReign, Meeting, meetingCollection, meetingConverter, rawMeetingCollection, User } from 'src/ts/models.ts';
-import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  currentReign,
+  Meeting,
+  meetingCollection,
+  meetingConverter,
+  rawMeetingCollection,
+  rawProposalCollection,
+  rawVotableCollection,
+  Role,
+  User,
+} from 'src/ts/models.ts';
+import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { generateRandomText } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
+import { exportVotingData } from 'pages/mgmt/common.ts';
 
 const columns = [
   { name: 'name', label: '會議名稱', field: 'name', sortable: true, align: 'left' },
@@ -223,28 +237,34 @@ async function copyLink(row: any) {
   });
 }
 
+async function getAttendanceData(meeting: Meeting) {
+  const accounts = (await getAllUsers()) as User[];
+  const data = {
+    attended: [] as string[],
+    absent: [] as string[],
+    scheduledAbsence: [] as string[],
+    accounts,
+  };
+  for (const account of accounts) {
+    const clazz = account.clazz ?? '';
+    if (data.attended.includes(clazz) || data.absent.includes(clazz) || data.scheduledAbsence.includes(clazz)) {
+      continue;
+    }
+    if (meeting.participants.includes(clazz)) {
+      data.attended.push(clazz);
+    } else if (Object.keys(meeting.absences).includes(clazz)) {
+      data.scheduledAbsence.push(clazz);
+    } else {
+      data.absent.push(clazz);
+    }
+  }
+  return data;
+}
+
 async function exportAttendance(meeting: Meeting) {
   Loading.show();
   try {
-    const accounts = (await getAllUsers()) as User[];
-    const data = {
-      attended: [] as string[],
-      absent: [] as string[],
-      scheduledAbsence: [] as string[],
-    };
-    for (const account of accounts) {
-      const clazz = account.clazz ?? '';
-      if (data.attended.includes(clazz) || data.absent.includes(clazz) || data.scheduledAbsence.includes(clazz)) {
-        continue;
-      }
-      if (meeting.participants.includes(clazz)) {
-        data.attended.push(clazz);
-      } else if (Object.keys(meeting.absences).includes(clazz)) {
-        data.scheduledAbsence.push(clazz);
-      } else {
-        data.absent.push(clazz);
-      }
-    }
+    const data = await getAttendanceData(meeting);
     Dialog.create({
       title: '出席狀況',
       message: `
@@ -259,6 +279,64 @@ async function exportAttendance(meeting: Meeting) {
     console.error(e);
     Notify.create({
       message: '匯出失敗',
+      color: 'negative',
+    });
+  } finally {
+    Loading.hide();
+  }
+}
+
+async function exportMeetingRecord(meeting: Meeting) {
+  Loading.show({ message: '正在取得出席資料' });
+  try {
+    const data = await getAttendanceData(meeting);
+    const dow = ['日', '一', '二', '三', '四', '五', '六'][meeting.start.getDay()];
+    let proposals = '';
+    let votables = '';
+    let count = 0;
+    Loading.show({ message: '正在取得提案資料' });
+    for (const proposal of (await getDocs(query(rawProposalCollection((meeting as any).id), orderBy('order')))).docs) {
+      count++;
+      const title = proposal.data().title;
+      proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
+      Loading.show({ message: '正在取得投票資料 - ' + title });
+      votables += `<div style="font-size: medium">${count}. ${title}</font></div>`;
+      votables += exportVotingData(
+        (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) => d.data()) as any,
+      );
+    }
+    const content = `<div style="font-size: medium">一、開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
+星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
+<div style="font-size: medium">二、出席狀況：</font></div>
+<div style="font-size: medium">1. 出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</font></div>
+<div style="font-size: medium">2. 請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length}人</font></div>
+<div style="font-size: medium">3. 缺席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</font></div>
+<div style="font-size: medium">三、議案以及決議</font></div>
+<div style="font-size: medium">(一) 議案順序：</font></div>
+${proposals}
+<div style="font-size: medium">(二) 議案決議</font></div>
+${votables}
+`;
+    const result = {} as any;
+    result.content = content;
+    const realName = meeting.name.match(/\d*-\d (.*)/);
+    if (realName && realName.length > 1) {
+      result.subject = realName[1];
+    } else {
+      result.subject = meeting.name;
+    }
+    result.fromSpecific = 'Speaker';
+    result.fromName = data.accounts.filter((u) => u.role === Role.Chair)[0].name.replace(/ck[0-9]*/, '');
+    result.secretarySpecific = 'StudentCouncilSecretary';
+    result.secretaryName = data.accounts.filter((u) => u.role === Role.Secretary)[0].name.replace(/ck[0-9]*/, '');
+    result.location = '夢紅樓五樓 公民審議論壇教室';
+    result.type = 'Record';
+    await navigator.clipboard.writeText(JSON.stringify(result));
+    window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+  } catch (e) {
+    console.error(e);
+    Notify.create({
+      message: '起草失敗',
       color: 'negative',
     });
   } finally {

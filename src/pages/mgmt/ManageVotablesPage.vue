@@ -14,18 +14,19 @@
     <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
     <span class="q-ml-md">提示：可以直接拖拉投票案件方塊以重新排序</span>
     <VueDraggable v-model="votables" class="q-gutter-md" style="cursor: move" @update="rearrange()">
-      <q-card v-for="votable of votables" :key="votable.id">
+      <q-card v-for="votable of votables" :key="(votable as any).id">
         <q-card-section>
-          <div class="text-h6">{{ votable.question }}</div>
+          <div class="text-h6">{{ votable!.question }}</div>
         </q-card-section>
         <q-separator />
         <q-card-section>
-          <div>選項：{{ votable.choices.join('、') }}</div>
+          <div>門檻：{{ votable!.type.translation }}</div>
+          <div>選項：{{ votable!.choices.join('、') }}</div>
         </q-card-section>
         <q-separator />
         <q-card-actions>
           <q-btn color="primary" flat label="編輯" @click="edit(votable)" />
-          <q-btn color="negative" flat label="刪除" @click="del(votable.id)" />
+          <q-btn color="negative" flat label="刪除" @click="del((votable as any).id)" />
         </q-card-actions>
       </q-card>
     </VueDraggable>
@@ -37,6 +38,7 @@
       </q-card-section>
       <q-card-section>
         <q-input v-model="target.question" label="問題" />
+        <q-select v-model="target.type" label="門檻" :options="Object.values(VotableType.VALUES)" :option-label="o=>o.translation" />
         <q-btn @click="target.choices.push('是', '否')" color="primary">加入是/否</q-btn>
         <ListEditor v-model="target.choices" />
       </q-card-section>
@@ -50,7 +52,7 @@
 
 <script lang="ts" setup>
 import { VueDraggable } from 'vue-draggable-plus';
-import { rawVotableCollection, votableCollection } from 'src/ts/models.ts';
+import { rawVotableCollection, Votable, votableCollection, VotableType } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { computed, reactive, ref } from 'vue';
 import { useFirestore } from 'vuefire';
@@ -58,6 +60,7 @@ import { Dialog, Loading, Notify } from 'quasar';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateRandomText } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
+import { exportVotingData } from 'pages/mgmt/common.ts';
 
 const router = useRouter();
 const props = defineProps({
@@ -90,6 +93,7 @@ let target = reactive(
     choices: string[];
     question: string;
     order: number;
+    type: VotableType;
     results: Record<string, string[]>;
   },
 );
@@ -118,6 +122,7 @@ function edit(prop: any) {
   target.choices = prop.choices;
   target.order = prop.order;
   target.results = prop.results;
+  target.type = prop.type;
   action.value = 'edit';
 }
 
@@ -126,6 +131,7 @@ function add() {
   target.choices = [];
   target.order = votables.value.length;
   target.results = {};
+  target.type = VotableType.Absolute;
   action.value = 'add';
 }
 
@@ -163,6 +169,7 @@ async function submit() {
       question: target.question,
       choices: target.choices,
       results: target.results,
+      type: target.type.firebase,
     };
     if (action.value === 'edit') {
       await updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id), data);
@@ -192,7 +199,7 @@ async function rearrange() {
   try {
     for (let i = 0; i < votables.value.length; i++) {
       tasks.push(
-        updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, votables.value[i].id), {
+        updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, (votables.value[i] as any).id), {
           order: i,
         }),
       );
@@ -215,30 +222,9 @@ async function rearrange() {
 }
 
 async function showResults() {
-  let r = '';
-  let count = 1;
-  for (const votable of votables.value) {
-    r += `<b>${count}. ${votable.question}</b><br>`;
-    let maxLen = 0;
-    let maxChoice = '';
-    for (const choice of votable.choices) {
-      if (!votable.results[choice]) {
-        r += `<b>${choice}</b>: 無；共 0 人<br>`;
-        continue;
-      }
-      const length = votable.results[choice].length;
-      r += `<b>${choice}</b>: ${votable.results[choice].join('、')}；共 ${length} 人<br>`;
-      if (length > maxLen) {
-        maxLen = length;
-        maxChoice = choice;
-      }
-    }
-    r += '表決結果：<b>' + maxChoice + '</b><br>';
-    count++;
-  }
   Dialog.create({
     title: '投票結果',
-    message: r,
+    message: exportVotingData(votables.value as Votable[]),
     html: true,
     persistent: true,
   });

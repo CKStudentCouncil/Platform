@@ -13,7 +13,7 @@
     />
     <q-route-tab
       v-if="selectedMeeting && selectedProposal && selectedVotable"
-      :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda/${selectedProposal.id}/vote/${selectedVotable.id}`"
+      :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda/${selectedProposal.id}/vote/${(selectedVotable as any).id}`"
       label="投票"
     />
   </q-tabs>
@@ -29,36 +29,22 @@
         <q-card-section>
           <div style="display: table-row">
             <div class="text-h3" style="display: table-cell">
-              {{
-                selectedVotable.results[choice] == undefined ? 0 : (selectedVotable.results[choice] as string[]).length
-              }}
+              {{ selectedVotable.results[choice] == undefined ? 0 : (selectedVotable.results[choice] as string[]).length }}
             </div>
-            <span style="vertical-align: bottom; display: table-cell"
-              >/ {{ Math.ceil(selectedMeeting!.participants.length / 2) }} 票</span
-            >
+            <span style="vertical-align: bottom; display: table-cell">/ {{ threshold }} 票</span>
           </div>
           <q-btn
-            v-if="
-              (selectedVotable.results[choice] == undefined
-                ? 0
-                : (selectedVotable.results[choice] as string[]).length) >=
-              Math.ceil(selectedMeeting!.participants.length / 2)
-            "
+            v-if="(selectedVotable.results[choice] == undefined ? 0 : (selectedVotable.results[choice] as string[]).length) >= threshold"
             color="positive"
             flat
             icon="check"
-            label="已過出席半數"
+            :label="'已過' + thresholdLabel"
           />
-          <q-btn v-else color="negative" flat icon="close" label="未過出席半數" />
+          <q-btn v-else color="negative" flat icon="close" :label="'未過' + thresholdLabel" />
         </q-card-section>
         <q-separator />
         <q-card-section>
-          <transition
-            v-for="voter of selectedVotable.results[choice] as string[]"
-            :key="voter"
-            appear
-            enter-active-class="animated heartBeat"
-          >
+          <transition v-for="voter of selectedVotable.results[choice] as string[]" :key="voter" appear enter-active-class="animated heartBeat">
             <q-chip removable @remove="removeVoter(choice, voter)">{{ voter }} 班代</q-chip>
           </transition>
         </q-card-section>
@@ -70,29 +56,50 @@
 <script lang="ts" setup>
 import { useRoute, useRouter } from 'vue-router';
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
-import { getMeeting, getProposal, getVotable, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
+import { getMeeting, getProposal, getVotable, rawProposalCollection, rawVotableCollection, VotableType } from 'src/ts/models.ts';
 import { Notify } from 'quasar';
+import { computed } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
 const selectedMeeting = getMeeting(route.params.id as string);
 const selectedProposal = getProposal(route.params.id as string, route.params.proposalId as string);
-const selectedVotable = getVotable(
-  route.params.id as string,
-  route.params.proposalId as string,
-  route.params.voteId as string,
-);
+const selectedVotable = getVotable(route.params.id as string, route.params.proposalId as string, route.params.voteId as string);
+const threshold = computed(() => {
+  if (selectedVotable.value) {
+    switch (selectedVotable.value.type.firebase) {
+      case VotableType.Absolute.firebase:
+        return Math.ceil(selectedMeeting.value!.participants.length / 2);
+      case VotableType.AbsoluteTwoThirds.firebase:
+        return Math.ceil((selectedMeeting.value!.participants.length / 3) * 2);
+      case VotableType.Relative.firebase:
+        let n = 0;
+        for (const i of Object.values(selectedVotable.value.results)) {
+          n += i.length;
+        }
+        return Math.ceil(n / 2);
+    }
+  }
+  return 0;
+});
+const thresholdLabel = computed(() => {
+  if (selectedVotable.value) {
+    switch (selectedVotable.value.type.firebase) {
+      case VotableType.Absolute.firebase:
+        return '出席半數';
+      case VotableType.AbsoluteTwoThirds.firebase:
+        return '出席三分之二';
+      case VotableType.Relative.firebase:
+        return '相對多數';
+    }
+  }
+  return '';
+});
 
 async function removeVoter(choice: string, voter: string) {
   const update = {} as any;
   update[('results.' + choice) as keyof typeof update] = arrayRemove(voter);
-  await updateDoc(
-    doc(
-      rawVotableCollection(route.params.id as string, route.params.proposalId as string),
-      route.params.voteId as string,
-    ),
-    update,
-  );
+  await updateDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as string), route.params.voteId as string), update);
 }
 
 async function endVote() {

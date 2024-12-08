@@ -9,6 +9,7 @@
     <q-btn v-if="activeMeeting != null" color="negative" flat icon="stop" label="散會" @click="adjourn()" />
     <q-select v-model="meeting" :option-label="(m) => m.name" :options="meetings" label="選擇會議" />
     <q-btn color="positive" label="開會" @click="go" />
+    <q-checkbox v-model="recordTime" label="記錄開會時間" />
   </q-page>
 </template>
 
@@ -20,6 +21,7 @@ import { useFirestore } from 'vuefire';
 import { Notify } from 'quasar';
 
 const meetings = meetingCollection();
+const recordTime = ref(true);
 
 interface MeetingId extends Meeting {
   id: string;
@@ -48,10 +50,13 @@ watch(
 async function go() {
   if (meeting.value) {
     try {
-      await updateDoc(doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter), {
-        active: true,
-        start: new Date(),
-      });
+      let data = {
+        active: true
+      } as any;
+      if (recordTime.value) {
+        data.start = new Date();
+      }
+      await updateDoc(doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter), data);
     } catch (e) {
       console.error(e);
       Notify.create({

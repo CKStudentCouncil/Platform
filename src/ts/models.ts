@@ -120,12 +120,45 @@ export interface Votable extends DocumentType {
   choices: string[];
   question: string;
   order: number;
+  type: VotableType;
   results: Record<string, string[]>;
+}
+
+export class VotableType {
+  static Absolute = new VotableType('Absolute', '絕對多數決');
+  static AbsoluteTwoThirds = new VotableType('AbsoluteTwoThirds', '>=出席班代2/3');
+  static Relative = new VotableType('Relative', '相對多數決');
+  static VALUES = {
+    Absolute: VotableType.Absolute,
+    AbsoluteTwoThirds: VotableType.AbsoluteTwoThirds,
+    Relative: VotableType.Relative,
+  } as Record<string, VotableType>;
+
+  constructor(
+    public firebase: string,
+    public translation: string,
+  ) {}
+}
+
+export const votableConverter: FirestoreDataConverter<Votable | null> = {
+  toFirestore(data: any) {
+    data.type = data.type.firebase;
+    return firestoreDefaultConverter.toFirestore(data);
+  },
+  fromFirestore(snapshot, options) {
+    const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
+    if (!data) return null;
+    if (data.type && typeof data.type === 'string' && data.type in VotableType.VALUES)
+      data.type = VotableType.VALUES[data.type];
+    else
+      data.type = VotableType.Absolute;
+    return data as unknown as Votable;
+  },
 }
 
 export function rawVotableCollection(meetingId: string, proposalId: string) {
   const db = useFirestore();
-  return collection(db, `meetings/${meetingId}/proposals/${proposalId}/votables`);
+  return collection(db, `meetings/${meetingId}/proposals/${proposalId}/votables`).withConverter(votableConverter);
 }
 
 export function votableCollection(meetingId: string, proposalId: string) {

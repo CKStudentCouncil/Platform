@@ -50,16 +50,16 @@
           @click="managingVotables = true"
         />
         <q-card
-          v-for="votable of votables.sort((a, b) => a.order - b.order)"
-          :key="votable.order"
-          :class="activeVotableId == votable.id ? 'bg-green-1 q-mt-sm' : 'q-mt-sm'"
+          v-for="votable of votables.sort((a, b) => a!.order - b!.order)"
+          :key="votable!.order"
+          :class="activeVotableId == (votable as any).id ? 'bg-green-1 q-mt-sm' : 'q-mt-sm'"
         >
           <q-card-section>
-            <div class="text-h6">{{ votable.question }}</div>
+            <div class="text-h6">{{ votable!.question }}</div>
           </q-card-section>
           <q-separator />
           <q-card-section>
-            <div>選項：{{ votable.choices.join('、') }}</div>
+            <div>選項：{{ votable!.choices.join('、') }}</div>
           </q-card-section>
           <q-separator />
           <q-card-actions>
