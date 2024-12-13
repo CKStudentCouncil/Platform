@@ -294,16 +294,22 @@ async function exportMeetingRecord(meeting: Meeting) {
     let proposals = '';
     let votables = '';
     let count = 0;
+    const attachments = [];
     Loading.show({ message: '正在取得提案資料' });
     for (const proposal of (await getDocs(query(rawProposalCollection((meeting as any).id), orderBy('order')))).docs) {
       count++;
-      const title = proposal.data().title;
+      const data = proposal.data();
+      const title = data.title;
       proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
       Loading.show({ message: '正在取得投票資料 - ' + title });
       votables += `<div style="font-size: medium">${count}. ${title}</font></div>`;
       votables += exportVotingData(
         (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) => d.data()) as any,
       );
+      attachments.push({
+        urls: data.attachments,
+        description: `「${title}」關係文書附件`,
+      })
     }
     const content = `<div style="font-size: medium">一、開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
 星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
