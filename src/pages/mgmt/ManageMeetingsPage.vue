@@ -337,6 +337,7 @@ ${votables}
     result.secretaryName = data.accounts.filter((u) => u.role === Role.Secretary)[0].name.replace(/ck[0-9]*/, '');
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
+    result.attachments = attachments;
     try{
       await navigator.clipboard.writeText(JSON.stringify(result));
       window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
