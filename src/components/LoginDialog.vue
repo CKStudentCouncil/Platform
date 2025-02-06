@@ -5,7 +5,19 @@
         <h5 class="q-ma-none">選擇登入方式</h5>
       </q-card-section>
       <q-card-section>
-        <div class="content-center">
+        <div v-if="register">
+          <q-btn
+            color="primary"
+            icon="person_add"
+            label="註冊"
+            @click="
+              parentValue = false;
+              registerDialogOpen = true;
+            "
+          >
+          </q-btn>
+        </div>
+        <div v-else class="content-center">
           <q-btn
             class="q-mr-md"
             color="primary"
@@ -44,13 +56,13 @@
             使用學校 Google 帳號登入
           </q-btn>
           <q-btn
+            icon="person"
+            label="使用班級學號登入"
             @click="
               parentValue = false;
               simpleLoginDialogOpen = true;
             "
-          >
-            使用班級學號登入
-          </q-btn>
+          />
         </div>
       </q-card-section>
     </q-card>
@@ -61,12 +73,29 @@
         <h5 class="q-ma-none">使用班級學號登入</h5>
       </q-card-section>
       <q-card-section>
-        <q-input v-model="schoolNumber" label="學號" />
-        <q-input v-model="clazz" label="班級" />
+        <q-input v-model="schoolNumber" label="學號" type="number" />
+        <q-input v-model="clazz" label="班級" type="number" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn label="取消" @click="simpleLoginDialogOpen = false" />
-        <q-btn color="primary" label="登入" @click="simpleLogin()" />
+        <q-btn color="negative" flat label="取消" @click="simpleLoginDialogOpen = false" />
+        <q-btn color="primary" flat label="登入" @click="simpleLogin()" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="registerDialogOpen">
+    <q-card @keyup.enter="submitRegistration">
+      <q-card-section>
+        <h5 class="q-ma-none">註冊</h5>
+      </q-card-section>
+      <q-card-section>
+        <q-input v-model="clazz" label="班級 (例：101)" type="number" />
+        <q-input v-model="seatNumber" label="座號 (例：7)" type="number" />
+        <q-input v-model="schoolNumber" label="學號 (八碼)" type="number" />
+        <q-input v-model="name" label="姓名" />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn color="negative" flat label="取消" @click="registerDialogOpen = false" />
+        <q-btn color="primary" flat label="註冊" @click="submitRegistration()" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -75,9 +104,15 @@
 <script lang="ts" setup>
 import { login, loginWithCredentials } from 'src/ts/auth.ts';
 import { computed, ref } from 'vue';
+import { useFunction } from 'boot/vuefire.ts';
+import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { Loading, Notify } from 'quasar';
 
 const emit = defineEmits(['update:modelValue']);
-const props = defineProps(['modelValue']);
+const props = defineProps({
+  modelValue: Boolean,
+  register: Boolean,
+});
 const parentValue = computed({
   get() {
     return props.modelValue;
@@ -87,13 +122,35 @@ const parentValue = computed({
   },
 });
 const simpleLoginDialogOpen = ref(false);
-const schoolNumber = ref('');
+const registerDialogOpen = ref(false);
 const clazz = ref('');
+const schoolNumber = ref('');
+const seatNumber = ref('');
+const name = ref('');
 
 function simpleLogin() {
   loginWithCredentials(schoolNumber.value, clazz.value).then(() => {
     simpleLoginDialogOpen.value = false;
   });
+}
+
+async function submitRegistration() {
+  Loading.show({ message: '註冊中' });
+  try {
+    await useFunction('register')({
+      clazz: clazz.value,
+      schoolNumber: schoolNumber.value,
+      seatNumber: seatNumber.value,
+      name: name.value,
+      email: schoolEmailFromSchoolNumber(schoolNumber.value),
+    });
+    registerDialogOpen.value = false;
+    simpleLogin();
+  } catch (e) {
+    console.error(e);
+    Notify.create({ color: 'negative', message: '註冊失敗' });
+  }
+  Loading.hide();
 }
 </script>
 

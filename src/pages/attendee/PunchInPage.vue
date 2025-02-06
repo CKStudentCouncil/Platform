@@ -9,7 +9,7 @@
     <q-btn v-if="!scanning" color="positive" label="掃描簽到碼" @click="scanning = true" />
     <qrcode-stream v-if="scanning" @detect="onDetect" />
   </q-page>
-  <LoginDialog v-model="loginDialog" />
+  <LoginDialog v-model="loginDialog" :register="register" />
 </template>
 
 <script lang="ts" setup>
@@ -22,11 +22,12 @@ import LoginDialog from 'components/LoginDialog.vue';
 import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
 
-const passcode = ref(useRoute().params.passcode);
+const passcode = ref(useRoute().params.passcode as string);
 const tempPasscode = ref('');
 const loginDialog = ref(false);
 const router = useRouter();
 const scanning = ref(false);
+const register = ref(false);
 
 async function submit() {
   passcode.value = tempPasscode.value;
@@ -35,6 +36,7 @@ async function submit() {
 
 async function punchIn() {
   if (!loggedInUserClaims || !loggedInUserClaims.clazz) {
+    register.value = passcode.value.startsWith('reg'); // I know this looks lame, but it allows us to know whether this meeting allows registration without having to read the meeting from the database (we can't do it now, since we don't have an account yet)
     loginDialog.value = true;
     watch(
       loggedInUserClaims,

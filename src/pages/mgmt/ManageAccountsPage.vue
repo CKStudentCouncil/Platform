@@ -67,6 +67,7 @@ import { getAllUsers, rootUID, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useCurrentUser } from 'vuefire';
+import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
@@ -151,9 +152,7 @@ function bulkAddUser() {
           seatNumber,
           schoolNumber,
           name,
-          email: schoolNumber.startsWith('11100')
-            ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
-            : `ck${schoolNumber}@gl.ck.tp.edu.tw`,
+          email: schoolEmailFromSchoolNumber(schoolNumber),
           role: 50,
         });
       } else {

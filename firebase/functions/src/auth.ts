@@ -43,6 +43,7 @@ export async function addUserWithRole(user: User) {
     schoolNumber: user.schoolNumber,
     seatNumber: user.seatNumber,
     clazz: user.clazz,
+    realName: user.name,
   });
   return result;
 }

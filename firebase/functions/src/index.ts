@@ -15,12 +15,15 @@ import {onCall} from 'firebase-functions/v2/https';
 import {Role, User} from './models';
 import {drive_v3, google} from 'googleapis';
 import * as Stream from 'stream';
+import {getFirestore} from 'firebase-admin/firestore';
+import {https} from 'firebase-functions';
 // @formatter:on
 
 // const db = admin.firestore();
 const globalFunctionOptions = { region: 'asia-east1' };
 const auth = new google.auth.GoogleAuth({ keyFile: 'src/credential.json', scopes: ['https://www.googleapis.com/auth/drive.file'] });
 const driveAPI = google.drive({ version: 'v3', auth }) as drive_v3.Drive;
+const db = getFirestore();
 
 export const addUser = onCall(globalFunctionOptions, async (request) => {
   await checkRole(request, Role.Chair);
@@ -78,6 +81,20 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
   });
 });
 
+export const register = onCall(globalFunctionOptions, async (request) => {
+  const activeMeeting = await db.collection('meetings').where('active', '==', true).get();
+  if (activeMeeting.size == 0 || !activeMeeting.docs[0].data().register) {
+    throw new https.HttpsError(
+      'permission-denied',
+      `Registration disabled.`
+    );
+  }
+  const user = request.data as User;
+  user.role = Role.ClassRep;
+  await addUserWithRole(user);
+  return { success: true };
+});
+
 export const uploadAttachment = onCall(globalFunctionOptions, async (request) => {
   await checkRole(request, Role.Secretary);
   const { name, content, mimeType } = request.data;
@@ -130,7 +147,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
 
 export function getReign(date: Date) {
   if (date.getMonth() > 7 || date.getMonth() < 1) { // -1
-    return `${date.getFullYear() - 1945}-1`
+    return `${date.getFullYear() - 1945}-1`;
   }
   return `${date.getFullYear() - 1945 - 1}-2`;
 }

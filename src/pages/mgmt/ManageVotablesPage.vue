@@ -174,7 +174,7 @@ async function submit() {
     if (action.value === 'edit') {
       await updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6)), data);
+      await setDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6, null)), data);
     }
   } catch (e) {
     console.error(e);

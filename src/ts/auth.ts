@@ -5,6 +5,7 @@ import { Loading, Notify } from 'quasar';
 import * as models from 'src/ts/models.ts';
 import { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
+import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
@@ -83,10 +84,9 @@ export function login() {
 }
 
 export async function loginWithCredentials(schoolNumber: string, clazz: string) {
-  Loading.show();
-  const email = schoolNumber.startsWith('11100') ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw` : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
+  Loading.show({ message: '登入中' });
   try {
-    await signInWithEmailAndPassword(auth, email, 'ck$c' + schoolNumber + '@' + clazz);
+    await signInWithEmailAndPassword(auth, schoolEmailFromSchoolNumber(schoolNumber), 'ck$c' + schoolNumber + '@' + clazz);
     console.log('Logged in successfully.');
     loggedInUser.value = auth.currentUser;
     Loading.hide();
@@ -139,4 +139,3 @@ export function translateRole(role: number | undefined) {
 export async function getAllUsers(): Promise<models.User[]> {
   return (await useFunction('getAllUsers')()).data as models.User[];
 }
-

@@ -149,7 +149,7 @@ async function submit() {
     if (action.value === 'edit') {
       await updateDoc(doc(db, `meetings/${route.params.id}/proposals`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(doc(db, `meetings/${route.params.id}/proposals`, generateRandomText(6)), {
+      await setDoc(doc(db, `meetings/${route.params.id}/proposals`, generateRandomText(6, null)), {
         ...data,
         order: target.order,
         activeVotable: target.activeVotable,

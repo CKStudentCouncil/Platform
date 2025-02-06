@@ -71,13 +71,19 @@
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <q-input v-model="targetMeeting.name" label="會議名稱" />
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${currentReign} 第次常務會議`"
-          >常務會議
-        </span>
-        <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${currentReign} 第次臨時會議`"
-          >臨時會議</span
+        <span class="template-link" @click="targetMeeting.name = `${currentReign} 第次常務會議`"> 常務會議 </span>
+        <span class="template-link" @click="targetMeeting.name = `${currentReign} 第次臨時會議`"> 臨時會議 </span>
+        <span
+          class="template-link"
+          @click="
+            targetMeeting.name = `${currentReign} 預備會議`;
+            targetMeeting.registration = true;
+          "
+        >
+          預備會議</span
         >
         <q-input v-model="targetMeeting.reign" label="屆期" />
+        <q-checkbox v-model="targetMeeting.registration" label="開放註冊 (預備會議用)" />
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -127,7 +133,7 @@ const columns = [
 const pagination = ref({ sortBy: 'start', descending: true });
 const filter = ref('');
 const action = ref('');
-const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string; registration: boolean });
+const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string; registration: boolean; punchInPasscode: string });
 const db = useFirestore();
 const route = useRoute();
 const router = useRouter();
@@ -152,6 +158,7 @@ function edit(row: any) {
   targetMeeting.startTime = date.formatDate(row.start, 'HH:mm');
   targetMeeting.reign = row.reign;
   targetMeeting.registration = row.registration;
+  targetMeeting.punchInPasscode = row.punchInPasscode;
 }
 
 function add() {
@@ -167,19 +174,28 @@ async function submit() {
   Loading.show();
   try {
     if (action.value === 'edit') {
+      // Reassign the passcode if registration status was changed
+      if (targetMeeting.punchInPasscode && targetMeeting.punchInPasscode.startsWith('reg') && !targetMeeting.registration) {
+        targetMeeting.punchInPasscode = generateRandomText(6, 'reg');
+      }
+      if (targetMeeting.punchInPasscode && !targetMeeting.punchInPasscode.startsWith('reg') && targetMeeting.registration) {
+        targetMeeting.punchInPasscode = 'reg' + generateRandomText(3, null);
+      }
       await updateDoc(doc(db, 'meetings', targetMeeting.id).withConverter(meetingConverter), {
         name: targetMeeting.name,
         start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm'),
         reign: targetMeeting.reign,
+        registration: targetMeeting.registration,
+        punchInPasscode: targetMeeting.punchInPasscode,
       });
     } else if (action.value === 'add') {
       const d = date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm');
 
-      await setDoc(doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6)).withConverter(meetingConverter), {
+      await setDoc(doc(db, 'meetings', date.formatDate(d, 'YYYYMMDD') + '_' + generateRandomText(6, null)).withConverter(meetingConverter), {
         active: false,
         name: targetMeeting.name,
         participants: [],
-        punchInPasscode: generateRandomText(6),
+        punchInPasscode: targetMeeting.registration ? generateRandomText(6, 'reg') : 'reg' + generateRandomText(3, null),
         signedOff: [],
         start: d,
         activeProposal: null,
@@ -383,4 +399,10 @@ function changeReign() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.template-link {
+  color: gray;
+  text-decoration: underline;
+  cursor: pointer;
+}
+</style>
