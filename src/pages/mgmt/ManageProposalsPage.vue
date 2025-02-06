@@ -9,6 +9,7 @@
       <q-route-tab
         :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
         label="投票案件"
+        :disable="!selected"
       />
     </q-tabs>
     <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>

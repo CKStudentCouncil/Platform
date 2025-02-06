@@ -14,13 +14,13 @@
 </template>
 
 <script lang="ts" setup>
-import { Meeting, meetingCollection, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, Meeting, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
 import { Notify } from 'quasar';
 
-const meetings = meetingCollection();
+const meetings = meetingCollectionOfCurrentReign();
 const recordTime = ref(true);
 
 interface MeetingId extends Meeting {
@@ -51,7 +51,7 @@ async function go() {
   if (meeting.value) {
     try {
       let data = {
-        active: true
+        active: true,
       } as any;
       if (recordTime.value) {
         data.start = new Date();

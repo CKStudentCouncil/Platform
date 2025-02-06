@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
-import { rawCurrentReignQuery } from 'src/ts/models.ts';
+import { rawMeetingsOfCurrentReignQuery } from 'src/ts/models.ts';
 import ExcelJS from 'exceljs';
 import { exportFile, Loading, Notify } from 'quasar';
 import { getDocs } from 'firebase/firestore';
@@ -20,7 +20,7 @@ import { getDocs } from 'firebase/firestore';
 async function exp() {
   Loading.show();
   const accounts = await getAllUsers();
-  const meetings = (await getDocs(rawCurrentReignQuery())).docs;
+  const meetings = (await getDocs(rawMeetingsOfCurrentReignQuery())).docs;
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('出席情況');
   sheet.columns = [

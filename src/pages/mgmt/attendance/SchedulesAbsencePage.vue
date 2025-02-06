@@ -20,13 +20,14 @@
 </template>
 
 <script lang="ts" setup>
-import { currentReign, currentReignMeetingCollection, User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
 import { computed, ref, watch } from 'vue';
 import { QTableColumn } from 'quasar';
 import { getAllUsers } from 'src/ts/auth.ts';
+import { currentReign } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
-const meetings = currentReignMeetingCollection();
+const meetings = meetingCollectionOfCurrentReign();
 const meetingsOptions = computed(() => meetings.value.map((meeting) => meeting?.name));
 const absences = ref([] as AbsenceInfo[]);
 

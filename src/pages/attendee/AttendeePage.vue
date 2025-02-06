@@ -50,7 +50,7 @@
               'col q-mr-md text-h5' +
               (selectedChoice == choice ? ' bg-amber' : '') +
               ((activeVotable.value.results[choice] ? activeVotable.value.results[choice] : []).includes(
-                getUserClaims().clazz,
+                loggedInUserClaims.clazz,
               )
                 ? ' bg-green'
                 : '')
@@ -77,9 +77,9 @@ import {
   rawVotableCollection,
   Votable,
 } from 'src/ts/models.ts';
-import { getUserClaims } from 'src/ts/auth.ts';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { Notify } from 'quasar';
+import { loggedInUserClaims } from 'src/ts/auth.ts';
 
 const id = ref(useRoute().params.id);
 const meeting = getMeeting(id.value as string);
@@ -99,7 +99,7 @@ const voted = computed(() => {
   if (!activeVotable.value) return false;
   const results = (activeVotable.value.value as unknown as Votable).results;
   for (const voters of Object.values(results)) {
-    if (voters.includes(getUserClaims().clazz)) return true;
+    if (voters.includes(loggedInUserClaims.clazz)) return true;
   }
   return false;
 });
@@ -117,7 +117,7 @@ watch(
       router.push('/punch_in');
       return;
     }
-    if (!meeting.participants.includes(getUserClaims().clazz)) router.push('/punch_in');
+    if (!meeting.participants.includes(loggedInUserClaims.clazz)) router.push('/punch_in');
     if (meeting.activeProposal) {
       activeProposalId.value = meeting.activeProposal;
     } else {
@@ -152,7 +152,7 @@ async function select(choice: string) {
   if (selectedChoice.value == choice) {
     try {
       const update = {} as any;
-      update[('results.' + choice) as keyof typeof update] = arrayUnion(getUserClaims().clazz);
+      update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
       await updateDoc(
         doc(
           rawVotableCollection(id.value as string, activeProposalId.value as string),
@@ -176,7 +176,7 @@ async function select(choice: string) {
 async function requestToSpeak() {
   try {
     await updateDoc(doc(rawProposalCollection(id.value as string), activeProposalId.value!), {
-      speakRequests: arrayUnion(getUserClaims().clazz),
+      speakRequests: arrayUnion(loggedInUserClaims.clazz),
     });
     Notify.create({
       message: '請求發言成功',

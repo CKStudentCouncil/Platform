@@ -7,8 +7,9 @@ import { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 
 let auth = useFirebaseAuth()!;
-const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
-const loggedInUserClaims = reactive({} as UserClaims);
+export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
+export const loggedInUserClaims = reactive({} as UserClaims);
+export const rootUID = '38fWtZ4AKRU3oAZjfrt9nBq7d8B2';
 
 export function init() {
   auth = useFirebaseAuth()!;
@@ -18,10 +19,11 @@ export function init() {
     loggedInUser.value = auth.currentUser;
     await updateCustomClaims();
   });
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(async (user) => {
     loggedInUser.value = user;
 
-    if (isLoggedIn()) {
+    await updateCustomClaims();
+    if (loggedInUser.value) {
       console.log('Logged In.');
     } else if (auth) {
       console.log('Logged Out.');
@@ -31,21 +33,20 @@ export function init() {
   });
 }
 
-export async function updateCustomClaims() {
+async function updateCustomClaims() {
   const claims = await auth?.currentUser?.getIdTokenResult();
-  if (!claims) return;
-  loggedInUserClaims.role = claims.claims.role as number;
-  loggedInUserClaims.schoolNumber = claims.claims.schoolNumber as string;
-  loggedInUserClaims.clazz = claims.claims.clazz as string;
-  loggedInUserClaims.seatNumber = claims.claims.seatNumber as string;
-}
-
-export function isLoggedIn() {
-  return loggedInUser.value !== null;
-}
-
-export function getUserClaims() {
-  return loggedInUserClaims;
+  if (claims) {
+    loggedInUserClaims.role = claims.claims.role as number;
+    loggedInUserClaims.schoolNumber = claims.claims.schoolNumber as string;
+    loggedInUserClaims.clazz = claims.claims.clazz as string;
+    loggedInUserClaims.seatNumber = claims.claims.seatNumber as string;
+  } else {
+    loggedInUserClaims.role = 0;
+    loggedInUserClaims.schoolNumber = '';
+    loggedInUserClaims.clazz = '';
+    loggedInUserClaims.seatNumber = '';
+  }
+  console.log('Custom claims updated.');
 }
 
 export function login() {
@@ -110,8 +111,8 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
   }
 }
 
-export function logout() {
-  auth.signOut();
+export async function logout() {
+  await auth.signOut();
   loggedInUser.value = null;
 }
 
@@ -138,3 +139,4 @@ export function translateRole(role: number | undefined) {
 export async function getAllUsers(): Promise<models.User[]> {
   return (await useFunction('getAllUsers')()).data as models.User[];
 }
+

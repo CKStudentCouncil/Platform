@@ -2,8 +2,8 @@
   <q-page>
     <q-tabs align="left">
       <q-route-tab :to="'/meetings/' + selected" label="會議" />
-      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
-      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" label="投票案件" />
+      <q-route-tab :disable="!selected" :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
+      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" disable label="投票案件" />
     </q-tabs>
     <q-table
       v-model:pagination="pagination"
@@ -11,13 +11,14 @@
       :filter="filter"
       :loading="Object.values(meetings).length === 0"
       :rows="Object.values(meetings)"
+      :title="`${reign} 會議管理`"
       class="rounded-borders shadow-2 q-ma-md"
       color="primary"
       row-key="name"
-      title="會議管理"
     >
       <template v-slot:top-right>
         <div class="row justify-end q-gutter-sm">
+          <q-btn icon="visibility" @click="changeReign">檢視其他屆期</q-btn>
           <q-btn icon="add" @click="add">新增會議</q-btn>
           <q-input v-model="filter" debounce="300" dense label="搜尋">
             <template v-slot:append>
@@ -63,7 +64,7 @@
       </template>
     </q-table>
   </q-page>
-  <q-dialog v-model="dialog">
+  <q-dialog :model-value="action === 'edit' || action === 'add'">
     <q-card>
       <q-card-section>
         <h6 class="q-ma-none">{{ action == 'edit' ? '編輯' : '新增' }}會議</h6>
@@ -76,7 +77,7 @@
         <span style="color: gray; text-decoration: underline; cursor: pointer" @click="targetMeeting.name = `${currentReign} 第次臨時會議`"
           >臨時會議</span
         >
-        <q-input v-model="targetMeeting.reign" label="屆數" />
+        <q-input v-model="targetMeeting.reign" label="屆期" />
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -94,9 +95,8 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
 import {
-  currentReign,
   Meeting,
-  meetingCollection,
+  meetingCollectionOfReign,
   meetingConverter,
   rawMeetingCollection,
   rawProposalCollection,
@@ -107,7 +107,7 @@ import {
 import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
-import { generateRandomText } from 'src/ts/utils.ts';
+import { currentReign, generateRandomText } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { exportVotingData } from 'pages/mgmt/common.ts';
@@ -122,19 +122,18 @@ const columns = [
     sortable: true,
     align: 'left',
   },
-  { name: 'reign', label: '屆數', field: 'reign', sortable: true, align: 'left' },
+  { name: 'reign', label: '屆期', field: 'reign', sortable: true, align: 'left' },
 ] as QTableColumn[]; // Typescript magic requirements
+const pagination = ref({ sortBy: 'start', descending: true });
 const filter = ref('');
 const action = ref('');
-const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string });
+const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string; registration: boolean });
 const db = useFirestore();
-let meetings = meetingCollection();
-const dialog = computed(() => {
-  return action.value === 'edit' || action.value === 'add';
-});
 const route = useRoute();
 const router = useRouter();
-let selected = computed({
+const reign = ref(currentReign);
+const meetings = meetingCollectionOfReign(reign);
+const selected = computed({
   get: () => route.params.id,
   set: (value) => {
     if (value === selected.value) {
@@ -144,7 +143,6 @@ let selected = computed({
     }
   },
 });
-let pagination = ref({ sortBy: 'start', descending: true });
 
 function edit(row: any) {
   action.value = 'edit';
@@ -153,6 +151,7 @@ function edit(row: any) {
   targetMeeting.startDate = date.formatDate(row.start, 'YYYY-MM-DD');
   targetMeeting.startTime = date.formatDate(row.start, 'HH:mm');
   targetMeeting.reign = row.reign;
+  targetMeeting.registration = row.registration;
 }
 
 function add() {
@@ -161,6 +160,7 @@ function add() {
   targetMeeting.startDate = date.formatDate(new Date(), 'YYYY-MM-DD');
   targetMeeting.startTime = date.formatDate(new Date(), 'HH:mm:ss');
   targetMeeting.reign = currentReign;
+  targetMeeting.registration = false;
 }
 
 async function submit() {
@@ -185,6 +185,7 @@ async function submit() {
         activeProposal: null,
         absences: {},
         reign: targetMeeting.reign,
+        registration: targetMeeting.registration,
       } as unknown as Meeting);
     }
   } catch (e) {
@@ -309,7 +310,7 @@ async function exportMeetingRecord(meeting: Meeting) {
       attachments.push({
         urls: data.attachments,
         description: `「${title}」關係文書附件`,
-      })
+      });
     }
     const content = `<div style="font-size: medium">一、開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
 星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
@@ -338,7 +339,7 @@ ${votables}
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
     result.attachments = attachments;
-    try{
+    try {
       await navigator.clipboard.writeText(JSON.stringify(result));
       window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
     } catch (e) {
@@ -363,6 +364,22 @@ ${votables}
   } finally {
     Loading.hide();
   }
+}
+
+function changeReign() {
+  Dialog.create({
+    title: '更改屆期',
+    message: `請輸入要檢視的屆期 (例如：${currentReign})`,
+    prompt: {
+      model: `${reign.value}`,
+      label: '屆期',
+    },
+    persistent: true,
+    ok: true,
+    cancel: true,
+  }).onOk((data) => {
+    reign.value = data.trim();
+  });
 }
 </script>
 

@@ -22,12 +22,13 @@
 
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
-import { currentReign, currentReignMeetingCollection, User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { QTableColumn } from 'quasar';
+import { currentReign } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
-const meetings = currentReignMeetingCollection();
+const meetings = meetingCollectionOfCurrentReign();
 const attendance = ref([] as AttendanceInfo[]);
 const filter = ref('');
 const columns = [

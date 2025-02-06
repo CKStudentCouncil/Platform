@@ -18,10 +18,10 @@
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
 import { computed, reactive, ref, watch } from 'vue';
-import { meetingCollection, User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
 
 const accounts = ref(null as User[] | null);
-const meetings = meetingCollection();
+const meetings = meetingCollectionOfCurrentReign();
 const absence_map = reactive({} as Record<string, number>);
 const requirement = ref(3);
 const serial_absences = computed(() => {

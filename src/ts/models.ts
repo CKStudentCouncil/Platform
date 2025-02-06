@@ -1,10 +1,8 @@
 import { collection, doc, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import { FirestoreDataConverter } from '@firebase/firestore';
-
-const date = new Date();
-export const timezoneOffset = date.getTimezoneOffset() * 60 * 1000; // -480
-export const currentReign = `${date.getFullYear() - 1945}-${date.getMonth() > 7 || date.getMonth() < 1 ? '1' : '2'}`; // August to January
+import { currentReign } from 'src/ts/utils.ts';
+import { computed, Ref } from 'vue';
 
 export enum Role {
   Admin = 999,
@@ -44,6 +42,7 @@ export interface Meeting extends DocumentType {
   stop?: Date;
   absences: Record<string, Absence>;
   reign: string; // 79-1
+  registration: boolean; // Whether to allow account registration
 }
 
 interface Absence {
@@ -53,10 +52,10 @@ interface Absence {
 
 export const meetingConverter: FirestoreDataConverter<Meeting | null> = {
   toFirestore(data: any) {
-    data.start = Timestamp.fromMillis(data.start.valueOf() - timezoneOffset);
-    if (data.stop) data.stop = Timestamp.fromMillis(data.stop.valueOf() - timezoneOffset);
+    data.start = Timestamp.fromDate(data.start);
+    if (data.stop) data.stop = Timestamp.fromDate(data.stop);
     for (const key in data.absences) {
-      data.absences[key].scheduledAt = Timestamp.fromMillis(data.absences[key].scheduledAt.valueOf() - timezoneOffset);
+      data.absences[key].scheduledAt = Timestamp.fromDate(data.absences[key].scheduledAt);
     }
     return firestoreDefaultConverter.toFirestore(data);
   },
@@ -77,16 +76,18 @@ export function rawMeetingCollection() {
   return collection(db, 'meetings').withConverter(meetingConverter);
 }
 
-export function meetingCollection() {
-  return useCollection(query(rawMeetingCollection(), orderBy('start', 'desc')));
+export function meetingCollectionOfReign(reign: Ref<string>) {
+  const meetingsQuery = computed(() => query(rawMeetingCollection(), where('reign', '==', reign.value), orderBy('start', 'desc')));
+  return useCollection(meetingsQuery);
 }
 
-export function rawCurrentReignQuery() {
+
+export function rawMeetingsOfCurrentReignQuery() {
   return query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign));
 }
 
-export function currentReignMeetingCollection() {
-  return useCollection(rawCurrentReignQuery());
+export function meetingCollectionOfCurrentReign() {
+  return useCollection(rawMeetingsOfCurrentReignQuery());
 }
 
 export function getMeeting(id: string) {
@@ -148,13 +149,11 @@ export const votableConverter: FirestoreDataConverter<Votable | null> = {
   fromFirestore(snapshot, options) {
     const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
     if (!data) return null;
-    if (data.type && typeof data.type === 'string' && data.type in VotableType.VALUES)
-      data.type = VotableType.VALUES[data.type];
-    else
-      data.type = VotableType.Absolute;
+    if (data.type && typeof data.type === 'string' && data.type in VotableType.VALUES) data.type = VotableType.VALUES[data.type];
+    else data.type = VotableType.Absolute;
     return data as unknown as Votable;
   },
-}
+};
 
 export function rawVotableCollection(meetingId: string, proposalId: string) {
   const db = useFirestore();

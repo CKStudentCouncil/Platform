@@ -12,8 +12,8 @@
         </q-toolbar-title>
 
         <q-btn flat icon="fullscreen" @click="toggleFullscreen" />
-        <q-btn v-if="!loggedIn" align="right" dense flat icon="login" round @click="loginDialogOpen = true">登入 </q-btn>
-        <q-btn v-if="loggedIn" align="right" dense flat icon="logout" round @click="logout()">登出 </q-btn>
+        <q-btn v-if="!loggedInUser" align="right" dense flat icon="login" round @click="loginDialogOpen = true">登入</q-btn>
+        <q-btn v-if="loggedInUser" align="right" dense flat icon="logout" round @click="logout()">登出</q-btn>
       </q-toolbar>
     </q-header>
 
@@ -40,7 +40,7 @@
           <QRPasscode v-for="meeting of activeMeetings" :key="meeting!.name" :passcode="meeting!.punchInPasscode" :size="0.5" />
         </div>
         <q-space />
-        <q-item v-if="!loggedIn" clickable @click="loginDialogOpen = true">
+        <q-item v-if="!loggedInUser" clickable @click="loginDialogOpen = true">
           <q-item-section avatar>
             <q-icon name="login" />
           </q-item-section>
@@ -49,7 +49,7 @@
             <q-item-label>登入</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item v-if="loggedIn && loggedInUser !== null && loggedInUser !== undefined">
+        <q-item v-if="loggedInUser">
           <q-item-section v-if="loggedInUser.photoURL !== null" avatar>
             <q-avatar>
               <img :src="loggedInUser.photoURL" alt="profile picture" />
@@ -59,7 +59,7 @@
             <q-item-label>{{ loggedInUser.displayName }}</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item v-if="loggedIn" clickable @click="logout()">
+        <q-item v-if="loggedInUser" clickable @click="logout()">
           <q-item-section avatar>
             <q-icon name="logout" />
           </q-item-section>
@@ -78,11 +78,11 @@
   </q-layout>
 </template>
 
-<script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { getUserClaims, init, isLoggedIn, logout, updateCustomClaims } from 'src/ts/auth';
+<script lang="ts" setup>
+import { computed, ref } from 'vue';
+import { init, loggedInUser, loggedInUserClaims, logout } from 'src/ts/auth';
 import { rawMeetingCollection, Role } from 'src/ts/models.ts';
-import { useCollection, useCurrentUser } from 'vuefire';
+import { useCollection } from 'vuefire';
 import LoginDialog from 'components/LoginDialog.vue';
 import { query, where } from 'firebase/firestore';
 import QRPasscode from 'components/QRPasscode.vue';
@@ -133,22 +133,7 @@ let endpoints = [
 ];
 let selected = ref('Account Information');
 let loginDialogOpen = ref(false);
-const loggedIn = computed(() => isLoggedIn());
-const loggedInUser = useCurrentUser();
-const role = ref(0);
-watch(
-  loggedInUser,
-  async (user) => {
-    if (user) {
-      await updateCustomClaims();
-      role.value = getUserClaims().role;
-    } else {
-      role.value = 0;
-    }
-    console.log('Updated user role: ' + role.value);
-  },
-  { deep: true },
-);
+const role = computed(() => loggedInUserClaims.role);
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;

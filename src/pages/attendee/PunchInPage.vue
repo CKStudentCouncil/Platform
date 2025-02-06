@@ -17,8 +17,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ref, watch } from 'vue';
 import { and, arrayUnion, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { Notify } from 'quasar';
-import { useCurrentUser } from 'vuefire';
-import { getUserClaims, updateCustomClaims } from 'src/ts/auth.ts';
+import { loggedInUserClaims } from 'src/ts/auth.ts';
 import LoginDialog from 'components/LoginDialog.vue';
 import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
@@ -35,15 +34,18 @@ async function submit() {
 }
 
 async function punchIn() {
-  if (!getUserClaims() || !getUserClaims().clazz) {
+  if (!loggedInUserClaims || !loggedInUserClaims.clazz) {
     loginDialog.value = true;
-    watch(useCurrentUser(), async (user) => {
-      if (user) {
-        await updateCustomClaims();
-        loginDialog.value = false;
-        await punchIn();
-      }
-    });
+    watch(
+      loggedInUserClaims,
+      async (user) => {
+        if (user) {
+          loginDialog.value = false;
+          await punchIn();
+        }
+      },
+      { deep: true },
+    );
     return;
   }
   const meeting = await getDocs(query(rawMeetingCollection(), where('punchInPasscode', '==', passcode.value)));
@@ -56,17 +58,14 @@ async function punchIn() {
     return;
   }
   await updateDoc(meeting.docs[0].ref, {
-    participants: arrayUnion(getUserClaims().clazz),
+    participants: arrayUnion(loggedInUserClaims.clazz),
   });
   await router.push('/attendee/' + meeting.docs[0].id);
 }
 
 async function checkPunchedIn() {
   const punchedIn = await getDocs(
-    query(
-      rawMeetingCollection(),
-      and(where('participants', 'array-contains', getUserClaims().clazz), where('active', '==', true)),
-    ),
+    query(rawMeetingCollection(), and(where('participants', 'array-contains', loggedInUserClaims.clazz), where('active', '==', true))),
   );
   if (punchedIn.docs.length != 0) {
     await router.push('/attendee/' + punchedIn.docs[0].id);
