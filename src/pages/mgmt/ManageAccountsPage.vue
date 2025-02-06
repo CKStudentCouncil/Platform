@@ -13,6 +13,7 @@
       <template v-slot:top-right>
         <div class="row justify-end q-gutter-sm">
           <q-btn icon="add_to_photos" @click="bulkAddUser">批次新增帳號</q-btn>
+          <q-btn color="negative" icon="delete" @click="bulkRemoveUser">批次刪除帳號</q-btn>
           <q-btn icon="add" @click="add">新增單一帳號</q-btn>
           <q-input v-model="filter" debounce="300" dense label="搜尋">
             <template v-slot:append>
@@ -62,9 +63,10 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
 import { User } from 'src/ts/models.ts';
-import { getAllUsers, translateRole } from '../../ts/auth.ts';
+import { getAllUsers, rootUID, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { Dialog, Loading, Notify, QTableColumn } from 'quasar';
+import { useCurrentUser } from 'vuefire';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
@@ -174,6 +176,35 @@ function bulkAddUser() {
     await load();
     Notify.create({
       message: '帳號資料已更新',
+      color: 'positive',
+    });
+  });
+}
+
+function bulkRemoveUser() {
+  Dialog.create({
+    title: '批次刪除帳號',
+    message: '請勾選要刪除的帳號，預設全選除了目前登入之帳號',
+    options: {
+      type: 'checkbox',
+      model: accounts.map((a) => a.uid).filter((uid) => uid !== useCurrentUser().value?.uid && uid !== rootUID),
+      items: accounts.map((a) => ({ label: a.name, value: a.uid, disable: a.uid === rootUID })),
+    },
+    cancel: true,
+    persistent: true,
+  }).onOk(async (data: any) => {
+    try {
+      await useFunction('bulkRemoveUser')({ users: data });
+    } catch (e) {
+      console.error(e);
+      Notify.create({
+        message: '刪除失敗',
+        color: 'negative',
+      });
+    }
+    await load();
+    Notify.create({
+      message: '帳號已批次刪除',
       color: 'positive',
     });
   });

@@ -40,6 +40,16 @@ export const bulkAddUser = onCall(globalFunctionOptions, async (request) => {
   return { success: true };
 });
 
+export const bulkRemoveUser = onCall(globalFunctionOptions, async (request) => {
+  await checkRole(request, Role.Chair);
+  const tasks = [];
+  for (const user of request.data.users) {
+    tasks.push(admin.auth().deleteUser(user));
+  }
+  await Promise.all(tasks);
+  return { success: true };
+});
+
 export const deleteUser = onCall(globalFunctionOptions, async (request) => {
   await checkRole(request, Role.Chair);
   await admin.auth().deleteUser(request.data.uid);
@@ -118,7 +128,13 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
   return { success: true, url: file.data.webViewLink };
 });
 
-function getCurrentReign() {
-  const date = new Date();
-  return `${date.getFullYear() - 1945}-${date.getMonth() > 7 || date.getMonth() < 1 ? '1' : '2'}`; // August to January
+export function getReign(date: Date) {
+  if (date.getMonth() > 7 || date.getMonth() < 1) { // -1
+    return `${date.getFullYear() - 1945}-1`
+  }
+  return `${date.getFullYear() - 1945 - 1}-2`;
+}
+
+export function getCurrentReign() {
+  return getReign(new Date());
 }
