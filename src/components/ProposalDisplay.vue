@@ -29,7 +29,7 @@
     </q-card-section>
     <q-separator />
     <q-card-actions v-if="editable">
-      <q-btn color="positive" flat label="選擇並檢視投票案件" @click="$emit('select', proposal.id)" />
+      <q-btn color="positive" flat v-if="selectable" label="選擇並檢視投票案件" @click="$emit('select', proposal.id)" />
       <q-btn color="primary" flat label="編輯" @click="$emit('edit', proposal.id)" />
       <q-btn color="negative" flat label="刪除" @click="$emit('del', proposal.id)" />
     </q-card-actions>
@@ -55,6 +55,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  selectable: {
+    type: Boolean,
+    default: true,
+  }
 });
 
 defineEmits<{

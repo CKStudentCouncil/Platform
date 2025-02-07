@@ -1,18 +1,18 @@
 <template>
   <q-page>
-    <q-tabs align="left">
-      <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
+    <q-tabs v-if="!embed" align="left">
+      <q-route-tab :to="'/meetings/' + meetingId" label="會議" />
       <q-route-tab
-        :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`"
+        :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId}`"
         label="提案"
       />
       <q-route-tab
         :disable="!selected"
-        :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
+        :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId.length == 0 ? '' : proposalId + '/'}votables`"
         label="投票案件"
       />
     </q-tabs>
-    <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
+    <span v-if="meetingId.length == 0 && !embed">請先選擇一個會議</span>
     <div v-else class="q-ma-md">
       <q-btn color="primary" icon="add" label="新增提案" style="margin-bottom: 10px" @click="add" />
       <span class="q-ml-md">提示：可以直接拖拉提案方塊以重新排序</span>
@@ -23,11 +23,12 @@
           :class="selected == prop.id ? 'bg-green-1' : ''"
           :proposal="prop"
           editable
+          :selectable="!embed"
           @del="del(prop.id)"
           @edit="edit(prop)"
           @select="
             selected = prop.id;
-            $router.push(`/meetings/${$route.params.id}/proposals/${prop.id}/votables`);
+            $router.push(`/meetings/${meetingId}/proposals/${prop.id}/votables`);
           "
         />
       </VueDraggable>
@@ -67,19 +68,35 @@ import ListEditor from 'components/ListEditor.vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
 
-let meeting = getMeeting(useRoute().params.id as string);
-let proposals = proposalCollection(useRoute().params.id as string);
-let action = ref('');
-
+const props = defineProps({
+  meetingId: {
+    type: String,
+    required: false,
+    default: '',
+  },
+  embed: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+});
 interface ProposalId extends Proposal {
   id: string;
 }
 
-let target = reactive({} as ProposalId);
+const meetingId = props.embed ? props.meetingId : useRoute().params.id as string;
+const proposalId = useRoute().params.proposalId as string;
+const meeting = getMeeting(meetingId);
+const proposals = proposalCollection(meetingId);
+const action = ref('');
+const target = reactive({} as ProposalId);
 const router = useRouter();
 let selected = computed({
-  get: () => route.params.proposalId,
+  get: () => proposalId,
   set: (value) => {
+    if (props.embed) {
+      return;
+    }
     if (value === selected.value) {
       router.push({ params: { proposalId: '' } });
     } else {
@@ -91,7 +108,6 @@ const dialog = computed(() => {
   return action.value === 'edit' || action.value === 'add';
 });
 const db = useFirestore();
-const route = useRoute();
 
 function edit(proposal: any) {
   Object.assign(target, proposal);
@@ -120,7 +136,7 @@ async function del(id: string) {
   }).onOk(async () => {
     Loading.show();
     try {
-      await deleteDoc(doc(rawProposalCollection(route.params.id as string), id));
+      await deleteDoc(doc(rawProposalCollection(meetingId), id));
     } catch (e) {
       console.error(e);
       notifyError('刪除失敗', e);
@@ -141,9 +157,9 @@ async function submit() {
       title: target.title,
     };
     if (action.value === 'edit') {
-      await updateDoc(doc(db, `meetings/${route.params.id}/proposals`, target.id), data);
+      await updateDoc(doc(db, `meetings/${meetingId}/proposals`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(doc(db, `meetings/${route.params.id}/proposals`, generateRandomText(6, null)), {
+      await setDoc(doc(db, `meetings/${meetingId}/proposals`, generateRandomText(6, null)), {
         ...data,
         order: target.order,
         activeVotable: target.activeVotable,
@@ -167,7 +183,7 @@ async function rearrange() {
   try {
     for (let i = 0; i < proposals.value.length; i++) {
       tasks.push(
-        updateDoc(doc(db, `meetings/${route.params.id}/proposals`, proposals.value[i].id), {
+        updateDoc(doc(db, `meetings/${meetingId}/proposals`, proposals.value[i].id), {
           order: i,
         }),
       );

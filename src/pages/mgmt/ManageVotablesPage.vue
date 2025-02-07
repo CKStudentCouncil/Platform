@@ -1,14 +1,14 @@
 <template>
   <q-tabs v-if="!embed" align="left">
-    <q-route-tab :to="'/meetings/' + $route.params.id" label="會議" />
-    <q-route-tab :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId}`" label="提案" />
+    <q-route-tab :to="'/meetings/' + meetingId" label="會議" />
+    <q-route-tab :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId}`" label="提案" />
     <q-route-tab
-      :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
+      :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId.length == 0 ? '' : proposalId + '/'}votables`"
       label="投票案件"
     />
   </q-tabs>
-  <span v-if="$route.params.id.length == 0 && !embed">請先選擇一個會議</span>
-  <span v-if="$route.params.proposalId.length == 0 && !embed">請先選擇一個提案</span>
+  <span v-if="meetingId.length == 0 && !embed">請先選擇一個會議</span>
+  <span v-if="proposalId.length == 0 && !embed">請先選擇一個提案</span>
   <q-page v-else padding>
     <q-btn class="q-mr-md" color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
     <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
@@ -62,14 +62,13 @@ import { generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts'
 import ListEditor from 'components/ListEditor.vue';
 import { exportVotingData } from 'pages/mgmt/common.ts';
 
-const router = useRouter();
 const props = defineProps({
-  meeting: {
+  meetingId: {
     type: String,
     required: false,
     default: '',
   },
-  proposal: {
+  proposalId: {
     type: String,
     required: false,
     default: '',
@@ -80,12 +79,11 @@ const props = defineProps({
     default: false,
   },
 });
-let votables =
-  props.proposal.length == 0
-    ? useRoute().params.id.length == 0 || useRoute().params.proposalId.length == 0
-      ? ref([])
-      : votableCollection(useRoute().params.id as string, useRoute().params.proposalId as string)
-    : votableCollection(props.meeting as string, props.proposal as string);
+
+const meetingId = props.embed ? props.meetingId : (useRoute().params.id as string);
+const proposalId = props.embed ? props.proposalId : (useRoute().params.proposalId as string);
+const votables = !!meetingId || !!proposalId ? votableCollection(meetingId, proposalId) : ref([]);
+const router = useRouter();
 let action = ref('');
 let target = reactive(
   {} as {
@@ -98,7 +96,7 @@ let target = reactive(
   },
 );
 let selected = computed({
-  get: () => (props.proposal.length > 0 ? props.proposal : route.params.proposalId),
+  get: () => proposalId,
   set: (value) => {
     if (props.embed) {
       return;
@@ -114,7 +112,6 @@ const dialog = computed(() => {
   return action.value === 'edit' || action.value === 'add';
 });
 const db = useFirestore();
-const route = useRoute();
 
 function edit(prop: any) {
   target.id = prop.id;
@@ -144,7 +141,7 @@ async function del(id: string) {
   }).onOk(async () => {
     Loading.show();
     try {
-      await deleteDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as string), id));
+      await deleteDoc(doc(rawVotableCollection(meetingId, proposalId), id));
     } catch (e) {
       console.error(e);
       notifyError('刪除失敗', e);
@@ -166,9 +163,9 @@ async function submit() {
       type: target.type.firebase,
     };
     if (action.value === 'edit') {
-      await updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, target.id), data);
+      await updateDoc(doc(db, `meetings/${meetingId}/proposals/${proposalId}/votables`, target.id), data);
     } else if (action.value === 'add') {
-      await setDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, generateRandomText(6, null)), data);
+      await setDoc(doc(db, `meetings/${meetingId}/proposals/${proposalId}/votables`, generateRandomText(6, null)), data);
     }
   } catch (e) {
     console.error(e);
@@ -187,7 +184,7 @@ async function rearrange() {
   try {
     for (let i = 0; i < votables.value.length; i++) {
       tasks.push(
-        updateDoc(doc(db, `meetings/${route.params.id}/proposals/${route.params.proposalId}/votables`, (votables.value[i] as any).id), {
+        updateDoc(doc(db, `meetings/${meetingId}/proposals/${proposalId}/votables`, (votables.value[i] as any).id), {
           order: i,
         }),
       );

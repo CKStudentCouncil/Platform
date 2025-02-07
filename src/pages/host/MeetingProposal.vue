@@ -67,7 +67,7 @@
           <q-space />
           <q-btn v-close-popup dense flat icon="close" round />
         </q-toolbar>
-        <ManageVotablesPage :meeting="route.params.id as string" :proposal="route.params.proposalId as string" embed />
+        <ManageVotablesPage :meeting-id="route.params.id as string" :proposal-id="route.params.proposalId as string" embed />
       </q-card-section>
     </q-card>
   </q-dialog>
