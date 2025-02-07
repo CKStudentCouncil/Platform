@@ -8,12 +8,13 @@
           <q-avatar>
             <img alt="favicon" src="icon.png" />
           </q-avatar>
-          建國中學班代大會議事系統
+          <span v-if="$q.screen.gt.xs" class="q-pl-sm">建國中學班代大會議事系統</span>
+          <span v-else class="q-pl-sm">建中班代大會議事系統</span>
         </q-toolbar-title>
 
-        <q-btn flat icon="fullscreen" @click="toggleFullscreen" />
+        <q-btn v-if="$q.screen.gt.xs" flat icon="fullscreen" @click="toggleFullscreen" />
         <q-btn v-if="!loggedInUser" align="right" dense flat icon="login" round @click="loginDialogOpen = true">登入</q-btn>
-        <q-btn v-if="loggedInUser" align="right" dense flat icon="logout" round @click="logout()">登出</q-btn>
+        <q-btn v-if="$q.screen.gt.xs && loggedInUser" align="right" dense flat icon="logout" round @click="logout()">登出</q-btn>
       </q-toolbar>
     </q-header>
 
