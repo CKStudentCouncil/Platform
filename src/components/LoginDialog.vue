@@ -73,8 +73,8 @@
         <h5 class="q-ma-none">使用班級學號登入</h5>
       </q-card-section>
       <q-card-section>
-        <q-input v-model="schoolNumber" label="學號" type="number" />
-        <q-input v-model="clazz" label="班級" type="number" />
+        <q-input v-model="schoolNumber" ref="schoolNumberRef" label="學號" type="number" :rules="schoolNumberRule" />
+        <q-input v-model="clazz" ref="clazzRef" label="班級" type="number" :rules="clazzRule" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="simpleLoginDialogOpen = false" />
@@ -88,10 +88,10 @@
         <h5 class="q-ma-none">註冊</h5>
       </q-card-section>
       <q-card-section>
-        <q-input v-model="clazz" label="班級 (例：101)" type="number" />
-        <q-input v-model="seatNumber" label="座號 (例：7)" type="number" />
-        <q-input v-model="schoolNumber" label="學號 (八碼)" type="number" />
-        <q-input v-model="name" label="姓名" />
+        <q-input v-model="schoolNumber" ref="schoolNumberRef" label="學號 (八碼)" type="number" :rules="schoolNumberRule" />
+        <q-input v-model="clazz" ref="clazzRef" label="班級 (例：101)" type="number" :rules="clazzRule"/>
+        <q-input v-model="seatNumber" ref="seatNumberRef" label="座號 (例：7)" type="number" :rules="seatNumberRule"/>
+        <q-input v-model="name" ref="nameRef" label="姓名" :rules="[required]"/>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="registerDialogOpen = false" />
@@ -127,14 +127,34 @@ const clazz = ref('');
 const schoolNumber = ref('');
 const seatNumber = ref('');
 const name = ref('');
+const clazzRef = ref();
+const schoolNumberRef = ref();
+const seatNumberRef = ref();
+const nameRef = ref();
+const required = (v: string) => !!v || '此欄必填';
+const clazzRule = [required, (v: string) => /^[1-3][0-2][0-9]$/.test(v) || '請輸入正確的班級號碼'];
+const schoolNumberRule = [required, (v: string) => /^[0-9]{8}$/.test(v) || '請輸入正確的學號'];
+const seatNumberRule = [required, (v: string) => /^[1-9]?[0-9]$/.test(v) || '請輸入正確的座號 (個位數免加0)'];
 
 function simpleLogin() {
+  clazzRef.value.validate();
+  schoolNumberRef.value.validate();
+  if (clazzRef.value.hasError || schoolNumberRef.value.hasError) {
+    return;
+  }
   loginWithCredentials(schoolNumber.value, clazz.value).then(() => {
     simpleLoginDialogOpen.value = false;
   });
 }
 
 async function submitRegistration() {
+  clazzRef.value.validate();
+  schoolNumberRef.value.validate();
+  seatNumberRef.value.validate();
+  nameRef.value.validate();
+  if (clazzRef.value.hasError || schoolNumberRef.value.hasError || seatNumberRef.value.hasError || nameRef.value.hasError) {
+    return;
+  }
   Loading.show({ message: '註冊中' });
   try {
     await useFunction('register')({
