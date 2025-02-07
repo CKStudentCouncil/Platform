@@ -73,8 +73,8 @@
         <h5 class="q-ma-none">使用班級學號登入</h5>
       </q-card-section>
       <q-card-section>
-        <q-input v-model="schoolNumber" ref="schoolNumberRef" label="學號" type="number" :rules="schoolNumberRule" />
-        <q-input v-model="clazz" ref="clazzRef" label="班級" type="number" :rules="clazzRule" />
+        <q-input lazy-rules v-model="schoolNumber" ref="schoolNumberRef" label="學號" type="number" :rules="schoolNumberRule" />
+        <q-input lazy-rules v-model="clazz" ref="clazzRef" label="班級" type="number" :rules="clazzRule" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="simpleLoginDialogOpen = false" />
@@ -88,10 +88,10 @@
         <h5 class="q-ma-none">註冊</h5>
       </q-card-section>
       <q-card-section>
-        <q-input v-model="schoolNumber" ref="schoolNumberRef" label="學號 (八碼)" type="number" :rules="schoolNumberRule" />
-        <q-input v-model="clazz" ref="clazzRef" label="班級 (例：101)" type="number" :rules="clazzRule"/>
-        <q-input v-model="seatNumber" ref="seatNumberRef" label="座號 (例：7)" type="number" :rules="seatNumberRule"/>
-        <q-input v-model="name" ref="nameRef" label="姓名" :rules="[required]"/>
+        <q-input lazy-rules v-model="schoolNumber" ref="schoolNumberRef" label="學號 (八碼)" type="number" :rules="schoolNumberRule" />
+        <q-input lazy-rules v-model="clazz" ref="clazzRef" label="班級 (例：101)" type="number" :rules="clazzRule"/>
+        <q-input lazy-rules v-model="seatNumber" ref="seatNumberRef" label="座號 (例：7)" type="number" :rules="seatNumberRule"/>
+        <q-input lazy-rules v-model="name" ref="nameRef" label="姓名" :rules="[required]"/>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="registerDialogOpen = false" />

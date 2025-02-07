@@ -83,7 +83,7 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
 
 export const register = onCall(globalFunctionOptions, async (request) => {
   const activeMeeting = await db.collection('meetings').where('active', '==', true).get();
-  if (activeMeeting.size == 0 || !activeMeeting.docs[0].data().register) {
+  if (activeMeeting.size == 0 || !activeMeeting.docs[0].data().registration) {
     throw new https.HttpsError(
       'permission-denied',
       `Registration disabled.`
