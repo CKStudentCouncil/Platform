@@ -12,6 +12,7 @@
       :loading="Object.values(meetings).length === 0"
       :rows="Object.values(meetings)"
       :title="`${reign} 會議管理`"
+      :visible-columns="$q.screen.gt.xs ? ['name', 'start', 'reign'] : ['name']"
       class="rounded-borders shadow-2 q-ma-md"
       color="primary"
       row-key="name"
@@ -44,20 +45,46 @@
             >
               <q-tooltip>選擇並管理提案</q-tooltip>
             </q-btn>
-            <q-btn class="text-amber-9 q-ml-sm q-mr-sm" icon="content_copy" round @click="copyLink(props.row)">
-              <q-tooltip>複製請假連結</q-tooltip>
-            </q-btn>
-            <q-btn class="text-brown-9 q-ml-sm q-mr-sm" icon="ios_share" round @click="exportAttendance(props.row)">
-              <q-tooltip>匯出出席狀況</q-tooltip>
-            </q-btn>
-            <q-btn class="text-brown-9 q-ml-sm q-mr-sm" icon="draw" round @click="exportMeetingRecord(props.row)">
-              <q-tooltip>起草會議記錄</q-tooltip>
-            </q-btn>
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
-            <q-btn class="text-red q-ml-sm q-mr-sm" icon="delete" round @click="del(props.row)">
-              <q-tooltip>刪除</q-tooltip>
+
+            <q-btn class="q-ml-sm q-mr-sm" flat icon="more_vert" round>
+              <q-tooltip>更多功能</q-tooltip>
+              <q-menu auto-close transition-hide="jump-up" transition-show="jump-down">
+                <q-list>
+                  <q-item clickable @click="copyLink(props.row)">
+                    <q-item-section avatar>
+                      <q-icon color="amber" name="content_copy" />
+                    </q-item-section>
+                    <q-item-section>複製請假連結</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="exportMeetingNotice(props.row)">
+                    <q-item-section avatar>
+                      <q-icon color="amber" name="draw" />
+                    </q-item-section>
+                    <q-item-section>起草開會通知單</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="exportMeetingRecord(props.row)">
+                    <q-item-section avatar>
+                      <q-icon color="brown" name="draw" />
+                    </q-item-section>
+                    <q-item-section>起草會議記錄</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="exportAttendance(props.row)">
+                    <q-item-section avatar>
+                      <q-icon color="brown" name="ios_share" />
+                    </q-item-section>
+                    <q-item-section>匯出出席狀況</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="del(props.row)">
+                    <q-item-section avatar>
+                      <q-icon color="red" name="delete" />
+                    </q-item-section>
+                    <q-item-section>刪除</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-btn>
           </q-td>
         </q-tr>
@@ -108,7 +135,7 @@ import {
   rawProposalCollection,
   rawVotableCollection,
   Role,
-  User,
+  User, Votable
 } from 'src/ts/models.ts';
 import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
 import { date, Dialog, Loading, QTableColumn } from 'quasar';
@@ -315,10 +342,12 @@ async function exportMeetingRecord(meeting: Meeting) {
       votables += exportVotingData(
         (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) => d.data()) as any,
       );
-      attachments.push({
-        urls: data.attachments,
-        description: `「${title}」關係文書附件`,
-      });
+      if (data.attachments.length > 0) {
+        attachments.push({
+          urls: data.attachments,
+          description: `「${title}」關係文書附件`,
+        });
+      }
     }
     const content = `<div style="font-size: medium">一、開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
 星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
@@ -346,6 +375,87 @@ ${votables}
     result.secretaryName = data.accounts.filter((u) => u.role === Role.Secretary)[0].name.replace(/ck[0-9]*/, '');
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
+    result.attachments = attachments;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(result));
+      window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+    } catch (e) {
+      Dialog.create({
+        title: '起草會議記錄',
+        message: '請將以下內容「全選」並複製到剪貼簿中，再按下OK，於新打開的頁面中允許貼上：',
+        persistent: true,
+        ok: true,
+        prompt: {
+          model: JSON.stringify(result),
+        },
+      }).onOk(async () => {
+        window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    notifyError('匯出失敗', e);
+  } finally {
+    Loading.hide();
+  }
+}
+
+async function exportMeetingNotice(meeting: Meeting) {
+  try {
+    const accounts = (await getAllUsers()) as User[];
+    const dow = ['日', '一', '二', '三', '四', '五', '六'][meeting.start.getDay()];
+    let proposals = '';
+    let count = 0;
+    const attachments = [];
+    Loading.show({ message: '正在取得提案資料' });
+    for (const proposal of (await getDocs(query(rawProposalCollection((meeting as any).id), orderBy('order')))).docs) {
+      count++;
+      const data = proposal.data();
+      const title = data.title;
+      proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
+      Loading.show({ message: '正在取得投票資料 - ' + title });
+      const votables = (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) => d.data()) as Votable[];
+      if (votables.length > 0) {
+        proposals += '<div style="font-size: medium">投票案：</font></div>';
+        let count = 0;
+        for (const votable of votables) {
+          count++;
+          proposals += `<div style="font-size: medium">(${count}) ${votable.question} (${votable.type.translation})</font></div>`;
+        }
+        proposals += '<div><br></div>';
+      }
+      if (data.attachments.length > 0) {
+        attachments.push({
+          urls: data.attachments,
+          description: `「${title}」關係文書附件`,
+        });
+      }
+    }
+    const result = {} as any;
+    const host = accounts.filter((u) => u.role === Role.Chair)[0]?.name.replace(/ck[0-9]*/, '');
+    result.content = `
+<div style="font-size: large">議程：</div>
+${proposals}
+<div style="font-size: medium">開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
+星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
+<div style="font-size: medium">開會地點：夢紅樓五樓 公民審議論壇教室</div>
+<div style="font-size: medium">會議主席：${host}</div>
+<div><br></div>
+<div style="font-size: medium">備註：</div>
+<div style="font-size: medium">一、請尚未加入本期間班級代表LINE社群的班代盡快加入，以便聯繫及接收最新開會資訊。</div>
+<div style="font-size: medium">二、班代大會為本校重要學生自治機關，請各位班級代表務必出席，不勝感激。不克出席者請請假或由同班同學代理。</div>
+<div style="font-size: medium">三、任何會議資料及會議相關事宜的更動皆會發布在本會社群。</div>`;
+    const realName = meeting.name.match(/\d*-\d (.*)/);
+    if (realName && realName.length > 1) {
+      result.subject = realName[1];
+    } else {
+      result.subject = meeting.name;
+    }
+    result.fromSpecific = 'Speaker';
+    result.toSpecific = ['StudentCouncilRepresentative'];
+    result.ccSpecific = ['Chairman', 'ViceChairman', 'JudicialCommitteeMember'];
+    result.location = '夢紅樓五樓 公民審議論壇教室';
+    result.type = 'MeetingNotice';
     result.attachments = attachments;
     try {
       await navigator.clipboard.writeText(JSON.stringify(result));
