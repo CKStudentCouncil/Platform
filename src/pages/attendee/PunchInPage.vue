@@ -16,11 +16,11 @@
 import { useRoute, useRouter } from 'vue-router';
 import { ref, watch } from 'vue';
 import { and, arrayUnion, getDocs, query, updateDoc, where } from 'firebase/firestore';
-import { Notify } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
 import LoginDialog from 'components/LoginDialog.vue';
 import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
+import { notifyError } from 'src/ts/utils.ts';
 
 const passcode = ref(useRoute().params.passcode as string);
 const tempPasscode = ref('');
@@ -52,10 +52,7 @@ async function punchIn() {
   }
   const meeting = await getDocs(query(rawMeetingCollection(), where('punchInPasscode', '==', passcode.value)));
   if (meeting.docs.length == 0) {
-    Notify.create({
-      message: '簽到碼錯誤',
-      color: 'negative',
-    });
+    notifyError('簽到碼錯誤', null);
     passcode.value = '';
     return;
   }

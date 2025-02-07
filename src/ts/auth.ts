@@ -1,11 +1,11 @@
 import { useFirebaseAuth } from 'vuefire';
 import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, User } from 'firebase/auth';
 import { reactive, Ref, ref } from 'vue';
-import { Loading, Notify } from 'quasar';
+import { Loading } from 'quasar';
 import * as models from 'src/ts/models.ts';
 import { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
-import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
@@ -61,25 +61,13 @@ export function login() {
       console.log('Logged in successfully.');
       loggedInUser.value = auth.currentUser;
       Loading.hide();
-      Notify.create({
-        message: '登入成功',
-        color: 'positive',
-        icon: 'check_circle',
-        position: 'top',
-        timeout: 2000,
-      });
+      notifySuccess('登入成功');
     })
     .catch((error) => {
       console.error('Failed to log in.');
       console.error(error);
       Loading.hide();
-      Notify.create({
-        message: '登入失敗',
-        color: 'negative',
-        icon: 'report_problem',
-        position: 'top',
-        timeout: 2000,
-      });
+      notifyError('登入失敗', error);
     });
 }
 
@@ -90,24 +78,12 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
     console.log('Logged in successfully.');
     loggedInUser.value = auth.currentUser;
     Loading.hide();
-    Notify.create({
-      message: '登入成功',
-      color: 'positive',
-      icon: 'check_circle',
-      position: 'top',
-      timeout: 2000,
-    });
+    notifySuccess('登入成功');
   } catch (e) {
     console.error('Failed to log in.');
     console.error(e);
     Loading.hide();
-    Notify.create({
-      message: '登入失敗',
-      color: 'negative',
-      icon: 'report_problem',
-      position: 'top',
-      timeout: 2000,
-    });
+    notifyError('登入失敗', e);
   }
 }
 

@@ -38,8 +38,8 @@
       </q-card-section>
       <q-card-section>
         <q-input v-model="target.question" label="問題" />
-        <q-select v-model="target.type" label="門檻" :options="Object.values(VotableType.VALUES)" :option-label="o=>o.translation" />
-        <q-btn @click="target.choices.push('是', '否')" color="primary">加入是/否</q-btn>
+        <q-select v-model="target.type" :option-label="(o) => o.translation" :options="Object.values(VotableType.VALUES)" label="門檻" />
+        <q-btn color="primary" @click="target.choices.push('是', '否')">加入是/否</q-btn>
         <ListEditor v-model="target.choices" />
       </q-card-section>
       <q-card-actions align="right">
@@ -56,9 +56,9 @@ import { rawVotableCollection, Votable, votableCollection, VotableType } from 's
 import { useRoute, useRouter } from 'vue-router';
 import { computed, reactive, ref } from 'vue';
 import { useFirestore } from 'vuefire';
-import { Dialog, Loading, Notify } from 'quasar';
+import { Dialog, Loading } from 'quasar';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { generateRandomText } from 'src/ts/utils.ts';
+import { generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 import { exportVotingData } from 'pages/mgmt/common.ts';
 
@@ -147,17 +147,11 @@ async function del(id: string) {
       await deleteDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as string), id));
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '刪除失敗',
-        color: 'negative',
-      });
+      notifyError('刪除失敗', e);
       return;
     }
     Loading.hide();
-    Notify.create({
-      message: '已刪除投票案件',
-      color: 'positive',
-    });
+    notifySuccess('成功刪除投票案件');
   });
 }
 
@@ -178,19 +172,13 @@ async function submit() {
     }
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '更新失敗',
-      color: 'negative',
-    });
+    notifyError('更新失敗', e);
     Loading.hide();
     return;
   }
   Loading.hide();
   action.value = '';
-  Notify.create({
-    message: '投票案件已更新',
-    color: 'positive',
-  });
+  notifySuccess('成功更新投票案件');
 }
 
 async function rearrange() {
@@ -207,18 +195,12 @@ async function rearrange() {
     await Promise.all(tasks);
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '重新排序失敗',
-      color: 'negative',
-    });
+    notifyError('重新排序失敗', e);
     Loading.hide();
     return;
   }
   Loading.hide();
-  Notify.create({
-    message: '提案已重新排序',
-    color: 'positive',
-  });
+  notifySuccess('成功重新排序投票案件');
 }
 
 async function showResults() {

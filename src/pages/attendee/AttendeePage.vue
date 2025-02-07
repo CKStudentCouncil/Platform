@@ -80,6 +80,7 @@ import {
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { Notify } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
+import { notifyError, notifySuccess } from 'src/ts/utils.ts';
 
 const id = ref(useRoute().params.id);
 const meeting = getMeeting(id.value as string);
@@ -162,10 +163,7 @@ async function select(choice: string) {
       );
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '投票失敗',
-        color: 'negative',
-      });
+      notifyError('投票失敗', e);
     }
     selectedChoice.value = null;
   } else {
@@ -178,16 +176,10 @@ async function requestToSpeak() {
     await updateDoc(doc(rawProposalCollection(id.value as string), activeProposalId.value!), {
       speakRequests: arrayUnion(loggedInUserClaims.clazz),
     });
-    Notify.create({
-      message: '請求發言成功',
-      color: 'positive',
-    });
+    notifySuccess('請求發言成功');
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '請求發言失敗',
-      color: 'negative',
-    });
+    notifyError('請求發言失敗', e);
   }
 }
 </script>

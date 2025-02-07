@@ -14,8 +14,9 @@
 import { getAllUsers } from 'src/ts/auth.ts';
 import { rawMeetingsOfCurrentReignQuery } from 'src/ts/models.ts';
 import ExcelJS from 'exceljs';
-import { exportFile, Loading, Notify } from 'quasar';
+import { exportFile, Loading } from 'quasar';
 import { getDocs } from 'firebase/firestore';
+import { notifyError } from 'src/ts/utils.ts';
 
 async function exp() {
   Loading.show();
@@ -68,20 +69,14 @@ async function exp() {
       });
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '匯出中途出現錯誤，可能會有若干筆資料遺失',
-        color: 'negative',
-      });
+      notifyError('匯出中途出現錯誤，可能會有若干筆資料遺失', e);
     }
   }
   sheet.autoFilter = 'A1:G1';
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   if (exportFile('出席情況.xlsx', blob) != true) {
-    Notify.create({
-      message: '匯出失敗',
-      color: 'negative',
-    });
+    notifyError('匯出失敗', null);
   }
   Loading.hide();
 }

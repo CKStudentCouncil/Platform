@@ -1,3 +1,6 @@
+import { Loading, Notify } from 'quasar';
+import { event } from 'vue-gtag';
+
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -14,6 +17,31 @@ export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
   return schoolNumber.startsWith('11100')
     ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
     : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
+}
+
+export function notifySuccess(message: string): void {
+  Loading.hide();
+  Notify.create({
+    message,
+    color: 'positive',
+    icon: 'check_circle',
+    position: 'top',
+  });
+}
+
+export function notifyError(message: string, exception: any): void {
+  Loading.hide();
+  Notify.create({
+    message,
+    color: 'negative',
+    icon: 'report_problem',
+    position: 'top',
+  });
+  event('exception', {
+    description: message + ': ' +  exception?.message,
+    stack: exception?.stack,
+    fatal: false,
+  })
 }
 
 const date = new Date();

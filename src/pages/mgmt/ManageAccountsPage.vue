@@ -65,9 +65,9 @@ import { computed, reactive, ref } from 'vue';
 import { User } from 'src/ts/models.ts';
 import { getAllUsers, rootUID, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
-import { Dialog, Loading, Notify, QTableColumn } from 'quasar';
+import { Dialog, Loading, QTableColumn } from 'quasar';
 import { useCurrentUser } from 'vuefire';
-import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
@@ -156,10 +156,7 @@ function bulkAddUser() {
           role: 50,
         });
       } else {
-        Notify.create({
-          message: '格式錯誤',
-          color: 'negative',
-        });
+        notifyError('格式錯誤', null);
         return;
       }
     }
@@ -167,16 +164,10 @@ function bulkAddUser() {
       await useFunction('bulkAddUser')(users);
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '更新失敗',
-        color: 'negative',
-      });
+      notifyError('新增失敗', null);
     }
     await load();
-    Notify.create({
-      message: '帳號資料已更新',
-      color: 'positive',
-    });
+    notifySuccess('帳號已批次新增');
   });
 }
 
@@ -196,16 +187,10 @@ function bulkRemoveUser() {
       await useFunction('bulkRemoveUser')({ users: data });
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '刪除失敗',
-        color: 'negative',
-      });
+      notifyError('刪除失敗', e);
     }
     await load();
-    Notify.create({
-      message: '帳號已批次刪除',
-      color: 'positive',
-    });
+    notifySuccess('帳號已批次刪除');
   });
 }
 
@@ -227,18 +212,12 @@ async function submit() {
     }
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '更新失敗',
-      color: 'negative',
-    });
+    notifyError('新增失敗', e);
   }
   Loading.hide();
   action.value = '';
   await load();
-  Notify.create({
-    message: '帳號資料已更新',
-    color: 'positive',
-  });
+  notifySuccess('成功新增帳號');
 }
 
 async function del(row: any) {
@@ -253,18 +232,12 @@ async function del(row: any) {
       await useFunction('deleteUser')({ uid: row.uid });
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '刪除失敗',
-        color: 'negative',
-      });
+      notifyError('刪除失敗', e);
       return;
     }
     Loading.hide();
     await load();
-    Notify.create({
-      message: '帳號資料已更新',
-      color: 'positive',
-    });
+    notifySuccess('成功刪除帳號');
   });
 }
 

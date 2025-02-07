@@ -14,11 +14,11 @@
 </template>
 
 <script lang="ts" setup>
-import { meetingCollectionOfCurrentReign, Meeting, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import { Meeting, meetingCollectionOfCurrentReign, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
-import { Notify } from 'quasar';
+import { notifyError, notifySuccess } from 'src/ts/utils.ts';
 
 const meetings = meetingCollectionOfCurrentReign();
 const recordTime = ref(true);
@@ -59,15 +59,9 @@ async function go() {
       await updateDoc(doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter), data);
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '開會失敗',
-        color: 'negative',
-      });
+      notifyError('開會失敗', e);
     }
-    Notify.create({
-      message: '已開會',
-      color: 'positive',
-    });
+    notifySuccess('成功開會');
   }
 }
 
@@ -80,15 +74,9 @@ async function adjourn() {
       });
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '散會失敗',
-        color: 'negative',
-      });
+      notifyError('散會失敗', e);
     }
-    Notify.create({
-      message: '已散會',
-      color: 'positive',
-    });
+    notifySuccess('成功散會');
   }
 }
 </script>

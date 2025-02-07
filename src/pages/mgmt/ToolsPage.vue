@@ -17,7 +17,8 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { getAllUsers } from 'src/ts/auth.ts';
-import { Notify } from 'quasar';
+import { Loading } from 'quasar';
+import { notifyError, notifySuccess } from 'src/ts/utils.ts';
 
 const input = ref('');
 const tab = ref('classTransformation');
@@ -31,10 +32,19 @@ const choices = ref([
 const from = ref(choices.value[0]);
 const to = ref(choices.value[1]);
 const accounts = [] as any[];
-getAllUsers().then((users) => {
-  accounts.push(...(users as any[]));
-  Notify.create({ message: '資料載入完成', color: 'positive' });
-});
+Loading.show({ message: '載入資料中' });
+getAllUsers()
+  .then((users) => {
+    accounts.push(...(users as any[]));
+    notifySuccess('資料載入完成');
+  })
+  .catch((e) => {
+    console.error(e);
+    notifyError('資料載入失敗', e);
+  })
+  .finally(() => {
+    Loading.hide();
+  });
 
 async function transform() {
   const lines = input.value.split('\n');

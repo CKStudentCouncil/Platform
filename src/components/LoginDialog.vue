@@ -105,8 +105,8 @@
 import { login, loginWithCredentials } from 'src/ts/auth.ts';
 import { computed, ref } from 'vue';
 import { useFunction } from 'boot/vuefire.ts';
-import { schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
-import { Loading, Notify } from 'quasar';
+import { notifyError, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { Loading } from 'quasar';
 
 const emit = defineEmits(['update:modelValue']);
 const props = defineProps({
@@ -148,7 +148,7 @@ async function submitRegistration() {
     simpleLogin();
   } catch (e) {
     console.error(e);
-    Notify.create({ color: 'negative', message: '註冊失敗' });
+    notifyError('註冊失敗', e);
   }
   Loading.hide();
 }

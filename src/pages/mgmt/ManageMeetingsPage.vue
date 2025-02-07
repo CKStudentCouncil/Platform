@@ -111,9 +111,9 @@ import {
   User,
 } from 'src/ts/models.ts';
 import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
-import { date, Dialog, Loading, Notify, QTableColumn } from 'quasar';
+import { date, Dialog, Loading, QTableColumn } from 'quasar';
 import { useFirestore } from 'vuefire';
-import { currentReign, generateRandomText } from 'src/ts/utils.ts';
+import { currentReign, generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { exportVotingData } from 'pages/mgmt/common.ts';
@@ -133,7 +133,17 @@ const columns = [
 const pagination = ref({ sortBy: 'start', descending: true });
 const filter = ref('');
 const action = ref('');
-const targetMeeting = reactive({} as { id: string; name: string; startDate: string; startTime: string; reign: string; registration: boolean; punchInPasscode: string });
+const targetMeeting = reactive(
+  {} as {
+    id: string;
+    name: string;
+    startDate: string;
+    startTime: string;
+    reign: string;
+    registration: boolean;
+    punchInPasscode: string;
+  },
+);
 const db = useFirestore();
 const route = useRoute();
 const router = useRouter();
@@ -206,17 +216,11 @@ async function submit() {
     }
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '更新失敗',
-      color: 'negative',
-    });
+    notifyError('更新失敗', e);
   }
   Loading.hide();
   action.value = '';
-  Notify.create({
-    message: '會議已更新',
-    color: 'positive',
-  });
+  notifySuccess('成功更新會議');
 }
 
 async function del(row: any) {
@@ -231,27 +235,18 @@ async function del(row: any) {
       await deleteDoc(doc(rawMeetingCollection(), row.id));
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '刪除失敗',
-        color: 'negative',
-      });
+      notifyError('刪除失敗', e);
       return;
     }
     Loading.hide();
-    Notify.create({
-      message: '已刪除會議',
-      color: 'positive',
-    });
+    notifySuccess('成功刪除會議');
   });
 }
 
 async function copyLink(row: any) {
   const url = window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
   await navigator.clipboard.writeText(url);
-  Notify.create({
-    message: '已複製請假連結',
-    color: 'positive',
-  });
+  notifySuccess('已複製請假連結');
 }
 
 async function getAttendanceData(meeting: Meeting) {
@@ -294,10 +289,7 @@ async function exportAttendance(meeting: Meeting) {
     });
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '匯出失敗',
-      color: 'negative',
-    });
+    notifyError('匯出失敗', e);
   } finally {
     Loading.hide();
   }
@@ -367,16 +359,13 @@ ${votables}
         prompt: {
           model: JSON.stringify(result),
         },
-      }).onOk(async (data: any) => {
+      }).onOk(async () => {
         window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
       });
     }
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '起草失敗',
-      color: 'negative',
-    });
+    notifyError('匯出失敗', e);
   } finally {
     Loading.hide();
   }

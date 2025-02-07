@@ -3,11 +3,7 @@
     <q-tabs align="left">
       <q-route-tab :to="`/meeting_host`" label="開會" />
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
-      <q-route-tab
-        v-if="selectedMeeting"
-        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`"
-        label="審理議案"
-      />
+      <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="審理議案" />
     </q-tabs>
     <q-tabs align="left">
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="議程" />
@@ -43,12 +39,7 @@
         <ProposalDisplay :proposal="selectedProposal" endable @end="endProposal" />
       </div>
       <div class="col-5">
-        <q-btn
-          color="primary"
-          icon="settings"
-          label="管理投票案件"
-          @click="managingVotables = true"
-        />
+        <q-btn color="primary" icon="settings" label="管理投票案件" @click="managingVotables = true" />
         <q-card
           v-for="votable of votables.sort((a, b) => a!.order - b!.order)"
           :key="votable!.order"
@@ -72,8 +63,11 @@
   <q-dialog v-model="managingVotables">
     <q-card>
       <q-card-section>
-        <q-toolbar><q-space/><q-btn flat round dense icon="close" v-close-popup /></q-toolbar>
-        <ManageVotablesPage embed :proposal="route.params.proposalId as string" :meeting="route.params.id as string"/>
+        <q-toolbar>
+          <q-space />
+          <q-btn v-close-popup dense flat icon="close" round />
+        </q-toolbar>
+        <ManageVotablesPage :meeting="route.params.id as string" :proposal="route.params.proposalId as string" embed />
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -81,18 +75,13 @@
 
 <script lang="ts" setup>
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
-import {
-  getMeeting,
-  getProposal,
-  rawMeetingCollection,
-  rawProposalCollection,
-  votableCollection,
-} from 'src/ts/models.ts';
+import { getMeeting, getProposal, rawMeetingCollection, rawProposalCollection, votableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
-import { Notify, QBtn, QItemSection } from 'quasar';
+import { QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import ManageVotablesPage from 'pages/mgmt/ManageVotablesPage.vue';
+import { notifyError } from 'src/ts/utils.ts';
 
 const route = useRoute();
 const selectedMeeting = getMeeting(route.params.id as string);
@@ -119,10 +108,7 @@ async function selectVotable(votable: any) {
     await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}/vote/${votable.id}`);
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '開始審理失敗',
-      color: 'negative',
-    });
+    notifyError('開始審理失敗', e);
   }
 }
 
@@ -134,10 +120,7 @@ async function endProposal() {
     await router.push(`/meeting_host/${route.params.id}/agenda`);
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '結束議案失敗',
-      color: 'negative',
-    });
+    notifyError('結束議案失敗', e);
   }
 }
 

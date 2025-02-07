@@ -25,8 +25,8 @@ import { useRoute } from 'vue-router';
 import LoginDialog from 'components/LoginDialog.vue';
 import { computed, ref, watch } from 'vue';
 import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
-import { Notify } from 'quasar';
 import { deleteField, doc, updateDoc } from 'firebase/firestore';
+import { notifyError } from 'src/ts/utils.ts';
 
 const route = useRoute();
 let meetingId = ref(route.params.id as string);
@@ -38,16 +38,20 @@ if (!loggedInUser.value) {
   loginDialog.value = true;
 }
 
-watch(loggedInUser, async (user) => {
-  console.log('user', user);
-  if (user) {
-    loginDialog.value = false;
-    meetingId.value = 'reload_dummy';
-    meetingId.value = route.params.id as string;
-  } else {
-    loginDialog.value = true;
-  }
-}, { deep: true });
+watch(
+  loggedInUser,
+  async (user) => {
+    console.log('user', user);
+    if (user) {
+      loginDialog.value = false;
+      meetingId.value = 'reload_dummy';
+      meetingId.value = route.params.id as string;
+    } else {
+      loginDialog.value = true;
+    }
+  },
+  { deep: true },
+);
 
 watch(
   meeting,
@@ -65,10 +69,7 @@ async function updateAbsenceReason(meeting: any) {
 
 async function scheduleAbsence() {
   if (!reason.value || reason.value.length == 0 || reason.value.trim().length == 0) {
-    Notify.create({
-      message: '請填寫請假原因',
-      color: 'negative',
-    });
+    notifyError('請填寫請假原因', null);
     return;
   }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {

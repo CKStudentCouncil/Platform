@@ -35,12 +35,12 @@
           </div>
           <q-btn
             v-if="(selectedVotable.results[choice] == undefined ? 0 : (selectedVotable.results[choice] as string[]).length) >= threshold"
+            :label="'已過' + thresholdLabel"
             color="positive"
             flat
             icon="check"
-            :label="'已過' + thresholdLabel"
           />
-          <q-btn v-else color="negative" flat icon="close" :label="'未過' + thresholdLabel" />
+          <q-btn v-else :label="'未過' + thresholdLabel" color="negative" flat icon="close" />
         </q-card-section>
         <q-separator />
         <q-card-section>
@@ -57,8 +57,8 @@
 import { useRoute, useRouter } from 'vue-router';
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
 import { getMeeting, getProposal, getVotable, rawProposalCollection, rawVotableCollection, VotableType } from 'src/ts/models.ts';
-import { Notify } from 'quasar';
 import { computed } from 'vue';
+import { notifyError } from 'src/ts/utils.ts';
 
 const route = useRoute();
 const router = useRouter();
@@ -110,10 +110,7 @@ async function endVote() {
     await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}`);
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '結束投票失敗',
-      color: 'negative',
-    });
+    notifyError('結束投票失敗', e);
   }
 }
 </script>

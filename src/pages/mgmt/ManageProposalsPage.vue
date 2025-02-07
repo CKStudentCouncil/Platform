@@ -7,9 +7,9 @@
         label="提案"
       />
       <q-route-tab
+        :disable="!selected"
         :to="`/meetings/${$route.params.id.length == 0 ? '' : $route.params.id + '/'}proposals/${$route.params.proposalId.length == 0 ? '' : $route.params.proposalId + '/'}votables`"
         label="投票案件"
-        :disable="!selected"
       />
     </q-tabs>
     <span v-if="$route.params.id.length == 0">請先選擇一個會議</span>
@@ -58,11 +58,11 @@
 import { getMeeting, Proposal, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { Dialog, Loading, Notify } from 'quasar';
+import { Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { computed, reactive, ref } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
-import { generateRandomText } from 'src/ts/utils.ts';
+import { generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
@@ -123,17 +123,11 @@ async function del(id: string) {
       await deleteDoc(doc(rawProposalCollection(route.params.id as string), id));
     } catch (e) {
       console.error(e);
-      Notify.create({
-        message: '刪除失敗',
-        color: 'negative',
-      });
+      notifyError('刪除失敗', e);
       return;
     }
     Loading.hide();
-    Notify.create({
-      message: '已刪除提案',
-      color: 'positive',
-    });
+    notifySuccess('成功刪除提案');
   });
 }
 
@@ -158,19 +152,13 @@ async function submit() {
     }
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '更新失敗',
-      color: 'negative',
-    });
+    notifyError('更新失敗', e);
     Loading.hide();
     return;
   }
   Loading.hide();
   action.value = '';
-  Notify.create({
-    message: '提案已更新',
-    color: 'positive',
-  });
+  notifySuccess('更新成功');
 }
 
 async function rearrange() {
@@ -187,18 +175,12 @@ async function rearrange() {
     await Promise.all(tasks);
   } catch (e) {
     console.error(e);
-    Notify.create({
-      message: '重新排序失敗',
-      color: 'negative',
-    });
+    notifyError('重新排序失敗', e);
     Loading.hide();
     return;
   }
   Loading.hide();
-  Notify.create({
-    message: '提案已重新排序',
-    color: 'positive',
-  });
+  notifySuccess('成功重新排序');
 }
 
 function addAttachments(a: string[]) {
