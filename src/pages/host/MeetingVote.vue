@@ -109,7 +109,6 @@ async function endVote() {
     });
     await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}`);
   } catch (e) {
-    console.error(e);
     notifyError('結束投票失敗', e);
   }
 }

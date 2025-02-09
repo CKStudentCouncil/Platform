@@ -167,7 +167,6 @@ async function submitRegistration() {
     registerDialogOpen.value = false;
     simpleLogin();
   } catch (e) {
-    console.error(e);
     notifyError('註冊失敗', e);
   }
   Loading.hide();

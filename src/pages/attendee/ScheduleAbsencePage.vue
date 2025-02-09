@@ -69,7 +69,7 @@ async function updateAbsenceReason(meeting: any) {
 
 async function scheduleAbsence() {
   if (!reason.value || reason.value.length == 0 || reason.value.trim().length == 0) {
-    notifyError('請填寫請假原因', null);
+    notifyError('請填寫請假原因');
     return;
   }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {

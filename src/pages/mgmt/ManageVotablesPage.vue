@@ -143,7 +143,6 @@ async function del(id: string) {
     try {
       await deleteDoc(doc(rawVotableCollection(meetingId, proposalId), id));
     } catch (e) {
-      console.error(e);
       notifyError('刪除失敗', e);
       return;
     }
@@ -168,7 +167,6 @@ async function submit() {
       await setDoc(doc(db, `meetings/${meetingId}/proposals/${proposalId}/votables`, generateRandomText(6, null)), data);
     }
   } catch (e) {
-    console.error(e);
     notifyError('更新失敗', e);
     Loading.hide();
     return;
@@ -191,7 +189,6 @@ async function rearrange() {
     }
     await Promise.all(tasks);
   } catch (e) {
-    console.error(e);
     notifyError('重新排序失敗', e);
     Loading.hide();
     return;

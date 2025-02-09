@@ -13,8 +13,8 @@
         </q-toolbar-title>
 
         <q-btn v-if="$q.screen.gt.xs" flat icon="fullscreen" @click="toggleFullscreen" />
-        <q-btn v-if="!loggedInUser" align="right" dense flat icon="login" round @click="loginDialogOpen = true">登入</q-btn>
-        <q-btn v-if="$q.screen.gt.xs && loggedInUser" align="right" dense flat icon="logout" round @click="logout()">登出</q-btn>
+        <q-btn v-if="!loggedInUser" align="right" dense flat icon="login" @click="loginDialogOpen = true">登入</q-btn>
+        <q-btn v-if="$q.screen.gt.xs && loggedInUser" align="right" dense flat icon="logout" @click="logout()">登出</q-btn>
       </q-toolbar>
     </q-header>
 

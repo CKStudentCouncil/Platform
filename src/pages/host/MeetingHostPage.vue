@@ -58,7 +58,6 @@ async function go() {
       }
       await updateDoc(doc(db, 'meetings', meeting.value.id).withConverter(meetingConverter), data);
     } catch (e) {
-      console.error(e);
       notifyError('開會失敗', e);
     }
     notifySuccess('成功開會');
@@ -73,7 +72,6 @@ async function adjourn() {
         end: new Date(),
       });
     } catch (e) {
-      console.error(e);
       notifyError('散會失敗', e);
     }
     notifySuccess('成功散會');

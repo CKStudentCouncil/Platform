@@ -83,7 +83,6 @@ async function selectProposal(proposal: ProposalId) {
     });
     await router.push(`/meeting_host/${route.params.id}/agenda/${proposal.id}`);
   } catch (e) {
-    console.error(e);
     notifyError('開始審理失敗', e);
   }
 }

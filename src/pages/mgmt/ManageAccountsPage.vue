@@ -156,15 +156,14 @@ function bulkAddUser() {
           role: 50,
         });
       } else {
-        notifyError('格式錯誤', null);
+        notifyError('格式錯誤');
         return;
       }
     }
     try {
       await useFunction('bulkAddUser')(users);
     } catch (e) {
-      console.error(e);
-      notifyError('新增失敗', null);
+      notifyError('新增失敗');
     }
     await load();
     notifySuccess('帳號已批次新增');
@@ -186,7 +185,6 @@ function bulkRemoveUser() {
     try {
       await useFunction('bulkRemoveUser')({ users: data });
     } catch (e) {
-      console.error(e);
       notifyError('刪除失敗', e);
     }
     await load();
@@ -211,7 +209,6 @@ async function submit() {
       await useFunction('addUser')(targetUser);
     }
   } catch (e) {
-    console.error(e);
     notifyError('新增失敗', e);
   }
   Loading.hide();
@@ -231,7 +228,6 @@ async function del(row: any) {
     try {
       await useFunction('deleteUser')({ uid: row.uid });
     } catch (e) {
-      console.error(e);
       notifyError('刪除失敗', e);
       return;
     }

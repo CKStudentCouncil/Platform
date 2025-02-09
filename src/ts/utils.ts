@@ -1,4 +1,4 @@
-import { Loading, Notify } from 'quasar';
+import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
@@ -20,7 +20,6 @@ export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
 }
 
 export function notifySuccess(message: string): void {
-  Loading.hide();
   Notify.create({
     message,
     color: 'positive',
@@ -29,19 +28,20 @@ export function notifySuccess(message: string): void {
   });
 }
 
-export function notifyError(message: string, exception: any): void {
-  Loading.hide();
+export function notifyError(message: string, exception?: any): void {
   Notify.create({
     message,
     color: 'negative',
     icon: 'report_problem',
     position: 'top',
   });
-  event('exception', {
-    description: message + ': ' +  exception?.message,
-    stack: exception?.stack,
-    fatal: false,
-  })
+  if (exception) {
+    event('exception', {
+      description: message + ': ' +  exception?.message,
+      stack: exception?.stack,
+      fatal: false,
+    })
+  }
 }
 
 const date = new Date();

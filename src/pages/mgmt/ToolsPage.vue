@@ -39,7 +39,6 @@ getAllUsers()
     notifySuccess('資料載入完成');
   })
   .catch((e) => {
-    console.error(e);
     notifyError('資料載入失敗', e);
   })
   .finally(() => {

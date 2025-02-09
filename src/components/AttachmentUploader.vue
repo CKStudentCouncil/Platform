@@ -49,7 +49,6 @@ async function upload() {
         results.push(url);
         notifySuccess('上傳成功');
       } catch (e) {
-        console.error(e);
         notifyError('上傳失敗', e);
       }
       completed++;

@@ -68,7 +68,6 @@ async function exp() {
         awardType,
       });
     } catch (e) {
-      console.error(e);
       notifyError('匯出中途出現錯誤，可能會有若干筆資料遺失', e);
     }
   }
@@ -76,7 +75,7 @@ async function exp() {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   if (exportFile('出席情況.xlsx', blob) != true) {
-    notifyError('匯出失敗', null);
+    notifyError('匯出失敗');
   }
   Loading.hide();
 }

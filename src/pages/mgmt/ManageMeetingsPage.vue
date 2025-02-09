@@ -242,7 +242,6 @@ async function submit() {
       } as unknown as Meeting);
     }
   } catch (e) {
-    console.error(e);
     notifyError('更新失敗', e);
   }
   Loading.hide();
@@ -261,7 +260,6 @@ async function del(row: any) {
     try {
       await deleteDoc(doc(rawMeetingCollection(), row.id));
     } catch (e) {
-      console.error(e);
       notifyError('刪除失敗', e);
       return;
     }
@@ -315,7 +313,6 @@ async function exportAttendance(meeting: Meeting) {
       html: true,
     });
   } catch (e) {
-    console.error(e);
     notifyError('匯出失敗', e);
   } finally {
     Loading.hide();
@@ -393,7 +390,6 @@ ${votables}
       });
     }
   } catch (e) {
-    console.error(e);
     notifyError('匯出失敗', e);
   } finally {
     Loading.hide();
@@ -474,7 +470,6 @@ ${proposals}
       });
     }
   } catch (e) {
-    console.error(e);
     notifyError('匯出失敗', e);
   } finally {
     Loading.hide();

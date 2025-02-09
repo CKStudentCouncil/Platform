@@ -107,7 +107,6 @@ async function selectVotable(votable: any) {
     });
     await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}/vote/${votable.id}`);
   } catch (e) {
-    console.error(e);
     notifyError('開始審理失敗', e);
   }
 }
@@ -119,7 +118,6 @@ async function endProposal() {
     });
     await router.push(`/meeting_host/${route.params.id}/agenda`);
   } catch (e) {
-    console.error(e);
     notifyError('結束議案失敗', e);
   }
 }

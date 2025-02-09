@@ -65,7 +65,6 @@ export function login() {
     })
     .catch((error) => {
       console.error('Failed to log in.');
-      console.error(error);
       Loading.hide();
       notifyError('登入失敗', error);
     });
@@ -81,7 +80,6 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
     notifySuccess('登入成功');
   } catch (e) {
     console.error('Failed to log in.');
-    console.error(e);
     Loading.hide();
     notifyError('登入失敗', e);
   }

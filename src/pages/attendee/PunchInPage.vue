@@ -52,7 +52,7 @@ async function punchIn() {
   }
   const meeting = await getDocs(query(rawMeetingCollection(), where('punchInPasscode', '==', passcode.value)));
   if (meeting.docs.length == 0) {
-    notifyError('簽到碼錯誤', null);
+    notifyError('簽到碼錯誤');
     passcode.value = '';
     return;
   }

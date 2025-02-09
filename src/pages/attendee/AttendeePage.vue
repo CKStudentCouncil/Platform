@@ -162,7 +162,6 @@ async function select(choice: string) {
         update,
       );
     } catch (e) {
-      console.error(e);
       notifyError('投票失敗', e);
     }
     selectedChoice.value = null;
@@ -178,7 +177,6 @@ async function requestToSpeak() {
     });
     notifySuccess('請求發言成功');
   } catch (e) {
-    console.error(e);
     notifyError('請求發言失敗', e);
   }
 }
