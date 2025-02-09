@@ -323,7 +323,6 @@ async function exportMeetingRecord(meeting: Meeting) {
   Loading.show({ message: '正在取得出席資料' });
   try {
     const data = await getAttendanceData(meeting);
-    const dow = ['日', '一', '二', '三', '四', '五', '六'][meeting.start.getDay()];
     let proposals = '';
     let votables = '';
     let count = 0;
@@ -346,13 +345,12 @@ async function exportMeetingRecord(meeting: Meeting) {
         });
       }
     }
-    const content = `<div style="font-size: medium">一、開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
-星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
-<div style="font-size: medium">二、出席狀況：</font></div>
+    const content = `
+<div style="font-size: medium">一、出席狀況：</font></div>
 <div style="font-size: medium">1. 出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</font></div>
 <div style="font-size: medium">2. 請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length}人</font></div>
 <div style="font-size: medium">3. 缺席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</font></div>
-<div style="font-size: medium">三、議案以及決議</font></div>
+<div style="font-size: medium">二、議案與決議</font></div>
 <div style="font-size: medium">(一) 議案順序：</font></div>
 ${proposals}
 <div style="font-size: medium">(二) 議案決議</font></div>
@@ -373,6 +371,7 @@ ${votables}
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
     result.attachments = attachments;
+    result.meetingTime = meeting.start.valueOf();
     try {
       await navigator.clipboard.writeText(JSON.stringify(result));
       window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
@@ -399,7 +398,6 @@ ${votables}
 async function exportMeetingNotice(meeting: Meeting) {
   try {
     const accounts = (await getAllUsers()) as User[];
-    const dow = ['日', '一', '二', '三', '四', '五', '六'][meeting.start.getDay()];
     let proposals = '';
     let count = 0;
     const attachments = [];
@@ -432,11 +430,8 @@ async function exportMeetingNotice(meeting: Meeting) {
     result.content = `
 <div style="font-size: large">議程：</div>
 ${proposals}
-<div style="font-size: medium">開會時間：中華民國${meeting.start.getFullYear() - 1911}年${meeting.start.getMonth() + 1}月${meeting.start.getDate()}日
-星期${dow} ${meeting.start.getHours()}時${meeting.start.getMinutes()}分</font></div>
-<div style="font-size: medium">開會地點：夢紅樓五樓 公民審議論壇教室</div>
-<div style="font-size: medium">會議主席：${host}</div>
 <div><br></div>
+<div style="font-size: medium">會議主席：${host}</div>
 <div style="font-size: medium">備註：</div>
 <div style="font-size: medium">一、請尚未加入本期間班級代表LINE社群的班代盡快加入，以便聯繫及接收最新開會資訊。</div>
 <div style="font-size: medium">二、班代大會為本校重要學生自治機關，請各位班級代表務必出席，不勝感激。不克出席者請請假或由同班同學代理。</div>
@@ -453,6 +448,7 @@ ${proposals}
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'MeetingNotice';
     result.attachments = attachments;
+    result.meetingTime = meeting.start.valueOf();
     try {
       await navigator.clipboard.writeText(JSON.stringify(result));
       window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
