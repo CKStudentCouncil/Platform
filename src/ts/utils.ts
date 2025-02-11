@@ -36,6 +36,7 @@ export function notifyError(message: string, exception?: any): void {
     position: 'top',
   });
   if (exception) {
+    console.error(exception);
     event('exception', {
       description: message + ': ' +  exception?.message,
       stack: exception?.stack,
