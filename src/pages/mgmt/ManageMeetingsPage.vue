@@ -232,7 +232,7 @@ async function submit() {
         active: false,
         name: targetMeeting.name,
         participants: [],
-        punchInPasscode: targetMeeting.registration ? generateRandomText(6, 'reg') : 'reg' + generateRandomText(3, null),
+        punchInPasscode: targetMeeting.registration ? 'reg' + generateRandomText(3, null) : generateRandomText(6, 'reg'),
         signedOff: [],
         start: d,
         activeProposal: null,
@@ -365,9 +365,11 @@ ${votables}
       result.subject = meeting.name;
     }
     result.fromSpecific = 'Speaker';
-    result.fromName = data.accounts.filter((u) => u.role === Role.Chair)[0].name.replace(/ck[0-9]*/, '');
+    const chairs = data.accounts.filter((u) => u.role === Role.Chair);
+    result.fromName = chairs.length > 0 ? chairs[0].name.replace(/ck[0-9]*/, '') : '找不到議長';
     result.secretarySpecific = 'StudentCouncilSecretary';
-    result.secretaryName = data.accounts.filter((u) => u.role === Role.Secretary)[0].name.replace(/ck[0-9]*/, '');
+    const secretaries = data.accounts.filter((u) => u.role === Role.Secretary);
+    result.secretaryName = secretaries.length > 0 ? secretaries[0].name.replace(/ck[0-9]*/, '') : '找不到秘書';
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
     result.attachments = attachments;
@@ -426,7 +428,11 @@ async function exportMeetingNotice(meeting: Meeting) {
       }
     }
     const result = {} as any;
-    const host = accounts.filter((u) => u.role === Role.Chair)[0]?.name.replace(/ck[0-9]*/, '');
+    const chairs = accounts.filter((u) => u.role === Role.Chair);
+    let host = '找不到議長';
+    if (chairs.length > 0) {
+      host = chairs[0].name.replace(/ck[0-9]*/, '');
+    }
     result.content = `
 <div style="font-size: large">議程：</div>
 ${proposals}

@@ -48,8 +48,8 @@
         <q-input v-model="targetUser.name" :disable="action == 'edit'" :readonly="action == 'edit'" label="姓名" />
         <q-input v-model="targetUser.email" :disable="action == 'edit'" :readonly="action == 'edit'" label="Email" />
         <q-input v-model="targetUser.schoolNumber" label="學號" />
-        <q-input v-model="targetUser.seatNumber" label="座號" />
         <q-input v-model="targetUser.clazz" label="班級" />
+        <q-input v-model="targetUser.seatNumber" label="座號" />
         <q-select v-model="targetUser.role" :options="roleOptions" emit-value label="身分" />
       </q-card-section>
       <q-card-actions align="right">
