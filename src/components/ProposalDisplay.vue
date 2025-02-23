@@ -12,24 +12,20 @@
     <q-card-section>
       <div class="text-subtitle1">附件：</div>
       <q-list>
-        <q-item
-          v-for="attachment of proposal.attachments"
-          :key="attachment"
-          v-ripple
-          :href="attachment"
-          clickable
-          target="_blank"
-        >
+        <q-item v-for="attachment of proposal.attachments" :key="attachment">
           <q-item-section>{{ attachment }}</q-item-section>
           <q-item-section side>
-            <q-icon name="visibility" />
+            <q-btn :href="attachment" flat icon="open_in_new" target="_blank" />
+          </q-item-section>
+          <q-item-section side>
+            <q-btn flat icon="visibility" @click="activeUrl = attachment" />
           </q-item-section>
         </q-item>
       </q-list>
     </q-card-section>
     <q-separator />
     <q-card-actions v-if="editable">
-      <q-btn color="positive" flat v-if="selectable" label="選擇並檢視投票案件" @click="$emit('select', proposal.id)" />
+      <q-btn v-if="selectable" color="positive" flat label="選擇並檢視投票案件" @click="$emit('select', proposal.id)" />
       <q-btn color="primary" flat label="編輯" @click="$emit('edit', proposal.id)" />
       <q-btn color="negative" flat label="刪除" @click="$emit('del', proposal.id)" />
     </q-card-actions>
@@ -37,10 +33,22 @@
       <q-btn color="negative" flat icon="stop" label="結束議案" @click="$emit('end', proposal.id)" />
     </q-card-actions>
   </q-card>
+  <q-dialog :model-value="!!activeUrl" persistent>
+    <q-card style="min-width: 60vw">
+      <q-card-section style="width: 100%">
+        <q-btn style="float:right" class="q-mb-sm" flat icon="close" @click="activeUrl = ''" />
+        <q-btn style="float:right" flat :href="activeUrl" icon="open_in_new" target="_blank" />
+      </q-card-section>
+      <q-card-section>
+        <iframe :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" height="700" width="100%" />
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script lang="ts" setup>
 import { QBtn } from 'quasar';
+import { ref } from 'vue';
 
 defineProps({
   proposal: {
@@ -58,7 +66,7 @@ defineProps({
   selectable: {
     type: Boolean,
     default: true,
-  }
+  },
 });
 
 defineEmits<{
@@ -67,6 +75,24 @@ defineEmits<{
   del: [proposalId: string];
   end: [proposalId: string];
 }>();
+
+const activeUrl = ref('');
+
+function getGoogleFileEmbed(input: string) {
+  let file_id = null;
+  const driveCapture = input.match(/https:\/\/drive\.google\.com\/file\/d\/(.*)\/view.*/);
+  if (driveCapture && driveCapture.length > 1) {
+    file_id = driveCapture[1];
+  }
+  const documentCapture = input.match(/https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/(.*)\/edit.*/);
+  if (documentCapture && documentCapture.length > 2) {
+    file_id = documentCapture[2];
+  }
+  if (file_id) {
+    return `https://drive.google.com/file/d/${file_id}/preview`;
+  }
+  return input;
+}
 </script>
 
 <style scoped></style>
