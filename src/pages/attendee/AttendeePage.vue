@@ -3,7 +3,7 @@
     <div v-if="!activeProposal || !activeProposal.value" class="text-h6">請等待會議主席開始審理議案</div>
     <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
       <div class="text-h6">正在審理議案</div>
-      <q-btn color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
+      <q-btn class="q-mb-md" color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
       <ProposalDisplay :proposal="activeProposal.value" />
     </div>
     <div v-if="activeVotable && activeVotable.value">

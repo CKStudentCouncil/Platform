@@ -13,12 +13,16 @@
       <div class="text-subtitle1">附件：</div>
       <q-list>
         <q-item v-for="attachment of proposal.attachments" :key="attachment">
-          <q-item-section>{{ attachment }}</q-item-section>
+          <q-item-section style="overflow-wrap: anywhere">{{ attachment }}</q-item-section>
           <q-item-section side>
-            <q-btn :href="attachment" flat icon="open_in_new" target="_blank" />
+            <q-btn :dense="$q.screen.lt.sm" :href="attachment" flat icon="open_in_new" target="_blank">
+              <q-tooltip>在新視窗開啟</q-tooltip>
+            </q-btn>
           </q-item-section>
           <q-item-section side>
-            <q-btn flat icon="visibility" @click="activeUrl = attachment" />
+            <q-btn :dense="$q.screen.lt.sm" flat icon="visibility" @click="activeUrl = attachment">
+              <q-tooltip>在網頁內預覽</q-tooltip>
+            </q-btn>
           </q-item-section>
         </q-item>
       </q-list>
@@ -36,8 +40,8 @@
   <q-dialog :model-value="!!activeUrl" persistent>
     <q-card style="min-width: 60vw">
       <q-card-section style="width: 100%">
-        <q-btn style="float:right" class="q-mb-sm" flat icon="close" @click="activeUrl = ''" />
-        <q-btn style="float:right" flat :href="activeUrl" icon="open_in_new" target="_blank" />
+        <q-btn class="q-mb-sm" flat icon="close" style="float: right" @click="activeUrl = ''" />
+        <q-btn :href="activeUrl" flat icon="open_in_new" style="float: right" target="_blank" />
       </q-card-section>
       <q-card-section>
         <iframe :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" height="700" width="100%" />
