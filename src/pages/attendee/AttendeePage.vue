@@ -4,36 +4,7 @@
     <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
       <div class="text-h6">正在審理議案</div>
       <q-btn color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">{{ activeProposal.value!.title }}</div>
-        </q-card-section>
-        <q-separator />
-        <q-card-section>
-          <div class="text-subtitle1">提案人：{{ activeProposal.value!.proposer }}</div>
-          <div>{{ activeProposal.value!.content }}</div>
-        </q-card-section>
-        <q-separator />
-        <q-card-section>
-          <div class="text-subtitle1">附件：</div>
-          <q-list>
-            <q-item
-              v-for="attachment of activeProposal.value!.attachments"
-              :key="attachment"
-              v-ripple
-              :href="attachment"
-              clickable
-              target="_blank"
-            >
-              <q-item-section>{{ attachment }}</q-item-section>
-              <q-item-section side>
-                <q-icon name="visibility" />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-        <q-separator />
-      </q-card>
+      <ProposalDisplay :proposal="activeProposal.value" />
     </div>
     <div v-if="activeVotable && activeVotable.value">
       <div class="text-h6">請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改</div>
@@ -81,6 +52,7 @@ import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { Notify } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
+import ProposalDisplay from 'components/ProposalDisplay.vue';
 
 const id = ref(useRoute().params.id);
 const meeting = getMeeting(id.value as string);
