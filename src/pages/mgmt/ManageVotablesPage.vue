@@ -39,6 +39,7 @@
       <q-card-section>
         <q-input v-model="target.question" label="問題" />
         <q-select v-model="target.type" :option-label="(o) => o.translation" :options="Object.values(VotableType.VALUES)" label="門檻" />
+        <div>選項 (若在會後編輯選項，則受刪除選項之投票結果會一並被刪除！)</div>
         <q-btn color="primary" @click="target.choices.push('是', '否')">加入是/否</q-btn>
         <ListEditor v-model="target.choices" />
       </q-card-section>

@@ -2,12 +2,12 @@
   <q-page v-if="meeting" padding>
     <div v-if="!activeProposal || !activeProposal.value" class="text-h6">請等待會議主席開始審理議案</div>
     <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
-      <div class="text-h6">正在審理議案</div>
-      <q-btn class="q-mb-md" color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
+      <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
+      <q-btn class="q-mb-md text-h6 full-width" color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
       <ProposalDisplay :proposal="activeProposal.value" />
     </div>
     <div v-if="activeVotable && activeVotable.value">
-      <div class="text-h6">請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改</div>
+      <div class="text-h6 q-mb-sm">請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改</div>
       <q-card>
         <q-card-section>
           <div class="text-h4">{{ activeVotable.value.question }}</div>
@@ -18,7 +18,7 @@
             v-for="choice of activeVotable.value.choices"
             :key="choice"
             :class="
-              'col q-mr-md text-h5' +
+              'row full-width q-mr-md text-h4 q-mb-xl' +
               (selectedChoice == choice ? ' bg-amber' : '') +
               ((activeVotable.value.results[choice] ? activeVotable.value.results[choice] : []).includes(
                 loggedInUserClaims.clazz,

@@ -40,11 +40,11 @@
   <q-dialog :model-value="!!activeUrl" persistent>
     <q-card style="min-width: 60vw">
       <q-card-section style="width: 100%">
-        <q-btn class="q-mb-sm" flat icon="close" style="float: right" @click="activeUrl = ''" />
+        <q-btn class="q-mb-sm" color="negative" flat icon="close" style="float: right" @click="activeUrl = ''" />
         <q-btn :href="activeUrl" flat icon="open_in_new" style="float: right" target="_blank" />
       </q-card-section>
       <q-card-section>
-        <iframe :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" height="700" width="100%" />
+        <iframe :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" :height="$q.screen.height -200" width="100%" />
       </q-card-section>
     </q-card>
   </q-dialog>
