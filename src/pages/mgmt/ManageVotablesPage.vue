@@ -11,6 +11,8 @@
   <span v-if="proposalId.length == 0 && !embed">請先選擇一個提案</span>
   <q-page v-else padding>
     <q-btn class="q-mr-md" color="primary" icon="add" label="新增投票案件" style="margin-bottom: 10px" @click="add" />
+    <q-btn class="q-mr-md" color="secondary" icon="add_task" label="新增法律投票案" style="margin-bottom: 10px" @click="addLegislationVotables" />
+    <q-btn class="q-mr-md" color="accent" icon="add_task" label="新增命令投票案" style="margin-bottom: 10px" @click="addOrderVotables" />
     <q-btn color="primary" icon="ios_share" label="匯出投票結果" style="margin-bottom: 10px" @click="showResults" />
     <span class="q-ml-md">提示：可以直接拖拉投票案件方塊以重新排序</span>
     <VueDraggable v-model="votables" class="q-gutter-md" style="cursor: move" @update="rearrange()">
@@ -131,6 +133,36 @@ function add() {
   target.results = {};
   target.type = VotableType.Absolute;
   action.value = 'add';
+}
+
+async function addLegislationVotables() {
+  target.question = '一讀：是否審理本案？';
+  target.choices = ['逕付二讀', '送交法制委員會', '不予審議'];
+  target.order = votables.value.length;
+  target.results = {};
+  target.type = VotableType.Absolute;
+  action.value = 'add';
+  await submit();
+  target.question = '二讀：是否同意本案？';
+  target.choices = ['是', '否'];
+  target.order = votables.value.length + 1;
+  action.value = 'add';
+  await submit();
+  target.question = '三讀：是否同意本案？';
+  target.choices = ['是', '否'];
+  target.order = votables.value.length + 1;
+  action.value = 'add';
+  await submit();
+}
+
+async function addOrderVotables() {
+  target.question = '一讀：是否同意本案？';
+  target.choices = ['是，送交行政委員會審理', '否，退回本案'];
+  target.order = votables.value.length;
+  target.results = {};
+  target.type = VotableType.Absolute;
+  action.value = 'add';
+  await submit();
 }
 
 async function del(id: string) {
