@@ -40,11 +40,21 @@
   <q-dialog :model-value="!!activeUrl" persistent>
     <q-card style="min-width: 60vw">
       <q-card-section style="width: 100%">
-        <q-btn class="q-mb-sm" color="negative" flat icon="close" style="float: right" @click="activeUrl = ''" />
+        <q-btn
+          class="q-mb-sm"
+          color="negative"
+          flat
+          icon="close"
+          style="float: right"
+          @click="
+            activeUrl = '';
+            lastActiveUrl = '';
+          "
+        />
         <q-btn :href="activeUrl" flat icon="open_in_new" style="float: right" target="_blank" />
       </q-card-section>
       <q-card-section>
-        <iframe :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" :height="$q.screen.height -200" width="100%" />
+        <iframe :height="$q.screen.height - 200" :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" width="100%" />
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -81,6 +91,7 @@ defineEmits<{
 }>();
 
 const activeUrl = ref('');
+const lastActiveUrl = ref('');
 
 function getGoogleFileEmbed(input: string) {
   let file_id = null;
@@ -97,6 +108,20 @@ function getGoogleFileEmbed(input: string) {
   }
   return input;
 }
+
+function closeDialog() {
+  lastActiveUrl.value = activeUrl.value;
+  activeUrl.value = '';
+}
+
+function reopenDialog() {
+  activeUrl.value = lastActiveUrl.value;
+}
+
+defineExpose({
+  closeDialog,
+  reopenDialog,
+});
 </script>
 
 <style scoped></style>

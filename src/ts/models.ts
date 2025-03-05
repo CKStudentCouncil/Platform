@@ -104,6 +104,10 @@ export interface Proposal extends DocumentType {
   speakRequests: string[];
 }
 
+export interface ProposalId extends Proposal {
+  id: string;
+}
+
 export function rawProposalCollection(meetingId: string) {
   const db = useFirestore();
   return collection(db, `meetings/${meetingId}/proposals`);
