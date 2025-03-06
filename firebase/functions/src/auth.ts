@@ -4,7 +4,7 @@ import { Role, User } from './models';
 
 const auth = admin.auth();
 
-export async function checkRole(request: https.CallableContext, role: Role) {
+export async function checkRole(request: https.CallableRequest, role: Role) {
   if (!request.auth) {
     throw new https.HttpsError('unauthenticated', 'You must be authenticated');
   }
