@@ -28,10 +28,15 @@ jobs:
           # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
           node-version: '20.x'
           cache: 'npm'
-      - run: cd firebase/functions
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
-      - run: yarn lint
+      - name: Install dependencies
+        run: |
+          cd firebase/functions
+          yarn install --frozen-lockfile
+      - name: Build & lint
+        run: |
+          cd firebase/functions
+          yarn build
+          yarn lint
       - run: tsc
 #      - uses: FirebaseExtended/action-hosting-deploy@v0
 #        with:
