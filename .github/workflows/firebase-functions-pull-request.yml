@@ -19,8 +19,8 @@ jobs:
       - name: Cache packages
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          path: node_modules
+          key: ${{ runner.os }}-functions-yarn-${{ hashFiles('**/yarn.lock') }}
+          path: firebase/functions/node_modules
       - uses: actions/setup-node@v4
         with:
           # Version Spec of the version to use in SemVer notation.
@@ -28,6 +28,7 @@ jobs:
           # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
           node-version: '20.x'
           cache: 'npm'
+      - run: cd firebase/functions
       - run: yarn install --frozen-lockfile
       - run: yarn build
       - run: yarn lint
