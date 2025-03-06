@@ -24,7 +24,7 @@
     "quasar": "^2.18.0",
     "vue": "^3.4.27",
     "vue-draggable-plus": "^0.5.3",
-    "vue-gtag": "^2.0.1",
+    "vue-gtag": "^2.1.0",
     "vue-qrcode-reader": "^5.5.8",
     "vue-router": "^4.0.12",
     "vuefire": "^3.2.1"
