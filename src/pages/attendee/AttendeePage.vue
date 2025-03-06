@@ -9,7 +9,7 @@
     <q-btn
       v-if="!activeVotable || !activeVotable.value"
       class="q-mt-md text-h6 full-width"
-      color="primary"
+      color="secondary"
       icon="visibility"
       label="檢視本次會議議案"
       @click="viewOtherProposals()"
