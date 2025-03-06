@@ -37,7 +37,6 @@ jobs:
           cd firebase/functions
           yarn build
           yarn lint
-      - run: tsc
 #      - uses: FirebaseExtended/action-hosting-deploy@v0
 #        with:
 #          repoToken: ${{ secrets.GITHUB_TOKEN }}
