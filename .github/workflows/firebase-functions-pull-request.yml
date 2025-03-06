@@ -30,6 +30,8 @@ jobs:
           cache: 'npm'
       - run: yarn install --frozen-lockfile
       - run: yarn build
+      - run: yarn lint
+      - run: tsc
 #      - uses: FirebaseExtended/action-hosting-deploy@v0
 #        with:
 #          repoToken: ${{ secrets.GITHUB_TOKEN }}
