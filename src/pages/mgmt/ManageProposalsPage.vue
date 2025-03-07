@@ -91,6 +91,7 @@ const proposals = proposalCollection(meetingId);
 const action = ref('');
 const target = reactive({} as ProposalId);
 const router = useRouter();
+const attachmentUploader = ref<InstanceType<typeof AttachmentUploader> | null>(null);
 let selected = computed({
   get: () => proposalId,
   set: (value) => {
@@ -197,6 +198,9 @@ async function rearrange() {
 }
 
 function addAttachments(a: string[]) {
+  if (!attachmentUploader.value?.check()) {
+    return;
+  }
   for (const attachment of a) {
     target.attachments.push(attachment);
   }
