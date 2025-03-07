@@ -25,12 +25,8 @@
           <q-btn
             v-for="choice of activeVotable.value.choices"
             :key="choice"
-            :class="
-              'row full-width q-mr-md text-h4 q-mb-xl' +
-              (selectedChoice == choice ? ' bg-amber' : '') +
-              ((activeVotable.value.results[choice] ? activeVotable.value.results[choice] : []).includes(loggedInUserClaims.clazz) ? ' bg-green' : '')
-            "
-            :disable="voted"
+            :class="'row full-width q-mr-md text-h4 q-mb-xl' + (selectedChoice == choice ? ' bg-amber' : '') + (voted == choice ? ' bg-green' : '')"
+            :disable="!!voted"
             :label="choice"
             @click="select(choice)"
           >
@@ -85,12 +81,10 @@ const voted = computed(() => {
   const results = (activeVotable.value.value as unknown as Votable).results;
   for (const [choice, voters] of Object.entries(results)) {
     if (voters.includes(loggedInUserClaims.clazz)) {
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      selectedChoice.value = choice;
-      return true;
+      return choice;
     }
   }
-  return false;
+  return null;
 });
 const speakRequests = ref([] as string[]);
 const propRefs = ref();
