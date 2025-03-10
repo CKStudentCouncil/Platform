@@ -56,11 +56,11 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getMeeting, ProposalId, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
+import { getMeeting, Proposal, ProposalId, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
-import { Loading, Notify, QBtn } from 'quasar';
+import { Loading, QBtn } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
-import { notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { notifyError, notifySpeechRequests, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import { useDocument } from 'vuefire';
 
@@ -89,7 +89,6 @@ const voted = computed(() => {
   }
   return null;
 });
-const speakRequests = ref([] as string[]);
 const propRefs = ref();
 onMounted(() => {
   if (!id || id.length == 0) {
@@ -118,16 +117,7 @@ watch(
   (prop, prevProp) => {
     if (prop) {
       // Speak request notification
-      if (prevProp && prevProp.value) {
-        for (const speakRequest of prop.speakRequests) {
-          if (!speakRequests.value.includes(speakRequest)) {
-            Notify.create({
-              message: `${speakRequest} 班代請求發言`,
-              color: 'positive',
-            });
-          }
-        }
-      }
+      notifySpeechRequests(prop as Proposal, prevProp as Proposal);
       // Close dialogs when voting starts
       if (prop.activeVotable && !activeVotableId.value) {
         if (viewingOtherProposals.value) {

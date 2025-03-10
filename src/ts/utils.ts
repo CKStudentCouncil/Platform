@@ -1,5 +1,6 @@
 import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
+import { Proposal } from 'src/ts/models.ts';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -42,6 +43,19 @@ export function notifyError(message: string, exception?: any): void {
       stack: exception?.stack,
       fatal: false,
     })
+  }
+}
+
+export function notifySpeechRequests(prop?: Proposal, prevProp?: Proposal): void {
+  if (prop && prevProp) {
+    for (const speakRequest of prop.speakRequests) {
+      if (!prevProp.speakRequests.includes(speakRequest)) {
+        Notify.create({
+          message: `${speakRequest} 班代請求發言`,
+          color: 'positive',
+        });
+      }
+    }
   }
 }
 

@@ -75,13 +75,13 @@
 
 <script lang="ts" setup>
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
-import { getMeeting, getProposal, rawMeetingCollection, rawProposalCollection, votableCollection } from 'src/ts/models.ts';
+import { getMeeting, getProposal, Proposal, rawMeetingCollection, rawProposalCollection, votableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import ManageVotablesPage from 'pages/mgmt/ManageVotablesPage.vue';
-import { notifyError } from 'src/ts/utils.ts';
+import { notifyError, notifySpeechRequests } from 'src/ts/utils.ts';
 
 const route = useRoute();
 const selectedMeeting = getMeeting(route.params.id as string);
@@ -89,7 +89,8 @@ const selectedProposal = getProposal(route.params.id as string, route.params.pro
 let activeVotableId = ref(null as string | null);
 watch(
   selectedProposal,
-  (selectedProposal) => {
+  (selectedProposal, prevProp) => {
+    notifySpeechRequests(selectedProposal as Proposal, prevProp as Proposal);
     if (selectedProposal && selectedProposal.activeVotable) {
       activeVotableId.value = selectedProposal.activeVotable;
     }
