@@ -6,6 +6,7 @@ import * as models from 'src/ts/models.ts';
 import { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { event } from 'vue-gtag';
 
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
@@ -62,6 +63,7 @@ export function login() {
       loggedInUser.value = auth.currentUser;
       Loading.hide();
       notifySuccess('登入成功');
+      event('login_with_google');
     })
     .catch((error) => {
       console.error('Failed to log in.');
@@ -78,6 +80,7 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
     loggedInUser.value = auth.currentUser;
     Loading.hide();
     notifySuccess('登入成功');
+    event('login_with_schoolId');
   } catch (e) {
     console.error('Failed to log in.');
     Loading.hide();
