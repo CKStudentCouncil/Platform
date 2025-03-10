@@ -81,7 +81,7 @@ import { QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import ManageVotablesPage from 'pages/mgmt/ManageVotablesPage.vue';
-import { notifyError, notifySpeechRequests } from 'src/ts/utils.ts';
+import { notifyError, notifySpeakRequests } from 'src/ts/utils.ts';
 
 const route = useRoute();
 const selectedMeeting = getMeeting(route.params.id as string);
@@ -90,7 +90,7 @@ let activeVotableId = ref(null as string | null);
 watch(
   selectedProposal,
   (selectedProposal, prevProp) => {
-    notifySpeechRequests(selectedProposal as Proposal, prevProp as Proposal);
+    notifySpeakRequests(selectedProposal as Proposal, prevProp as Proposal);
     if (selectedProposal && selectedProposal.activeVotable) {
       activeVotableId.value = selectedProposal.activeVotable;
     }

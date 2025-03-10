@@ -3,7 +3,22 @@
     <div v-if="!activeProposal" class="text-h6">請等待會議主席開始審理議案</div>
     <div v-if="activeProposal && !activeVotable">
       <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
-      <q-btn class="q-mb-md text-h6 full-width" color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
+      <q-btn
+        v-if="!activeProposal.speakRequests.includes(loggedInUserClaims.clazz)"
+        class="q-mb-md text-h6 full-width"
+        color="primary"
+        icon="chat"
+        label="請求發言"
+        @click="requestToSpeak()"
+      />
+      <q-btn
+        v-else
+        class="q-mb-md text-h6 full-width"
+        color="negative"
+        icon="speaker_notes_off"
+        label="撤回發言請求"
+        @click="withdrawSpeakRequest()"
+      />
       <ProposalDisplay :proposal="activeProposal" />
     </div>
     <q-btn
@@ -57,10 +72,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getMeeting, Proposal, ProposalId, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
-import { arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { Loading, QBtn } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
-import { notifyError, notifySpeechRequests, notifySuccess } from 'src/ts/utils.ts';
+import { notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import { useDocument } from 'vuefire';
 
@@ -117,7 +132,7 @@ watch(
   (prop, prevProp) => {
     if (prop) {
       // Speak request notification
-      notifySpeechRequests(prop as Proposal, prevProp as Proposal);
+      notifySpeakRequests(prop as Proposal, prevProp as Proposal);
       // Close dialogs when voting starts
       if (prop.activeVotable && !activeVotableId.value) {
         if (viewingOtherProposals.value) {
@@ -180,6 +195,17 @@ async function requestToSpeak() {
     notifySuccess('請求發言成功');
   } catch (e) {
     notifyError('請求發言失敗', e);
+  }
+}
+
+async function withdrawSpeakRequest() {
+  try {
+    await updateDoc(doc(rawProposalCollection(id), activeProposalId.value!), {
+      speakRequests: arrayRemove(loggedInUserClaims.clazz),
+    });
+    notifySuccess('撤回發言請求成功');
+  } catch (e) {
+    notifyError('撤回發言請求失敗', e);
   }
 }
 

@@ -46,7 +46,7 @@ export function notifyError(message: string, exception?: any): void {
   }
 }
 
-export function notifySpeechRequests(prop?: Proposal, prevProp?: Proposal): void {
+export function notifySpeakRequests(prop?: Proposal, prevProp?: Proposal): void {
   if (prop && prevProp) {
     for (const speakRequest of prop.speakRequests) {
       if (!prevProp.speakRequests.includes(speakRequest)) {
