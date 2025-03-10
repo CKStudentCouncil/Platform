@@ -1,29 +1,29 @@
 <template>
   <q-page v-if="meeting" padding>
-    <div v-if="!activeProposal || !activeProposal.value" class="text-h6">請等待會議主席開始審理議案</div>
-    <div v-if="activeProposal && activeProposal.value && !activeVotable?.value">
+    <div v-if="!activeProposal" class="text-h6">請等待會議主席開始審理議案</div>
+    <div v-if="activeProposal && !activeVotable">
       <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
       <q-btn class="q-mb-md text-h6 full-width" color="primary" icon="chat" label="請求發言" @click="requestToSpeak()" />
-      <ProposalDisplay :proposal="activeProposal.value" />
+      <ProposalDisplay :proposal="activeProposal" />
     </div>
     <q-btn
-      v-if="!activeVotable || !activeVotable.value"
+      v-if="!activeVotable || !activeVotable"
       class="q-mt-md text-h6 full-width"
       color="secondary"
       icon="visibility"
       label="檢視本次會議議案"
       @click="viewOtherProposals()"
     />
-    <div v-if="activeVotable && activeVotable.value">
+    <div v-if="activeVotable">
       <div class="text-h6 q-mb-sm">請<b class="text-h5">點兩下</b>以送出投票，送出後無法更改</div>
       <q-card>
         <q-card-section>
-          <div class="text-h4">{{ activeVotable.value.question }}</div>
+          <div class="text-h4">{{ activeVotable.question }}</div>
         </q-card-section>
         <q-separator />
         <q-card-section class="row">
           <q-btn
-            v-for="choice of activeVotable.value.choices"
+            v-for="choice of activeVotable.choices"
             :key="choice"
             :class="'row full-width q-mr-md text-h4 q-mb-xl' + (selectedChoice == choice ? ' bg-amber' : '') + (voted == choice ? ' bg-green' : '')"
             :disable="!!voted"
@@ -56,21 +56,24 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getMeeting, getProposal, getVotable, ProposalId, rawProposalCollection, rawVotableCollection, Votable } from 'src/ts/models.ts';
+import { getMeeting, ProposalId, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { Loading, Notify, QBtn } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
+import { useDocument } from 'vuefire';
 
-const id = ref(useRoute().params.id);
-const meeting = getMeeting(id.value as string);
+const id = useRoute().params.id as string;
+const meeting = getMeeting(id);
 const activeProposalId = ref(null as string | null);
-const activeProposal = computed(() => (activeProposalId.value == null ? null : getProposal(id.value as string, activeProposalId.value!)));
+const activeProposalQ = computed(() => (activeProposalId.value == null ? null : doc(rawProposalCollection(id), activeProposalId.value)));
+const activeProposal = useDocument(activeProposalQ, { reset: true });
 const activeVotableId = ref(null as string | null);
-const activeVotable = computed(() =>
-  activeVotableId.value == null ? null : getVotable(id.value as string, activeProposalId.value!, activeVotableId.value!),
+const activeVotableQ = computed(() =>
+  activeVotableId.value == null ? null : doc(rawVotableCollection(id, activeProposalId.value!), activeVotableId.value),
 );
+const activeVotable = useDocument(activeVotableQ, { reset: true });
 const selectedChoice = ref(null as string | null);
 const router = useRouter();
 const viewingOtherProposals = ref(false);
@@ -78,7 +81,7 @@ const lastViewingOtherProposals = ref(false);
 const proposals = ref([] as ProposalId[]);
 const voted = computed(() => {
   if (!activeVotable.value) return false;
-  const results = (activeVotable.value.value as unknown as Votable).results;
+  const results = activeVotable.value.results;
   for (const [choice, voters] of Object.entries(results)) {
     if (voters.includes(loggedInUserClaims.clazz)) {
       return choice;
@@ -89,7 +92,7 @@ const voted = computed(() => {
 const speakRequests = ref([] as string[]);
 const propRefs = ref();
 onMounted(() => {
-  if (!id.value || id.value.length == 0) {
+  if (!id || id.length == 0) {
     router.push('/punch_in');
     return;
   }
@@ -113,10 +116,10 @@ watch(
 watch(
   activeProposal,
   (prop, prevProp) => {
-    if (prop && prop.value) {
+    if (prop) {
       // Speak request notification
       if (prevProp && prevProp.value) {
-        for (const speakRequest of prop.value.speakRequests) {
+        for (const speakRequest of prop.speakRequests) {
           if (!speakRequests.value.includes(speakRequest)) {
             Notify.create({
               message: `${speakRequest} 班代請求發言`,
@@ -126,7 +129,7 @@ watch(
         }
       }
       // Close dialogs when voting starts
-      if (prop.value.activeVotable && !activeVotableId.value) {
+      if (prop.activeVotable && !activeVotableId.value) {
         if (viewingOtherProposals.value) {
           viewingOtherProposals.value = false;
           lastViewingOtherProposals.value = true;
@@ -138,7 +141,7 @@ watch(
         }
       }
       // Reopen dialogs when voting ends
-      if (!prop.value.activeVotable && activeVotableId.value) {
+      if (!prop.activeVotable && activeVotableId.value) {
         if (lastViewingOtherProposals.value) {
           viewingOtherProposals.value = true;
           lastViewingOtherProposals.value = false;
@@ -149,10 +152,10 @@ watch(
           }
         }
       }
-      activeVotableId.value = prop.value.activeVotable;
+      activeVotableId.value = prop.activeVotable;
       proposals.value = proposals.value.map((p) => {
-        if (p.id == prop.value!.id) {
-          return prop.value!;
+        if (p.id == prop.id) {
+          return prop;
         } else {
           return p;
         }
@@ -169,7 +172,7 @@ async function select(choice: string) {
     try {
       const update = {} as any;
       update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
-      await updateDoc(doc(rawVotableCollection(id.value as string, activeProposalId.value as string), activeVotableId.value as string), update);
+      await updateDoc(doc(rawVotableCollection(id, activeProposalId.value as string), activeVotableId.value as string), update);
     } catch (e) {
       notifyError('投票失敗', e);
     }
@@ -181,7 +184,7 @@ async function select(choice: string) {
 
 async function requestToSpeak() {
   try {
-    await updateDoc(doc(rawProposalCollection(id.value as string), activeProposalId.value!), {
+    await updateDoc(doc(rawProposalCollection(id), activeProposalId.value!), {
       speakRequests: arrayUnion(loggedInUserClaims.clazz),
     });
     notifySuccess('請求發言成功');
@@ -193,7 +196,7 @@ async function requestToSpeak() {
 async function viewOtherProposals() {
   Loading.show();
   proposals.value = [];
-  const snapshot = await getDocs(rawProposalCollection(id.value as string));
+  const snapshot = await getDocs(rawProposalCollection(id));
   snapshot.forEach((doc) => {
     const proposal = doc.data() as ProposalId;
     proposals.value.push(proposal);
