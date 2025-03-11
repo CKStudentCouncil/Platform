@@ -41,6 +41,7 @@ export default defineConfig((/* ctx */) => {
         strict: true,
         vueShim: true,
         extendTsConfig (tsConfig) {
+          tsConfig.exclude!.push('./../firebase');
           tsConfig.compilerOptions!.allowImportingTsExtensions = true;
         }
       },
