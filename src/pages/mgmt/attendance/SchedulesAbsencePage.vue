@@ -7,7 +7,7 @@
   </q-tabs>
   <div class="q-ma-md">
     <q-select v-model="filter" :options="meetingsOptions" label="選擇會議" />
-    <q-table :columns="columns" :filter="filter" :rows="absences" :title="`${currentReign} 班代出席時數`" row-key="name">
+    <q-table :columns="columns" :filter="filter" :rows="absences" :title="`${currentReign} 班代請假情況`" row-key="name">
       <template v-slot:top-right>
         <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
           <template v-slot:append>
