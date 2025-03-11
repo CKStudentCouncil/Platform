@@ -142,7 +142,7 @@ function simpleLogin() {
   if (clazzRef.value.hasError || schoolNumberRef.value.hasError) {
     return;
   }
-  loginWithCredentials(schoolNumber.value, clazz.value).then(() => {
+  void loginWithCredentials(schoolNumber.value, clazz.value).then(() => {
     simpleLoginDialogOpen.value = false;
   });
 }

@@ -39,7 +39,7 @@ async function exp() {
       let serviceHours = 0;
       for (const meeting of meetings) {
         if (!meeting) continue;
-        if (meeting!.data()?.participants.includes(account.clazz)) {
+        if (meeting.data()?.participants.includes(account.clazz)) {
           serviceHours++;
         }
       }

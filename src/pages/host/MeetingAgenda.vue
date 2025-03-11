@@ -48,7 +48,8 @@
 import { useDocument, useFirestore } from 'vuefire';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, updateDoc } from 'firebase/firestore';
-import { meetingConverter, proposalCollection, ProposalId, rawMeetingCollection } from 'src/ts/models.ts';
+import type { ProposalId} from 'src/ts/models.ts';
+import { meetingConverter, proposalCollection, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { notifyError } from 'src/ts/utils.ts';
 import { QBtn } from 'quasar';
@@ -77,7 +78,7 @@ async function selectProposal(proposal: ProposalId) {
     await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
       activeProposal: proposal.id,
     });
-    await router.push(`/meeting_host/${route.params.id}/agenda/${proposal.id}`);
+    await router.push(`/meeting_host/${route.params.id as string}/agenda/${proposal.id}`);
   } catch (e) {
     notifyError('開始審理失敗', e);
   }

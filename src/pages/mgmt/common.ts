@@ -1,4 +1,4 @@
-import { Votable } from 'src/ts/models.ts';
+import type { Votable } from 'src/ts/models.ts';
 
 export function exportVotingData(votables: Votable[]) {
   let r = '';

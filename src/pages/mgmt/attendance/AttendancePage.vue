@@ -22,10 +22,11 @@
 
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
-import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
+import type { User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
-import { QTableColumn } from 'quasar';
-import { currentReign } from 'src/ts/utils.ts';
+import type { QTableColumn } from 'quasar';
+import {currentReign, notifyError} from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
@@ -80,11 +81,11 @@ interface AttendanceInfo {
   attendanceRate: number;
 }
 
-async function updateAttendance() {
+function updateAttendance() {
   if (!accounts.value) return;
   attendance.value.length = 0;
   const tempAttendance = {} as Record<string, AttendanceInfo>;
-  for (const user of accounts.value!) {
+  for (const user of accounts.value) {
     if (!user.clazz) continue;
     tempAttendance[user.clazz] = {
       name: user.name,
@@ -104,7 +105,7 @@ async function updateAttendance() {
     }
     for (const clazz in meeting.absences) {
       if (!tempAttendance[clazz] || meeting.participants.includes(clazz)) continue;
-      if (meeting.absences[clazz].scheduledAt) {
+      if (meeting.absences[clazz]!.scheduledAt) {
         tempAttendance[clazz].scheduledAbsence++;
       } else {
         tempAttendance[clazz].unscheduledAbsence++;
@@ -113,8 +114,8 @@ async function updateAttendance() {
     meetingsCount++;
   }
   for (const clazz in tempAttendance) {
-    tempAttendance[clazz].attendanceRate = tempAttendance[clazz].attendedMeetings / meetingsCount;
-    tempAttendance[clazz].unscheduledAbsence = meetingsCount - tempAttendance[clazz].attendedMeetings - tempAttendance[clazz].scheduledAbsence;
+    tempAttendance[clazz]!.attendanceRate = tempAttendance[clazz]!.attendedMeetings / meetingsCount;
+    tempAttendance[clazz]!.unscheduledAbsence = meetingsCount - tempAttendance[clazz]!.attendedMeetings - tempAttendance[clazz]!.scheduledAbsence;
   }
   attendance.value = Object.values(tempAttendance);
 }
@@ -129,7 +130,7 @@ getAllUsers().then((users) => {
     { deep: true },
   );
   updateAttendance();
-});
+}).catch(e => notifyError('載入資料失敗', e));
 </script>
 
 <style scoped></style>

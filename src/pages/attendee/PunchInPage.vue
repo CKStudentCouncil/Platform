@@ -56,10 +56,10 @@ async function punchIn() {
     passcode.value = '';
     return;
   }
-  await updateDoc(meeting.docs[0].ref, {
+  await updateDoc(meeting.docs[0]!.ref, {
     participants: arrayUnion(loggedInUserClaims.clazz),
   });
-  await router.push('/attendee/' + meeting.docs[0].id);
+  await router.push('/attendee/' + meeting.docs[0]?.id);
 }
 
 async function checkPunchedIn() {
@@ -67,23 +67,24 @@ async function checkPunchedIn() {
     query(rawMeetingCollection(), and(where('participants', 'array-contains', loggedInUserClaims.clazz), where('active', '==', true))),
   );
   if (punchedIn.docs.length != 0) {
-    await router.push('/attendee/' + punchedIn.docs[0].id);
+    await router.push('/attendee/' + punchedIn.docs[0]?.id);
   }
 }
 
 async function onDetect(detectedCodes: any) {
   if (detectedCodes.length == 0) return;
   const code = detectedCodes[0].rawValue as string;
-  if (!code.includes('#/punch_in/')) return;
-  tempPasscode.value = code.split('#/punch_in/')[1];
+  const realPasscode = code.split('#/punch_in/')[1];
+  if (!realPasscode) return;
+  tempPasscode.value = realPasscode;
   scanning.value = false;
   await submit();
 }
 
 if (passcode.value && passcode.value.length != 0) {
-  punchIn();
+  void punchIn();
 } else {
-  checkPunchedIn();
+  void checkPunchedIn();
 }
 </script>
 

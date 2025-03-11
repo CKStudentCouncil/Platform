@@ -18,7 +18,9 @@
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
 import { computed, reactive, ref, watch } from 'vue';
-import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
+import type { User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
+import { notifyError } from 'src/ts/utils';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
@@ -35,7 +37,7 @@ const serial_absences = computed(() => {
   return a;
 });
 
-async function updateAttendance() {
+function updateAttendance() {
   if (!accounts.value) return;
   const participants = [] as string[][];
   const scheduledAbsences = [] as string[][];
@@ -46,30 +48,33 @@ async function updateAttendance() {
   }
   participants.reverse();
   scheduledAbsences.reverse(); // Default sorting order is latest first, so we need to reverse it
-  for (const user of accounts.value!) {
-    if (!user.clazz) continue;
-    absence_map[user.clazz] = 0;
-    for (const i in participants) {
-      if (!participants[i].includes(user.clazz) && !scheduledAbsences[i].includes(user.clazz)) {
-        absence_map[user.clazz]++;
+  for (const user of accounts.value) {
+    const clazz = user.clazz;
+    if (!clazz) continue;
+    absence_map[clazz] = 0;
+    participants.forEach((participant, i) => {
+      if (!participant.includes(clazz) && !scheduledAbsences[i]?.includes(clazz)) {
+        absence_map[clazz]!++;
       } else {
-        absence_map[user.clazz] = 0;
+        absence_map[clazz] = 0;
       }
-    }
+    });
   }
 }
 
-getAllUsers().then((users) => {
-  accounts.value = users;
-  watch(
-    meetings,
-    () => {
-      updateAttendance();
-    },
-    { deep: true },
-  );
-  updateAttendance();
-});
+getAllUsers()
+  .then((users) => {
+    accounts.value = users;
+    watch(
+      meetings,
+      () => {
+        updateAttendance();
+      },
+      { deep: true },
+    );
+    updateAttendance();
+  })
+  .catch((e) => notifyError('載入資料失敗', e));
 </script>
 
 <style scoped></style>

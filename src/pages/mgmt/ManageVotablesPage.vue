@@ -55,7 +55,8 @@
 
 <script lang="ts" setup>
 import { VueDraggable } from 'vue-draggable-plus';
-import { rawVotableCollection, Votable, votableCollection, VotableType } from 'src/ts/models.ts';
+import type { Votable} from 'src/ts/models.ts';
+import { rawVotableCollection, votableCollection, VotableType } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { computed, reactive, ref } from 'vue';
 import { useFirestore } from 'vuefire';
@@ -87,8 +88,8 @@ const meetingId = props.embed ? props.meetingId : (useRoute().params.id as strin
 const proposalId = props.embed ? props.proposalId : (useRoute().params.proposalId as string);
 const votables = !!meetingId || !!proposalId ? votableCollection(meetingId, proposalId) : ref([]);
 const router = useRouter();
-let action = ref('');
-let target = reactive(
+const action = ref('');
+const target = reactive(
   {} as {
     id: string;
     choices: string[];
@@ -98,16 +99,16 @@ let target = reactive(
     results: Record<string, string[]>;
   },
 );
-let selected = computed({
+const selected = computed({
   get: () => proposalId,
   set: (value) => {
     if (props.embed) {
       return;
     }
     if (value === selected.value) {
-      router.push({ params: { proposalId: '' } });
+      void router.push({ params: { proposalId: '' } });
     } else {
-      router.push({ params: { proposalId: value } });
+      void router.push({ params: { proposalId: value } });
     }
   },
 });
@@ -165,7 +166,7 @@ async function addOrderVotables() {
   await submit();
 }
 
-async function del(id: string) {
+function del(id: string) {
   Dialog.create({
     title: '刪除投票案件',
     message: '確定要刪除此投票案件嗎？',
@@ -230,7 +231,7 @@ async function rearrange() {
   notifySuccess('成功重新排序投票案件');
 }
 
-async function showResults() {
+function showResults() {
   Dialog.create({
     title: '投票結果',
     message: exportVotingData(votables.value as Votable[]),

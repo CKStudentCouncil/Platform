@@ -1,6 +1,6 @@
 import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
-import { Proposal } from 'src/ts/models.ts';
+import type { Proposal } from 'src/ts/models.ts';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';

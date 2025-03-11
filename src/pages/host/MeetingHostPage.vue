@@ -14,7 +14,8 @@
 </template>
 
 <script lang="ts" setup>
-import { Meeting, meetingCollectionOfCurrentReign, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
+import type { Meeting} from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, meetingConverter, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
@@ -50,7 +51,7 @@ watch(
 async function go() {
   if (meeting.value) {
     try {
-      let data = {
+      const data = {
         active: true,
       } as any;
       if (recordTime.value) {

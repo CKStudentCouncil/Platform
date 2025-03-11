@@ -83,7 +83,7 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
 
 export const register = onCall(globalFunctionOptions, async (request) => {
   const activeMeeting = await db.collection('meetings').where('active', '==', true).get();
-  if (activeMeeting.size == 0 || !activeMeeting.docs[0].data().registration) {
+  if (activeMeeting.size == 0 || !activeMeeting.docs[0]?.data().registration) {
     throw new https.HttpsError(
       'permission-denied',
       `Registration disabled.`
@@ -113,7 +113,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
       fields: 'id'
     })).data.id;
   } else {
-    folder = folderQuery.data.files?.[0].id;
+    folder = folderQuery.data.files?.[0]?.id;
   }
   const file = await driveAPI.files.create({
     requestBody: {

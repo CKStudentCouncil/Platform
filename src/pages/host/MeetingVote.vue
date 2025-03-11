@@ -72,12 +72,13 @@ const threshold = computed(() => {
         return Math.ceil(selectedMeeting.value!.participants.length / 2);
       case VotableType.AbsoluteTwoThirds.firebase:
         return Math.ceil((selectedMeeting.value!.participants.length / 3) * 2);
-      case VotableType.Relative.firebase:
+      case VotableType.Relative.firebase: {
         let n = 0;
         for (const i of Object.values(selectedVotable.value.results)) {
           n += i.length;
         }
         return Math.ceil(n / 2);
+      }
     }
   }
   return 0;
@@ -107,7 +108,7 @@ async function endVote() {
     await updateDoc(doc(rawProposalCollection(route.params.id as string), route.params.proposalId as string), {
       activeVotable: null,
     });
-    await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}`);
+    await router.push(`/meeting_host/${route.params.id as string}/agenda/${route.params.proposalId as string}`);
   } catch (e) {
     notifyError('結束投票失敗', e);
   }

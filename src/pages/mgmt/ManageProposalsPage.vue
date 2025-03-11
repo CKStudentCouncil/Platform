@@ -56,7 +56,8 @@
 </template>
 
 <script lang="ts" setup>
-import { getMeeting, Proposal, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
+import type { Proposal} from 'src/ts/models.ts';
+import { getMeeting, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { Dialog, Loading } from 'quasar';
@@ -92,16 +93,16 @@ const action = ref('');
 const target = reactive({} as ProposalId);
 const router = useRouter();
 const attachmentUploader = ref<InstanceType<typeof AttachmentUploader> | null>(null);
-let selected = computed({
+const selected = computed({
   get: () => proposalId,
   set: (value) => {
     if (props.embed) {
       return;
     }
     if (value === selected.value) {
-      router.push({ params: { proposalId: '' } });
+      void router.push({ params: { proposalId: '' } });
     } else {
-      router.push({ params: { proposalId: value } });
+      void router.push({ params: { proposalId: value } });
     }
   },
 });
@@ -128,7 +129,7 @@ function add() {
   action.value = 'add';
 }
 
-async function del(id: string) {
+function del(id: string) {
   Dialog.create({
     title: '刪除提案',
     message: '確定要刪除此提案嗎？',
@@ -182,7 +183,7 @@ async function rearrange() {
   try {
     for (let i = 0; i < proposals.value.length; i++) {
       tasks.push(
-        updateDoc(doc(db, `meetings/${meetingId}/proposals`, proposals.value[i].id), {
+        updateDoc(doc(db, `meetings/${meetingId}/proposals`, proposals.value[i]!.id), {
           order: i,
         }),
       );

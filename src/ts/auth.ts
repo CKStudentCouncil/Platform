@@ -1,9 +1,11 @@
 import { useFirebaseAuth } from 'vuefire';
-import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, User } from 'firebase/auth';
-import { reactive, Ref, ref } from 'vue';
+import type { User } from 'firebase/auth';
+import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import type { Ref} from 'vue';
+import { reactive, ref } from 'vue';
 import { Loading } from 'quasar';
-import * as models from 'src/ts/models.ts';
-import { UserClaims } from 'src/ts/models.ts';
+import type * as models from 'src/ts/models.ts';
+import type { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 import { event } from 'vue-gtag';
@@ -16,7 +18,7 @@ export const rootUID = '38fWtZ4AKRU3oAZjfrt9nBq7d8B2';
 export function init() {
   auth = useFirebaseAuth()!;
   loggedInUser.value = auth.currentUser;
-  auth.setPersistence(browserLocalPersistence).then(async () => {
+  void auth.setPersistence(browserLocalPersistence).then(async () => {
     console.log('Firebase auth persistence set.');
     loggedInUser.value = auth.currentUser;
     await updateCustomClaims();

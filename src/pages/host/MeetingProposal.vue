@@ -75,7 +75,8 @@
 
 <script lang="ts" setup>
 import { arrayRemove, doc, updateDoc } from 'firebase/firestore';
-import { getMeeting, getProposal, Proposal, rawMeetingCollection, rawProposalCollection, votableCollection } from 'src/ts/models.ts';
+import type { Proposal} from 'src/ts/models.ts';
+import { getMeeting, getProposal, rawMeetingCollection, rawProposalCollection, votableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { QBtn, QItemSection } from 'quasar';
 import { ref, watch } from 'vue';
@@ -86,7 +87,7 @@ import { notifyError, notifySpeakRequests } from 'src/ts/utils.ts';
 const route = useRoute();
 const selectedMeeting = getMeeting(route.params.id as string);
 const selectedProposal = getProposal(route.params.id as string, route.params.proposalId as string);
-let activeVotableId = ref(null as string | null);
+const activeVotableId = ref(null as string | null);
 watch(
   selectedProposal,
   (selectedProposal, prevProp) => {
@@ -106,7 +107,7 @@ async function selectVotable(votable: any) {
     await updateDoc(doc(rawProposalCollection(route.params.id as string), route.params.proposalId as string), {
       activeVotable: votable.id,
     });
-    await router.push(`/meeting_host/${route.params.id}/agenda/${route.params.proposalId}/vote/${votable.id}`);
+    await router.push(`/meeting_host/${route.params.id as string}/agenda/${route.params.proposalId as string}/vote/${votable.id}`);
   } catch (e) {
     notifyError('開始審理失敗', e);
   }
@@ -117,7 +118,7 @@ async function endProposal() {
     await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
       activeProposal: null,
     });
-    await router.push(`/meeting_host/${route.params.id}/agenda`);
+    await router.push(`/meeting_host/${route.params.id as string}/agenda`);
   } catch (e) {
     notifyError('結束議案失敗', e);
   }

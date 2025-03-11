@@ -84,7 +84,7 @@ async function getRequirement() {
   totalMembers.value = count + 2; // +議長副議長
 }
 
-getRequirement();
+void getRequirement();
 </script>
 
 <style scoped></style>

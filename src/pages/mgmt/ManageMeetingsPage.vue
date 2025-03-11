@@ -2,8 +2,8 @@
   <q-page>
     <q-tabs align="left">
       <q-route-tab :to="'/meetings/' + selected" label="會議" />
-      <q-route-tab :disable="!selected" :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
-      <q-route-tab :to="`/meetings/${selected.length == 0 ? '' : selected + '/'}proposals/votables`" disable label="投票案件" />
+      <q-route-tab :disable="!selected" :to="`/meetings/${selected?.length == 0 ? '' : selected + '/'}proposals`" label="提案" />
+      <q-route-tab disable label="投票案件" />
     </q-tabs>
     <q-table
       v-model:pagination="pagination"
@@ -127,18 +127,18 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
+import type { Meeting, Votable } from 'src/ts/models.ts';
 import {
-  Meeting,
   meetingCollectionOfReign,
   meetingConverter,
   rawMeetingCollection,
   rawProposalCollection,
   rawVotableCollection,
   Role,
-  User, Votable
 } from 'src/ts/models.ts';
 import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
-import { date, Dialog, Loading, QTableColumn } from 'quasar';
+import type { QTableColumn } from 'quasar';
+import { date, Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { currentReign, generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
@@ -180,9 +180,9 @@ const selected = computed({
   get: () => route.params.id,
   set: (value) => {
     if (value === selected.value) {
-      router.push({ params: { id: '' } });
+      void router.push({ params: { id: '' } });
     } else {
-      router.push({ params: { id: value } });
+      void router.push({ params: { id: value } });
     }
   },
 });
@@ -249,7 +249,7 @@ async function submit() {
   notifySuccess('成功更新會議');
 }
 
-async function del(row: any) {
+function del(row: any) {
   Dialog.create({
     title: '刪除會議',
     message: '確定要刪除此會議嗎？',
@@ -275,7 +275,7 @@ async function copyLink(row: any) {
 }
 
 async function getAttendanceData(meeting: Meeting) {
-  const accounts = (await getAllUsers()) as User[];
+  const accounts = await getAllUsers();
   const data = {
     attended: [] as string[],
     absent: [] as string[],
@@ -366,10 +366,10 @@ ${votables}
     }
     result.fromSpecific = 'Speaker';
     const chairs = data.accounts.filter((u) => u.role === Role.Chair);
-    result.fromName = chairs.length > 0 ? chairs[0].name.replace(/ck[0-9]*/, '') : '找不到議長';
+    result.fromName = chairs[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到議長';
     result.secretarySpecific = 'StudentCouncilSecretary';
     const secretaries = data.accounts.filter((u) => u.role === Role.Secretary);
-    result.secretaryName = secretaries.length > 0 ? secretaries[0].name.replace(/ck[0-9]*/, '') : '找不到秘書';
+    result.secretaryName = secretaries[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到秘書';
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
     result.attachments = attachments;
@@ -386,7 +386,7 @@ ${votables}
         prompt: {
           model: JSON.stringify(result),
         },
-      }).onOk(async () => {
+      }).onOk(() => {
         window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
       });
     }
@@ -399,7 +399,7 @@ ${votables}
 
 async function exportMeetingNotice(meeting: Meeting) {
   try {
-    const accounts = (await getAllUsers()) as User[];
+    const accounts = await getAllUsers();
     let proposals = '';
     let count = 0;
     const attachments = [];
@@ -410,7 +410,9 @@ async function exportMeetingNotice(meeting: Meeting) {
       const title = data.title;
       proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
       Loading.show({ message: '正在取得投票資料 - ' + title });
-      const votables = (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) => d.data()) as Votable[];
+      const votables = (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) =>
+        d.data(),
+      ) as Votable[];
       if (votables.length > 0) {
         proposals += '<div style="font-size: medium">投票案：</font></div>';
         let count = 0;
@@ -429,10 +431,7 @@ async function exportMeetingNotice(meeting: Meeting) {
     }
     const result = {} as any;
     const chairs = accounts.filter((u) => u.role === Role.Chair);
-    let host = '找不到議長';
-    if (chairs.length > 0) {
-      host = chairs[0].name.replace(/ck[0-9]*/, '');
-    }
+    const host = chairs[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到議長';
     result.content = `
 <div style="font-size: large">議程：</div>
 ${proposals}
@@ -467,7 +466,7 @@ ${proposals}
         prompt: {
           model: JSON.stringify(result),
         },
-      }).onOk(async () => {
+      }).onOk(() => {
         window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
       });
     }

@@ -20,11 +20,12 @@
 </template>
 
 <script lang="ts" setup>
-import { meetingCollectionOfCurrentReign, User } from 'src/ts/models.ts';
+import type { User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { computed, ref, watch } from 'vue';
-import { QTableColumn } from 'quasar';
+import type { QTableColumn } from 'quasar';
 import { getAllUsers } from 'src/ts/auth.ts';
-import { currentReign } from 'src/ts/utils.ts';
+import {currentReign, notifyError} from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
@@ -72,7 +73,7 @@ const columns = [
   },
 ] as QTableColumn[];
 
-async function updateAbsences() {
+function updateAbsences() {
   if (!accounts.value) return;
   absences.value = [];
   for (const user of accounts.value) {
@@ -84,8 +85,8 @@ async function updateAbsences() {
           meeting: meeting.name,
           clazz: user.clazz,
           name: user.name,
-          scheduledAt: meeting.absences[user.clazz].scheduledAt,
-          reason: meeting.absences[user.clazz].reason,
+          scheduledAt: meeting.absences[user.clazz]!.scheduledAt,
+          reason: meeting.absences[user.clazz]!.reason,
         });
       }
     }
@@ -102,7 +103,7 @@ getAllUsers().then((users) => {
     { deep: true },
   );
   updateAbsences();
-});
+}).catch(e => notifyError('載入資料失敗', e));
 </script>
 
 <style scoped></style>

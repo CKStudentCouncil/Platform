@@ -45,12 +45,12 @@ getAllUsers()
     Loading.hide();
   });
 
-async function transform() {
+function transform() {
   const lines = input.value.split('\n');
   const result = lines.map((clazz) => {
     try {
-      const users = (accounts as any[]).filter((user) => user[from.value.value] == clazz);
-      return users[0][to.value.value];
+      const users = (accounts).filter((user) => user[from.value!.value] == clazz);
+      return users[0][to.value!.value];
     } catch (e) {
       console.error(e);
       return '!!!!錯誤';

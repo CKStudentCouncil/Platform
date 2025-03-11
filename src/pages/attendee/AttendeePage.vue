@@ -71,7 +71,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getMeeting, Proposal, ProposalId, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
+import type { Proposal, ProposalId} from 'src/ts/models.ts';
+import { getMeeting, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { arrayRemove, arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { Loading, QBtn } from 'quasar';
 import { loggedInUserClaims } from 'src/ts/auth.ts';
@@ -107,7 +108,7 @@ const voted = computed(() => {
 const propRefs = ref();
 onMounted(() => {
   if (!id || id.length == 0) {
-    router.push('/punch_in');
+    void router.push('/punch_in');
     return;
   }
 });
@@ -115,10 +116,10 @@ watch(
   meeting,
   (meeting) => {
     if (!meeting) {
-      router.push('/punch_in');
+      void router.push('/punch_in');
       return;
     }
-    if (!meeting.participants.includes(loggedInUserClaims.clazz)) router.push('/punch_in');
+    if (!meeting.participants.includes(loggedInUserClaims.clazz)) void router.push('/punch_in');
     if (meeting.activeProposal) {
       activeProposalId.value = meeting.activeProposal;
     } else {

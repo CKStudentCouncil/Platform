@@ -62,10 +62,11 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { User } from 'src/ts/models.ts';
+import type { User } from 'src/ts/models.ts';
 import { getAllUsers, rootUID, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
-import { Dialog, Loading, QTableColumn } from 'quasar';
+import type { QTableColumn } from 'quasar';
+import { Dialog, Loading } from 'quasar';
 import { useCurrentUser } from 'vuefire';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 
@@ -103,7 +104,7 @@ const dialog = computed(() => {
 async function load() {
   loading.value = true;
   accounts.length = 0; // Typescript magic
-  for (const acc of (await getAllUsers()) as User[]) {
+  for (const acc of (await getAllUsers())) {
     accounts.push(acc);
   }
   loading.value = false;
@@ -217,7 +218,7 @@ async function submit() {
   notifySuccess('成功新增帳號');
 }
 
-async function del(row: any) {
+function del(row: any) {
   Dialog.create({
     title: '刪除帳號',
     message: '確定要刪除此帳號嗎？',
@@ -237,7 +238,7 @@ async function del(row: any) {
   });
 }
 
-load();
+void load();
 </script>
 
 <style scoped></style>

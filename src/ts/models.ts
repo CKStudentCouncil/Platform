@@ -1,8 +1,9 @@
 import { collection, doc, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
-import { FirestoreDataConverter } from '@firebase/firestore';
+import type { FirestoreDataConverter } from '@firebase/firestore';
 import { currentReign } from 'src/ts/utils.ts';
-import { computed, Ref } from 'vue';
+import type { Ref } from 'vue';
+import { computed } from 'vue';
 
 export enum Role {
   Admin = 999,

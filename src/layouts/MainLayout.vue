@@ -89,8 +89,8 @@ import { query, where } from 'firebase/firestore';
 import QRPasscode from 'components/QRPasscode.vue';
 
 init();
-let leftDrawerOpen = ref(false);
-let endpoints = [
+const leftDrawerOpen = ref(false);
+const endpoints = [
   {
     name: '帳號管理',
     url: '/accounts',
@@ -132,8 +132,8 @@ let endpoints = [
     icon: 'info',
   },
 ];
-let selected = ref('Account Information');
-let loginDialogOpen = ref(false);
+const selected = ref('Account Information');
+const loginDialogOpen = ref(false);
 const role = computed(() => loggedInUserClaims.role);
 
 function toggleLeftDrawer() {
@@ -146,9 +146,9 @@ function changeSelected(name: string) {
 
 function toggleFullscreen() {
   if (document.fullscreenElement) {
-    document.exitFullscreen();
+    void document.exitFullscreen();
   } else {
-    document.documentElement.requestFullscreen();
+    void document.documentElement.requestFullscreen();
   }
 }
 
