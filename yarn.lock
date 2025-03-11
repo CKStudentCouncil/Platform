@@ -1602,7 +1602,7 @@
     muggle-string "^0.4.1"
     path-browserify "^1.0.1"
 
-"@vue/language-server@2.0.29":
+"@vue/language-server@=2.0.29":
   version "2.0.29"
   resolved "https://registry.yarnpkg.com/@vue/language-server/-/language-server-2.0.29.tgz#d3d169d093a084b01eeb027656140d02b08bde4a"
   integrity sha512-Nni7KwxQBzFVKJj9tLIDe1MVmFBFHtup8yC5LIrWq+8/LFNcznf9QHBjgEWEmwfz6PKtv46vH1hqHlmPrClf/w==
