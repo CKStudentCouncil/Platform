@@ -30,7 +30,7 @@
     "vuefire": "^3.2.1"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^2.0.0-beta.12",
+    "@quasar/app-vite": "^2.1.4",
     "@types/node": "^22.13.9",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
     "@typescript-eslint/parser": "^7.16.0",
