@@ -16,7 +16,7 @@ import { rawMeetingsOfCurrentReignQuery } from 'src/ts/models.ts';
 import ExcelJS from 'exceljs';
 import { exportFile, Loading } from 'quasar';
 import { getDocs } from 'firebase/firestore';
-import { notifyError } from 'src/ts/utils.ts';
+import {cleanseName, notifyError} from 'src/ts/utils.ts';
 
 async function exp() {
   Loading.show();
@@ -59,7 +59,7 @@ async function exp() {
         awardType = '';
       }
       sheet.addRow({
-        name: account.name.replace(/ck[0-9]+/, ''),
+        name: cleanseName(account.name),
         clazz: account.clazz,
         seatNumber: account.seatNumber,
         schoolNumber: account.schoolNumber,

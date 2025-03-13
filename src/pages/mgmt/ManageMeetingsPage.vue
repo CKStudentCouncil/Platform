@@ -140,7 +140,7 @@ import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'fire
 import type { QTableColumn } from 'quasar';
 import { date, Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
-import { currentReign, generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import {cleanseName, currentReign, generateRandomText, notifyError, notifySuccess} from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { exportVotingData } from 'pages/mgmt/common.ts';
@@ -366,10 +366,10 @@ ${votables}
     }
     result.fromSpecific = 'Speaker';
     const chairs = data.accounts.filter((u) => u.role === Role.Chair);
-    result.fromName = chairs[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到議長';
+    result.fromName = cleanseName(chairs[0]?.name) ?? '找不到議長';
     result.secretarySpecific = 'StudentCouncilSecretary';
     const secretaries = data.accounts.filter((u) => u.role === Role.Secretary);
-    result.secretaryName = secretaries[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到秘書';
+    result.secretaryName = cleanseName(secretaries[0]?.name) ?? '找不到秘書';
     result.location = '夢紅樓五樓 公民審議論壇教室';
     result.type = 'Record';
     result.attachments = attachments;
@@ -431,7 +431,7 @@ async function exportMeetingNotice(meeting: Meeting) {
     }
     const result = {} as any;
     const chairs = accounts.filter((u) => u.role === Role.Chair);
-    const host = chairs[0]?.name.replace(/ck[0-9]*/, '') ?? '找不到議長';
+    const host = cleanseName(chairs[0]?.name) ?? '找不到議長';
     result.content = `
 <div style="font-size: large">議程：</div>
 ${proposals}

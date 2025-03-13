@@ -45,7 +45,7 @@
         <q-input v-model="target.content" label="內容" type="textarea" />
         <div>附件：</div>
         <ListEditor v-model="target.attachments" />
-        <AttachmentUploader :filename-prefix="`${meeting?.name}_`" @uploaded="addAttachments" />
+        <AttachmentUploader ref="attachmentUploader" :filename-prefix="`${meeting?.name}_`" @uploaded="addAttachments" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="negative" flat label="取消" @click="action = ''" />
@@ -149,6 +149,9 @@ function del(id: string) {
 }
 
 async function submit() {
+  if (!attachmentUploader.value?.check()) {
+    return;
+  }
   Loading.show();
   try {
     const data = {
@@ -199,9 +202,6 @@ async function rearrange() {
 }
 
 function addAttachments(a: string[]) {
-  if (!attachmentUploader.value?.check()) {
-    return;
-  }
   for (const attachment of a) {
     target.attachments.push(attachment);
   }

@@ -59,6 +59,10 @@ export function notifySpeakRequests(prop?: Proposal, prevProp?: Proposal): void 
   }
 }
 
+export function cleanseName(name: string | null | undefined): string | null {
+  return name?.replace(/ck[0-9]+/, '') ?? null;
+}
+
 const date = new Date();
 export const currentReign = date.getMonth() > 7 || date.getMonth() < 1 ?
   `${date.getFullYear() - 1945}-1` : // August to January

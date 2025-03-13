@@ -207,6 +207,7 @@ async function submit() {
         },
       });
     } else if (action.value === 'add') {
+      targetUser.email = targetUser.email.trim();
       await useFunction('addUser')(targetUser);
     }
   } catch (e) {

@@ -1,6 +1,9 @@
 <template>
   <q-page v-if="meeting" padding>
-    <div v-if="!activeProposal" class="text-h6">請等待會議主席開始審理議案</div>
+    <div v-if="!activeProposal" class="text-h6">
+      {{ loggedInUserClaims.clazz }} {{ translateRole(loggedInUserClaims.role) }}
+      {{ cleanseName(loggedInUser?.displayName) }} 您好：<br>請等待會議主席開始審理議案
+    </div>
     <div v-if="activeProposal && !activeVotable">
       <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
       <q-btn
@@ -71,12 +74,12 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { Proposal, ProposalId} from 'src/ts/models.ts';
+import type { Proposal, ProposalId } from 'src/ts/models.ts';
 import { getMeeting, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { arrayRemove, arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { Loading, QBtn } from 'quasar';
-import { loggedInUserClaims } from 'src/ts/auth.ts';
-import { notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
+import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
+import { cleanseName, notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import { useDocument } from 'vuefire';
 
