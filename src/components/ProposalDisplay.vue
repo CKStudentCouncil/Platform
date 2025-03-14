@@ -38,7 +38,7 @@
     </q-card-actions>
   </q-card>
   <q-dialog :model-value="!!activeUrl" persistent>
-    <q-card style="min-width: 60vw">
+    <q-card :style="$q.screen.lt.sm ? 'min-width: 100vw' : 'min-width: 60vw'">
       <q-card-section style="width: 100%">
         <q-btn
           class="q-mb-sm"

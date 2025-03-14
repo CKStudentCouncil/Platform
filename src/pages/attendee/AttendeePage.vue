@@ -54,7 +54,7 @@
     </div>
   </q-page>
   <q-dialog v-model="viewingOtherProposals" persistent>
-    <q-card>
+    <q-card :style="$q.screen.lt.sm ? 'min-width: 100vw' : 'min-width: 60vw'">
       <q-card-section class="q-pa-none" style="width: 100%">
         <q-toolbar>
           <q-toolbar-title>
