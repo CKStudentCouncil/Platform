@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "2",
-    "@quasar/extras": "^1.16.4",
+    "@quasar/extras": "^1.16.17",
     "@volar/language-server": "2.4.12",
     "@vue/language-server": "^2.2.8",
     "exceljs": "^4.4.0",
