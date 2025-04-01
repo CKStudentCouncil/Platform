@@ -1,11 +1,12 @@
 <template>
   <q-page>
-    <q-tabs align="left">
+    <q-tabs align="left" v-if="bar">
       <q-route-tab :to="`/meeting_host`" label="開會" />
+      <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="審理議案" />
     </q-tabs>
-    <q-tabs align="left">
+    <q-tabs align="left" v-if="bar">
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="議程" />
       <q-route-tab
         v-if="selectedMeeting && selectedProposal"
@@ -85,8 +86,24 @@ import ManageVotablesPage from 'pages/mgmt/ManageVotablesPage.vue';
 import { notifyError, notifySpeakRequests } from 'src/ts/utils.ts';
 
 const route = useRoute();
-const selectedMeeting = getMeeting(route.params.id as string);
-const selectedProposal = getProposal(route.params.id as string, route.params.proposalId as string);
+const props = defineProps({
+  bar: {
+    type: Boolean,
+    default: true,
+  },
+  meetingId: {
+    type: String,
+    default: '',
+  },
+  proposalId: {
+    type: String,
+    default: '',
+  }
+});
+const meetingId = route.params.id as string ?? props.meetingId;
+const proposalId = route.params.proposalId as string ?? props.proposalId;
+const selectedMeeting = getMeeting(meetingId);
+const selectedProposal = getProposal(meetingId, proposalId);
 const activeVotableId = ref(null as string | null);
 watch(
   selectedProposal,
@@ -98,16 +115,16 @@ watch(
   },
   { deep: true },
 );
-const votables = votableCollection(route.params.id as string, route.params.proposalId as string);
+const votables = votableCollection(meetingId, proposalId);
 const router = useRouter();
 const managingVotables = ref(false);
 
 async function selectVotable(votable: any) {
   try {
-    await updateDoc(doc(rawProposalCollection(route.params.id as string), route.params.proposalId as string), {
+    await updateDoc(doc(rawProposalCollection(meetingId), proposalId), {
       activeVotable: votable.id,
     });
-    await router.push(`/meeting_host/${route.params.id as string}/agenda/${route.params.proposalId as string}/vote/${votable.id}`);
+    await router.push(`/meeting_host/${meetingId}/agenda/${proposalId}/vote/${votable.id}`);
   } catch (e) {
     notifyError('開始審理失敗', e);
   }
@@ -115,17 +132,17 @@ async function selectVotable(votable: any) {
 
 async function endProposal() {
   try {
-    await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
+    await updateDoc(doc(rawMeetingCollection(), meetingId), {
       activeProposal: null,
     });
-    await router.push(`/meeting_host/${route.params.id as string}/agenda`);
+    await router.push(`/meeting_host/${meetingId}/agenda`);
   } catch (e) {
     notifyError('結束議案失敗', e);
   }
 }
 
 async function removeSpeakRequest(speaker: string) {
-  await updateDoc(doc(rawProposalCollection(route.params.id as string), route.params.proposalId as string), {
+  await updateDoc(doc(rawProposalCollection(meetingId), proposalId), {
     speakRequests: arrayRemove(speaker),
   });
 }

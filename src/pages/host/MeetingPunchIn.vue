@@ -1,7 +1,8 @@
 <template>
   <q-page>
-    <q-tabs align="left">
+    <q-tabs align="left" v-if="bar">
       <q-route-tab :to="`/meeting_host`" label="開會" />
+      <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
       <q-route-tab
         v-if="selectedMeeting"
@@ -59,8 +60,18 @@ import SignInQRCode from 'components/QRPasscode.vue';
 import { computed, ref } from 'vue';
 import { getAllUsers } from 'src/ts/auth.ts';
 
+const props = defineProps({
+  bar: {
+    type: Boolean,
+    default: true,
+  },
+  meetingId: {
+    type: String,
+    default: '',
+  },
+});
 const route = useRoute();
-const selectedMeeting = getMeeting(route.params.id as string);
+const selectedMeeting = getMeeting(route.params.id as string ?? props.meetingId);
 const totalMembers = ref(0);
 const absences = computed(() => {
   const a = selectedMeeting?.value?.absences;
@@ -68,7 +79,7 @@ const absences = computed(() => {
 });
 
 async function removeParticipant(participant: string) {
-  await updateDoc(doc(rawMeetingCollection(), route.params.id as string), {
+  await updateDoc(doc(rawMeetingCollection(), route.params.id as string ?? props.meetingId), {
     participants: arrayRemove(participant),
   });
 }

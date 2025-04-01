@@ -1,6 +1,7 @@
 <template>
   <q-tabs align="left">
     <q-route-tab :to="`/meeting_host`" label="開會" />
+    <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
     <q-route-tab v-if="activeMeeting" :to="`/meeting_host/${activeMeeting!.id}`" label="開放簽到" />
     <q-route-tab v-if="activeMeeting" :to="`/meeting_host/${activeMeeting!.id}/agenda`" label="審理議案" />
   </q-tabs>

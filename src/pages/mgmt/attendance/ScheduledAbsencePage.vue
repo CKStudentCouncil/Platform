@@ -7,7 +7,7 @@
   </q-tabs>
   <div class="q-ma-md">
     <q-select v-model="filter" :options="meetingsOptions" label="選擇會議" />
-    <q-table :columns="columns" :filter="filter" :rows="absences" :title="`${currentReign} 班代請假情況`" row-key="name">
+    <q-table :columns="columns" :filter="filter" :rows="absences" :title="`${currentReign} 班代請假情況`" row-key="name" :pagination="{ rowsPerPage: 25 }">
       <template v-slot:top-right>
         <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
           <template v-slot:append>
@@ -25,7 +25,7 @@ import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { computed, ref, watch } from 'vue';
 import type { QTableColumn } from 'quasar';
 import { getAllUsers } from 'src/ts/auth.ts';
-import {currentReign, notifyError} from 'src/ts/utils.ts';
+import { currentReign, notifyError } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
@@ -75,35 +75,40 @@ const columns = [
 
 function updateAbsences() {
   if (!accounts.value) return;
-  absences.value = [];
+  const toWrite = [] as AbsenceInfo[];
   for (const user of accounts.value) {
-    if (!user.clazz) return;
+    if (!user.clazz) continue
     for (const meeting of meetings.value) {
-      if (!meeting) continue;
-      if (meeting.absences[user.clazz]) {
-        absences.value.push({
+      if (meeting?.absences[user.clazz]) {
+        const data = {
           meeting: meeting.name,
           clazz: user.clazz,
           name: user.name,
           scheduledAt: meeting.absences[user.clazz]!.scheduledAt,
           reason: meeting.absences[user.clazz]!.reason,
-        });
+        };
+        toWrite.push(data);
       }
     }
   }
+  absences.value = toWrite;
 }
 
-getAllUsers().then((users) => {
-  accounts.value = users;
-  watch(
-    meetings,
-    () => {
-      updateAbsences();
-    },
-    { deep: true },
-  );
-  updateAbsences();
-}).catch(e => notifyError('載入資料失敗', e));
+getAllUsers()
+  .then((users) => {
+    accounts.value = users;
+    watch(
+      meetings,
+      () => {
+        updateAbsences();
+        console.log(meetings);
+      },
+      { deep: true },
+    );
+    console.log(meetings);
+    updateAbsences();
+  })
+  .catch((e) => notifyError('載入資料失敗', e));
 </script>
 
 <style scoped></style>

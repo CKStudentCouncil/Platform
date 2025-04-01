@@ -26,6 +26,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/host/MeetingHostPage.vue') },
+      { path: 'passive', component: () => import('pages/host/MeetingPassiveDisplay.vue') },
       { path: ':id', component: () => import('pages/host/MeetingPunchIn.vue') },
       {
         path: ':id/agenda',
@@ -36,7 +37,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/host/MeetingProposal.vue'),
       },
       {
-        path: ':id/agenda/:proposalId/vote/:voteId',
+        path: ':id/agenda/:proposalId/vote/:votableId',
         component: () => import('pages/host/MeetingVote.vue'),
       },
     ],
@@ -67,7 +68,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', component: () => import('pages/mgmt/attendance/AttendancePage.vue') },
       { path: 'serial_absence', component: () => import('pages/mgmt/attendance/SerialAbsencePage.vue') },
-      { path: 'scheduled_absence', component: () => import('pages/mgmt/attendance/SchedulesAbsencePage.vue') },
+      { path: 'scheduled_absence', component: () => import('pages/mgmt/attendance/ScheduledAbsencePage.vue') },
       { path: 'export', component: () => import('pages/mgmt/attendance/ExportAttendancePage.vue') },
     ],
   },

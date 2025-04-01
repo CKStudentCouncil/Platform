@@ -1,6 +1,7 @@
 <template>
   <q-tabs align="left">
     <q-route-tab :to="`/meeting_host`" label="開會" />
+    <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
     <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
     <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="審理議案" />
   </q-tabs>
@@ -22,7 +23,7 @@
         <q-separator />
         <q-card-section>
           <div class="text-subtitle1">提案人：{{ prop.proposer }}</div>
-          <div>{{ prop.content }}</div>
+          <div style="white-space: pre-wrap">{{ prop.content }}</div>
         </q-card-section>
         <q-separator />
         <q-card-actions>

@@ -6,7 +6,7 @@
     <q-separator />
     <q-card-section>
       <div class="text-subtitle1">提案人：{{ proposal.proposer }}</div>
-      <div>{{ proposal.content }}</div>
+      <div style="white-space: pre-wrap">{{ proposal.content }}</div>
     </q-card-section>
     <q-separator />
     <q-card-section>

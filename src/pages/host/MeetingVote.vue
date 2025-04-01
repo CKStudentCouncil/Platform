@@ -1,10 +1,11 @@
 <template>
-  <q-tabs align="left">
+  <q-tabs align="left" v-if="bar">
     <q-route-tab :to="`/meeting_host`" label="開會" />
+    <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
     <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
     <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="審理議案" />
   </q-tabs>
-  <q-tabs align="left">
+  <q-tabs align="left" v-if="bar">
     <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="議程" />
     <q-route-tab
       v-if="selectedMeeting && selectedProposal"
@@ -62,9 +63,30 @@ import { notifyError } from 'src/ts/utils.ts';
 
 const route = useRoute();
 const router = useRouter();
-const selectedMeeting = getMeeting(route.params.id as string);
-const selectedProposal = getProposal(route.params.id as string, route.params.proposalId as string);
-const selectedVotable = getVotable(route.params.id as string, route.params.proposalId as string, route.params.voteId as string);
+const props = defineProps({
+  bar: {
+    type: Boolean,
+    default: true,
+  },
+  meetingId: {
+    type: String,
+    default: '',
+  },
+  proposalId: {
+    type: String,
+    default: '',
+  },
+  votableId: {
+    type: String,
+    default: '',
+  }
+});
+const meetingId = props.meetingId || (route.params.id as string);
+const proposalId = props.proposalId || (route.params.proposalId as string);
+const votableId = props.votableId || (route.params.votableId as string);
+const selectedMeeting = getMeeting(meetingId);
+const selectedProposal = getProposal(meetingId, proposalId);
+const selectedVotable = getVotable(meetingId, proposalId, votableId);
 const threshold = computed(() => {
   if (selectedVotable.value) {
     switch (selectedVotable.value.type.firebase) {
@@ -100,15 +122,15 @@ const thresholdLabel = computed(() => {
 async function removeVoter(choice: string, voter: string) {
   const update = {} as any;
   update[('results.' + choice) as keyof typeof update] = arrayRemove(voter);
-  await updateDoc(doc(rawVotableCollection(route.params.id as string, route.params.proposalId as string), route.params.voteId as string), update);
+  await updateDoc(doc(rawVotableCollection(meetingId, proposalId), votableId), update);
 }
 
 async function endVote() {
   try {
-    await updateDoc(doc(rawProposalCollection(route.params.id as string), route.params.proposalId as string), {
+    await updateDoc(doc(rawProposalCollection(meetingId), proposalId), {
       activeVotable: null,
     });
-    await router.push(`/meeting_host/${route.params.id as string}/agenda/${route.params.proposalId as string}`);
+    await router.push(`/meeting_host/${meetingId}/agenda/${proposalId}`);
   } catch (e) {
     notifyError('結束投票失敗', e);
   }
