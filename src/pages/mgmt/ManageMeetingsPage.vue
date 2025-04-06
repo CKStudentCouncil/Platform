@@ -111,6 +111,7 @@
         >
         <q-input v-model="targetMeeting.reign" label="屆期" />
         <q-checkbox v-model="targetMeeting.registration" label="開放註冊 (預備會議用)" />
+        <q-checkbox v-model="targetMeeting.exemptFromAttendance" label="不記入出缺席 (委員會會議用)" />
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -168,6 +169,7 @@ const targetMeeting = reactive(
     startTime: string;
     reign: string;
     registration: boolean;
+    exemptFromAttendance: boolean;
     punchInPasscode: string;
   },
 );
@@ -195,6 +197,7 @@ function edit(row: any) {
   targetMeeting.startTime = date.formatDate(row.start, 'HH:mm');
   targetMeeting.reign = row.reign;
   targetMeeting.registration = row.registration;
+  targetMeeting.exemptFromAttendance = row.exemptFromAttendance;
   targetMeeting.punchInPasscode = row.punchInPasscode;
 }
 
@@ -205,6 +208,7 @@ function add() {
   targetMeeting.startTime = date.formatDate(new Date(), 'HH:mm:ss');
   targetMeeting.reign = currentReign;
   targetMeeting.registration = false;
+  targetMeeting.exemptFromAttendance = false;
 }
 
 async function submit() {
@@ -223,6 +227,7 @@ async function submit() {
         start: date.extractDate(targetMeeting.startDate + ' ' + targetMeeting.startTime, 'YYYY-MM-DD HH:mm'),
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
+        exemptFromAttendance: targetMeeting.exemptFromAttendance,
         punchInPasscode: targetMeeting.punchInPasscode,
       });
     } else if (action.value === 'add') {
@@ -239,6 +244,7 @@ async function submit() {
         absences: {},
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
+        exemptFromAttendance: targetMeeting.exemptFromAttendance,
       } as unknown as Meeting);
     }
   } catch (e) {
@@ -348,7 +354,7 @@ async function exportMeetingRecord(meeting: Meeting) {
     const content = `
 <div style="font-size: medium">一、出席狀況：</font></div>
 <div style="font-size: medium">1. 出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</font></div>
-<div style="font-size: medium">2. 請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length}人</font></div>
+<div style="font-size: medium">2. 請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length} 人</font></div>
 <div style="font-size: medium">3. 缺席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</font></div>
 <div style="font-size: medium">二、議案與決議</font></div>
 <div style="font-size: medium">(一) 議案順序：</font></div>

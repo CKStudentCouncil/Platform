@@ -42,7 +42,7 @@ function updateAttendance() {
   const participants = [] as string[][];
   const scheduledAbsences = [] as string[][];
   for (const meeting of meetings.value) {
-    if (!meeting) continue;
+    if (!meeting||meeting.exemptFromAttendance) continue;
     participants.push(meeting.participants);
     scheduledAbsences.push(Object.keys(meeting.absences));
   }

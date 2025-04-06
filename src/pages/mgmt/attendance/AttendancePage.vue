@@ -98,7 +98,7 @@ function updateAttendance() {
   }
   let meetingsCount = 0;
   for (const meeting of meetings.value) {
-    if (!meeting) continue;
+    if (!meeting||meeting.exemptFromAttendance) continue;
     for (const clazz of meeting.participants) {
       if (!tempAttendance[clazz]) continue;
       tempAttendance[clazz].attendedMeetings++;

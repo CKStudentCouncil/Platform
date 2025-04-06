@@ -38,7 +38,7 @@ async function exp() {
       if (!account.clazz) continue;
       let serviceHours = 0;
       for (const meeting of meetings) {
-        if (!meeting) continue;
+        if (!meeting||meeting.data()?.exemptFromAttendance) continue;
         if (meeting.data()?.participants.includes(account.clazz)) {
           serviceHours++;
         }

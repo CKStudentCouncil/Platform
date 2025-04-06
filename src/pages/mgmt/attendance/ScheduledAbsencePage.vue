@@ -101,11 +101,9 @@ getAllUsers()
       meetings,
       () => {
         updateAbsences();
-        console.log(meetings);
       },
       { deep: true },
     );
-    console.log(meetings);
     updateAbsences();
   })
   .catch((e) => notifyError('載入資料失敗', e));
