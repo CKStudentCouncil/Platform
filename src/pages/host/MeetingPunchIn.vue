@@ -1,14 +1,10 @@
 <template>
   <q-page>
-    <q-tabs align="left" v-if="bar">
+    <q-tabs v-if="bar" align="left">
       <q-route-tab :to="`/meeting_host`" label="開會" />
       <q-route-tab :to="`/meeting_host/passive`" label="開會投影" />
       <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}`" label="開放簽到" />
-      <q-route-tab
-        v-if="selectedMeeting"
-        :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`"
-        label="審理議案"
-      />
+      <q-route-tab v-if="selectedMeeting" :to="`/meeting_host/${(selectedMeeting! as any).id}/agenda`" label="審理議案" />
     </q-tabs>
     <div v-if="selectedMeeting" class="row q-ma-md">
       <div class="col-6">
@@ -16,20 +12,25 @@
       </div>
       <div class="col-6">
         <div v-if="!selectedMeeting.registration">
-          <div style="display: table-row">
-            <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
-            <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-            >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
-            >
+          <div v-if="selectedMeeting.customAttendanceBar">
+            <div style="display: table-row">
+              <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
+              <span class="text-h6" style="display: table-cell; vertical-align: bottom"
+              >/ {{ selectedMeeting.customAttendanceBar }} ( {{ absences }} 位請假)</span
+              >
+            </div>
+            <div class="text-h6">人已簽到 / 開會門檻</div>
           </div>
-          <div class="text-h6">人已簽到 / 開會門檻 / 班代總額</div>
-          <q-btn
-            v-if="selectedMeeting!.participants.length > Math.ceil((totalMembers - absences) / 5)"
-            color="positive"
-            flat
-            icon="check"
-            label="已達法定開會人數門檻"
-          />
+          <div v-else>
+            <div style="display: table-row">
+              <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
+              <span class="text-h6" style="display: table-cell; vertical-align: bottom"
+              >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
+              >
+            </div>
+            <div class="text-h6">人已簽到 / 開會門檻 / 班代總額</div>
+          </div>
+          <q-btn v-if="reachedRequirements" color="positive" flat icon="check" label="已達法定開會人數門檻" />
           <q-btn v-else color="negative" flat icon="close" label="未達法定開會人數門檻" />
         </div>
         <div v-else>
@@ -39,12 +40,7 @@
           <div class="text-h6">人已簽到</div>
         </div>
         <br />
-        <transition
-          v-for="participant of selectedMeeting!.participants"
-          :key="participant"
-          appear
-          enter-active-class="animated heartBeat"
-        >
+        <transition v-for="participant of selectedMeeting!.participants" :key="participant" appear enter-active-class="animated heartBeat">
           <q-chip removable @remove="removeParticipant(participant)">{{ participant }} 班代</q-chip>
         </transition>
       </div>
@@ -71,15 +67,22 @@ const props = defineProps({
   },
 });
 const route = useRoute();
-const selectedMeeting = getMeeting(route.params.id as string ?? props.meetingId);
+const selectedMeeting = getMeeting((route.params.id as string) ?? props.meetingId);
 const totalMembers = ref(0);
 const absences = computed(() => {
   const a = selectedMeeting?.value?.absences;
   return a ? Object.keys(a).length : 0;
 });
+const reachedRequirements = computed(() => {
+  if (selectedMeeting?.value?.customAttendanceBar) {
+    return selectedMeeting.value.participants.length >= selectedMeeting.value.customAttendanceBar;
+  } else {
+    return (selectedMeeting?.value?.participants.length ?? 0) >= Math.ceil((totalMembers.value - absences.value) / 5);
+  }
+});
 
 async function removeParticipant(participant: string) {
-  await updateDoc(doc(rawMeetingCollection(), route.params.id as string ?? props.meetingId), {
+  await updateDoc(doc(rawMeetingCollection(), (route.params.id as string) ?? props.meetingId), {
     participants: arrayRemove(participant),
   });
 }

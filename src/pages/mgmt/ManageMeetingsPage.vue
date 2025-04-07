@@ -112,6 +112,10 @@
         <q-input v-model="targetMeeting.reign" label="屆期" />
         <q-checkbox v-model="targetMeeting.registration" label="開放註冊 (預備會議用)" />
         <q-checkbox v-model="targetMeeting.exemptFromAttendance" label="不記入出缺席 (委員會會議用)" />
+        <div class="row">
+          <q-checkbox :model-value="!!targetMeeting.customAttendanceBar" @update:model-value="editCustomAttendanceBar" label="自訂開會門檻" />
+          <q-input class="q-ml-sm" v-if="targetMeeting.customAttendanceBar" v-model.number="targetMeeting.customAttendanceBar" type="number" dense label="開會門檻" />
+        </div>
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
           <q-date v-model="targetMeeting.startDate" class="col" mask="YYYY-MM-DD" />
@@ -128,7 +132,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import type { Meeting, Votable } from 'src/ts/models.ts';
+import type { Meeting, MeetingId, Votable } from 'src/ts/models.ts';
 import {
   meetingCollectionOfReign,
   meetingConverter,
@@ -141,7 +145,7 @@ import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'fire
 import type { QTableColumn } from 'quasar';
 import { date, Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
-import {cleanseName, currentReign, generateRandomText, notifyError, notifySuccess} from 'src/ts/utils.ts';
+import { cleanseName, currentReign, generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { exportVotingData } from 'pages/mgmt/common.ts';
@@ -161,18 +165,13 @@ const columns = [
 const pagination = ref({ sortBy: 'start', descending: true });
 const filter = ref('');
 const action = ref('');
-const targetMeeting = reactive(
-  {} as {
-    id: string;
-    name: string;
-    startDate: string;
-    startTime: string;
-    reign: string;
-    registration: boolean;
-    exemptFromAttendance: boolean;
-    punchInPasscode: string;
-  },
-);
+
+interface EditableMeeting extends MeetingId {
+  startDate: string;
+  startTime: string;
+}
+
+const targetMeeting = reactive({} as EditableMeeting);
 const db = useFirestore();
 const route = useRoute();
 const router = useRouter();
@@ -199,6 +198,7 @@ function edit(row: any) {
   targetMeeting.registration = row.registration;
   targetMeeting.exemptFromAttendance = row.exemptFromAttendance;
   targetMeeting.punchInPasscode = row.punchInPasscode;
+  targetMeeting.customAttendanceBar = row.customAttendanceBar;
 }
 
 function add() {
@@ -209,6 +209,7 @@ function add() {
   targetMeeting.reign = currentReign;
   targetMeeting.registration = false;
   targetMeeting.exemptFromAttendance = false;
+  targetMeeting.customAttendanceBar = null;
 }
 
 async function submit() {
@@ -228,6 +229,7 @@ async function submit() {
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
         exemptFromAttendance: targetMeeting.exemptFromAttendance,
+        customAttendanceBar: (targetMeeting.customAttendanceBar) ? targetMeeting.customAttendanceBar : null,
         punchInPasscode: targetMeeting.punchInPasscode,
       });
     } else if (action.value === 'add') {
@@ -245,6 +247,7 @@ async function submit() {
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
         exemptFromAttendance: targetMeeting.exemptFromAttendance,
+        customAttendanceBar: (targetMeeting.customAttendanceBar) ? targetMeeting.customAttendanceBar : null,
       } as unknown as Meeting);
     }
   } catch (e) {
@@ -497,6 +500,14 @@ function changeReign() {
   }).onOk((data) => {
     reign.value = data.trim();
   });
+}
+
+function editCustomAttendanceBar(v: boolean) {
+  if (v) {
+    targetMeeting.customAttendanceBar = 10;
+  } else {
+    targetMeeting.customAttendanceBar = null;
+  }
 }
 </script>
 

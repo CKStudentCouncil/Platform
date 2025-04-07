@@ -45,6 +45,11 @@ export interface Meeting extends DocumentType {
   reign: string; // 79-1
   registration?: boolean; // Whether to allow account registration
   exemptFromAttendance?: boolean; // Whether to exempt this meeting from attendance
+  customAttendanceBar?: number | null;
+}
+
+export interface MeetingId extends Meeting {
+  id: string;
 }
 
 interface Absence {
