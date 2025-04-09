@@ -7,7 +7,15 @@
   </q-tabs>
   <div class="q-ma-md">
     <q-select v-model="filter" :options="meetingsOptions" label="選擇會議" />
-    <q-table :columns="columns" :filter="filter" :rows="absences" :title="`${currentReign} 班代請假情況`" row-key="name" :pagination="{ rowsPerPage: 25 }">
+    <q-table
+      :columns="columns"
+      :filter="filter"
+      :loading="loading"
+      :pagination="{ rowsPerPage: 25 }"
+      :rows="absences"
+      :title="`${currentReign} 班代請假情況`"
+      row-key="name"
+    >
       <template v-slot:top-right>
         <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
           <template v-slot:append>
@@ -31,6 +39,7 @@ const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
 const meetingsOptions = computed(() => meetings.value.map((meeting) => meeting?.name));
 const absences = ref([] as AbsenceInfo[]);
+const loading = ref(true);
 
 interface AbsenceInfo {
   meeting: string;
@@ -77,7 +86,7 @@ function updateAbsences() {
   if (!accounts.value) return;
   const toWrite = [] as AbsenceInfo[];
   for (const user of accounts.value) {
-    if (!user.clazz) continue
+    if (!user.clazz) continue;
     for (const meeting of meetings.value) {
       if (meeting?.absences[user.clazz]) {
         const data = {
@@ -106,7 +115,10 @@ getAllUsers()
     );
     updateAbsences();
   })
-  .catch((e) => notifyError('載入資料失敗', e));
+  .catch((e) => notifyError('載入資料失敗', e))
+  .finally(() => {
+    loading.value = false;
+  });
 </script>
 
 <style scoped></style>

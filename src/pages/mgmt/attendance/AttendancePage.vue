@@ -7,7 +7,7 @@
       <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
     </q-tabs>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="attendance" :title="`${currentReign} 班代出席時數`" row-key="name">
+      <q-table :columns="columns" :filter="filter" :rows="attendance" :title="`${currentReign} 班代出席時數`" row-key="name" :loading="loading">
         <template v-slot:top-right>
           <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
             <template v-slot:append>
@@ -32,6 +32,7 @@ const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
 const attendance = ref([] as AttendanceInfo[]);
 const filter = ref('');
+const loading = ref(true);
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
   {
@@ -130,7 +131,10 @@ getAllUsers().then((users) => {
     { deep: true },
   );
   updateAttendance();
-}).catch(e => notifyError('載入資料失敗', e));
+}).catch(e => notifyError('載入資料失敗', e))
+.finally(()=> {
+  loading.value = false;
+});
 </script>
 
 <style scoped></style>
