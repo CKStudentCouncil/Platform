@@ -33,7 +33,7 @@ async function exp() {
     { header: '出席率', key: 'attendanceRate', style: { numFmt: '0.00%' } },
     { header: '記功嘉獎', key: 'awardType' },
   ];
-  for (const account of accounts) {
+  for (const account of accounts.sort((a, b) => a.clazz?.localeCompare(b.clazz!) ?? 0)) {
     try {
       if (!account.clazz) continue;
       let serviceHours = 0;
@@ -43,7 +43,7 @@ async function exp() {
           serviceHours++;
         }
       }
-      const attRate = serviceHours / meetings.length;
+      const attRate = serviceHours / meetings.filter(f => f.data() && !f.data()!.exemptFromAttendance).length;
       let awardType;
       if (attRate == 1) {
         awardType = '小功乙支';
