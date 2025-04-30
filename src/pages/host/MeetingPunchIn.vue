@@ -12,26 +12,32 @@
       </div>
       <div class="col-6">
         <div v-if="!selectedMeeting.registration">
-          <div v-if="selectedMeeting.customAttendanceBar">
-            <div style="display: table-row">
-              <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
-              <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-              >/ {{ selectedMeeting.customAttendanceBar }} ( {{ absences }} 位請假)</span
-              >
+          <div v-if="totalMembers != 0">
+            <div v-if="selectedMeeting.customAttendanceBar">
+              <div style="display: table-row">
+                <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
+                <span class="text-h6" style="display: table-cell; vertical-align: bottom"
+                >/ {{ selectedMeeting.customAttendanceBar }} ( {{ absences }} 位請假)</span
+                >
+              </div>
+              <div class="text-h6">人已簽到 / 開會門檻</div>
             </div>
-            <div class="text-h6">人已簽到 / 開會門檻</div>
+            <div v-else>
+              <div style="display: table-row">
+                <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
+                <span class="text-h6" style="display: table-cell; vertical-align: bottom"
+                >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
+                >
+              </div>
+              <div class="text-h6">人已簽到 / 開會門檻 / 班代總額</div>
+            </div>
+            <q-btn v-if="reachedRequirements" color="positive" flat icon="check" label="已達法定開會人數門檻" />
+            <q-btn v-else color="negative" flat icon="close" label="未達法定開會人數門檻" />
           </div>
           <div v-else>
-            <div style="display: table-row">
-              <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
-              <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-              >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
-              >
-            </div>
-            <div class="text-h6">人已簽到 / 開會門檻 / 班代總額</div>
+            <q-spinner class="text-h4 q-mr-md"/>
+            <span class="text-h4"> 正在載入班代總額</span>
           </div>
-          <q-btn v-if="reachedRequirements" color="positive" flat icon="check" label="已達法定開會人數門檻" />
-          <q-btn v-else color="negative" flat icon="close" label="未達法定開會人數門檻" />
         </div>
         <div v-else>
           <div style="display: table-row">
