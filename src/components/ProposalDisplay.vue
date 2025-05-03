@@ -30,6 +30,7 @@
     <q-separator />
     <q-card-actions v-if="editable">
       <q-btn v-if="selectable" color="positive" flat label="選擇並檢視投票案件" @click="$emit('select', proposal.id)" />
+      <q-btn color="brown" flat label="複製到其他會議" @click="$emit('copy', proposal.id)" />
       <q-btn color="primary" flat label="編輯" @click="$emit('edit', proposal.id)" />
       <q-btn color="negative" flat label="刪除" @click="$emit('del', proposal.id)" />
     </q-card-actions>
@@ -85,6 +86,7 @@ defineProps({
 
 defineEmits<{
   select: [proposalId: string];
+  copy: [proposalId: string];
   edit: [proposalId: string];
   del: [proposalId: string];
   end: [proposalId: string];

@@ -2,10 +2,7 @@
   <q-page>
     <q-tabs v-if="!embed" align="left">
       <q-route-tab :to="'/meetings/' + meetingId" label="會議" />
-      <q-route-tab
-        :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId}`"
-        label="提案"
-      />
+      <q-route-tab :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId}`" label="提案" />
       <q-route-tab
         :disable="!selected"
         :to="`/meetings/${meetingId.length == 0 ? '' : meetingId + '/'}proposals/${proposalId.length == 0 ? '' : proposalId + '/'}votables`"
@@ -22,9 +19,10 @@
           :key="prop.id"
           :class="selected == prop.id ? 'bg-green-1' : ''"
           :proposal="prop"
-          editable
           :selectable="!embed"
-          @del="del(prop.id)"
+          editable
+          @copy="copy"
+          @del="del"
           @edit="edit(prop)"
           @select="
             selected = prop.id;
@@ -53,13 +51,28 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog :model-value="!!copyingProp" persistent>
+    <q-card>
+      <q-card-section>
+        <h6 class="q-ma-none">複製提案至其他會議</h6>
+      </q-card-section>
+      <q-card-section>
+        <q-select v-model="copyingTo" :option-label="(m) => m.name" :options="meetings" label="選擇會議" />
+        <q-checkbox v-model="copyVotables" label="複製投票案件" />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn color="negative" flat label="取消" @click="copyingProp = null" />
+        <q-btn color="positive" flat label="確定" @click="submitCopy()" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script lang="ts" setup>
-import type { Proposal} from 'src/ts/models.ts';
-import { getMeeting, proposalCollection, rawProposalCollection } from 'src/ts/models.ts';
+import type { MeetingId, Proposal } from 'src/ts/models.ts';
+import { getMeeting, meetingCollectionOfCurrentReign, proposalCollection, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
-import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { computed, reactive, ref } from 'vue';
@@ -81,12 +94,14 @@ const props = defineProps({
     default: false,
   },
 });
+
 interface ProposalId extends Proposal {
   id: string;
 }
 
-const meetingId = props.embed ? props.meetingId : useRoute().params.id as string;
+const meetingId = props.embed ? props.meetingId : (useRoute().params.id as string);
 const proposalId = useRoute().params.proposalId as string;
+const meetings = meetingCollectionOfCurrentReign();
 const meeting = getMeeting(meetingId);
 const proposals = proposalCollection(meetingId);
 const action = ref('');
@@ -110,6 +125,9 @@ const dialog = computed(() => {
   return action.value === 'edit' || action.value === 'add';
 });
 const db = useFirestore();
+const copyingProp = ref<string | null>(null);
+const copyingTo = ref(null as MeetingId | null);
+const copyVotables = ref(true);
 
 function edit(proposal: any) {
   Object.assign(target, proposal);
@@ -204,6 +222,43 @@ async function rearrange() {
 function addAttachments(a: string[]) {
   for (const attachment of a) {
     target.attachments.push(attachment);
+  }
+}
+
+function copy(id: string) {
+  copyingProp.value = id;
+  copyingTo.value = null;
+  copyVotables.value = true;
+}
+
+async function submitCopy() {
+  if (!copyingProp.value || !copyingTo.value) return;
+  Loading.show();
+  try {
+    const newId = generateRandomText(6, null);
+    for (const prop of proposals.value) {
+      if (prop.id !== copyingProp.value) {
+        continue;
+      }
+      await setDoc(doc(rawProposalCollection(copyingTo.value.id), newId), prop);
+      break;
+    }
+    if (copyVotables.value) {
+      Loading.show({ message: '正在複製投票案件...' });
+      const tasks = [];
+      const col = rawVotableCollection(copyingTo.value.id, newId);
+      const docs = await getDocs(rawVotableCollection(meetingId, copyingProp.value));
+      for (const votable of docs.docs) {
+        tasks.push(setDoc(doc(col, generateRandomText(6, null)), votable.data()));
+      }
+      await Promise.all(tasks);
+    }
+    notifySuccess('複製成功');
+    copyingProp.value = null;
+  } catch (e) {
+    notifyError('複製失敗', e);
+  } finally {
+    Loading.hide();
   }
 }
 </script>
