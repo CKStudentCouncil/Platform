@@ -26,7 +26,7 @@ export async function addUserWithRole(user: User) {
   let result = null;
   try {
     result = await auth.getUserByEmail(user.email);
-  } catch (e) {
+  } catch {
     // user not found
   }
   if (!result) {

@@ -86,7 +86,7 @@ export const register = onCall(globalFunctionOptions, async (request) => {
   if (activeMeeting.size == 0 || !activeMeeting.docs[0]?.data().registration) {
     throw new https.HttpsError(
       'permission-denied',
-      `Registration disabled.`
+      'Registration disabled.'
     );
   }
   const user = request.data as User;
