@@ -72,7 +72,7 @@
 import type { MeetingId, Proposal } from 'src/ts/models.ts';
 import { getMeeting, meetingCollectionOfCurrentReign, proposalCollection, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
 import { useRoute, useRouter } from 'vue-router';
-import { deleteDoc, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getCountFromServer, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
 import { computed, reactive, ref } from 'vue';
@@ -240,7 +240,10 @@ async function submitCopy() {
       if (prop.id !== copyingProp.value) {
         continue;
       }
-      await setDoc(doc(rawProposalCollection(copyingTo.value.id), newId), prop);
+      const propCopy = { ...prop };
+      const toProps = rawProposalCollection(copyingTo.value.id);
+      propCopy.order = (await getCountFromServer(toProps)).data().count;
+      await setDoc(doc(toProps, newId), propCopy);
       break;
     }
     if (copyVotables.value) {
