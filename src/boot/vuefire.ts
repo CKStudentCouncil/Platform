@@ -14,13 +14,13 @@ let analytics: Analytics | null = null;
 export default boot(({ app, router }) => {
   // something to do
   const firebaseApp = initializeApp({
-    apiKey: 'AIzaSyDVpsV2SN10S6Oirk6NWU0GZzWLHJ0TUyw',
-    authDomain: 'cksc-platform.firebaseapp.com',
-    projectId: 'cksc-platform',
-    storageBucket: 'cksc-platform.appspot.com',
-    messagingSenderId: '405143921937',
-    appId: '1:405143921937:web:904e9dbe70c475afd5d8b0',
-    measurementId: 'G-0DEL084RDJ',
+    apiKey: "AIzaSyCYwBV-FH-xww7AFitUiP5LV3yZgU3Mn74",
+    authDomain: "cyhs-platform.firebaseapp.com",
+    projectId: "cyhs-platform",
+    storageBucket: "cyhs-platform.firebasestorage.app",
+    messagingSenderId: "303469346334",
+    appId: "1:303469346334:web:98b60e89b579fafe5ef80f",
+    measurementId: "G-Z0RHTBLREB"
   });
   analytics = initializeAnalytics(firebaseApp);
   app.use(VueFire, {

@@ -86,7 +86,7 @@ export const register = onCall(globalFunctionOptions, async (request) => {
   if (activeMeeting.size == 0 || !activeMeeting.docs[0]?.data().registration) {
     throw new https.HttpsError(
       'permission-denied',
-      `Registration disabled.`
+      'Registration disabled.'
     );
   }
   const user = request.data as User;
@@ -108,7 +108,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
       requestBody: {
         name: getCurrentReign(),
         mimeType: 'application/vnd.google-apps.folder',
-        parents: ['1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
+        parents: ['14H5nfNi2yoN6SCbsDzNkbLvMvffsYrMc']
       },
       fields: 'id'
     })).data.id;
@@ -119,7 +119,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
     requestBody: {
       name,
       mimeType,
-      parents: [folder ?? '1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
+      parents: [folder ?? '14H5nfNi2yoN6SCbsDzNkbLvMvffsYrMc']
     },
     media: {
       mimeType,
@@ -146,10 +146,16 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
 });
 
 export function getReign(date: Date) {
-  if (date.getMonth() > 7 || date.getMonth() < 1) { // -1
-    return `${date.getFullYear() - 1945}-1`;
+  let year: number;
+  if (date.getMonth() < 8) {
+    year = date.getFullYear() - 1996 - 1;
+  } else {
+    year = date.getFullYear() - 1996;
   }
-  return `${date.getFullYear() - 1945 - 1}-2`;
+  if (date.getMonth() > 7 || date.getMonth() < 1) { // -1
+    return `${year}-1`;
+  }
+  return `${year}-2`;
 }
 
 export function getCurrentReign() {

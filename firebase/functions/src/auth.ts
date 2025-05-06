@@ -8,7 +8,7 @@ export async function checkRole(request: https.CallableRequest, role: Role) {
   if (!request.auth) {
     throw new https.HttpsError('unauthenticated', 'You must be authenticated');
   }
-  if (request.auth.uid == '38fWtZ4AKRU3oAZjfrt9nBq7d8B2') {
+  if (request.auth.uid == 'tR3d08DBR6WQr3lcJLKJhlDH2RW2') {
     // Root account
     return;
   }
@@ -26,7 +26,7 @@ export async function addUserWithRole(user: User) {
   let result = null;
   try {
     result = await auth.getUserByEmail(user.email);
-  } catch (e) {
+  } catch {
     // user not found
   }
   if (!result) {

@@ -5,11 +5,21 @@
         <q-btn dense flat icon="menu" round @click="toggleLeftDrawer" />
 
         <q-toolbar-title>
-          <q-avatar>
-            <img alt="favicon" src="icon.png" />
-          </q-avatar>
-          <span v-if="$q.screen.gt.xs" class="q-pl-sm">建國中學班代大會議事系統</span>
-          <span v-else class="q-pl-sm">建中班代大會議事系統</span>
+          <div v-if="$q.screen.gt.xs">
+            <q-avatar>
+              <img alt="favicon" src="icon.png" />
+            </q-avatar>
+            <span class="q-pl-sm">建國中學班代大會議事系統<span style="font-size: 16px"> for 成淵班聯青年會議</span></span>
+          </div>
+          <div v-else class="row flex-center">
+            <q-avatar>
+              <img alt="favicon" src="icon.png" />
+            </q-avatar>
+            <div class="q-pl-sm col">
+              <span class="row" style="font-size: 20px;">建中班代大會議事系統</span>
+              <span class="row" style="font-size: 12px;"> for 成淵班聯青年會議</span>
+            </div>
+          </div>
         </q-toolbar-title>
 
         <q-btn v-if="$q.screen.gt.xs" flat icon="fullscreen" @click="toggleFullscreen" />
