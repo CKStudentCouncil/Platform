@@ -6,7 +6,7 @@
 
         <q-toolbar-title>
           <q-avatar>
-            <img alt="favicon" src="icon.png" />
+            <img alt="favicon" src="/icon.png" />
           </q-avatar>
           <span v-if="$q.screen.gt.xs" class="q-pl-sm">建國中學班代大會議事系統</span>
           <span v-else class="q-pl-sm">建中班代大會議事系統</span>

@@ -9,7 +9,7 @@
       tag="svg"
     ></vue-qrcode>
     <div class="text-h4" style="text-align: center">簽到碼：{{ passcode }}</div>
-    <img alt="cksc" class="qrcode__image" src="icon.png" v-if="$q.screen.gt.sm" />
+    <img alt="cksc" class="qrcode__image" src="/icon.png" v-if="$q.screen.gt.sm" />
   </figure>
 </template>
 
