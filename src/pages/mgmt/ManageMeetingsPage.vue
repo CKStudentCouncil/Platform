@@ -278,7 +278,7 @@ function del(row: any) {
 }
 
 async function copyLink(row: any) {
-  const url = window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
+  const url = window.location.origin.replace(/\/+$/, '') + '/schedule_absence/' + row.id;
   await navigator.clipboard.writeText(url);
   notifySuccess('已複製請假連結');
 }
