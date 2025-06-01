@@ -445,7 +445,6 @@ async function exportMeetingNotice(meeting: Meeting) {
 <div style="font-size: large">議程：</div>
 ${proposals}
 <div><br></div>
-<div style="font-size: medium">會議主席：${host}</div>
 <div style="font-size: medium">備註：</div>
 <div style="font-size: medium">一、請尚未加入本期間班級代表LINE社群的班代盡快加入，以便聯繫及接收最新開會資訊。</div>
 <div style="font-size: medium">二、班代大會為本校重要學生自治機關，請各位班級代表務必出席，不勝感激。不克出席者請請假或由同班同學代理。</div>
@@ -457,6 +456,7 @@ ${proposals}
       result.subject = meeting.name;
     }
     result.fromSpecific = 'Speaker';
+    result.fromName = host;
     result.toSpecific = ['StudentCouncilRepresentative'];
     result.ccSpecific = ['Chairman', 'ViceChairman', 'JudicialCommitteeMember'];
     result.location = '夢紅樓五樓 公民審議論壇教室';
