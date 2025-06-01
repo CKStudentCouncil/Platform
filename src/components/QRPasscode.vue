@@ -5,18 +5,18 @@
         errorCorrectionLevel: 'Q',
         width: Math.min(screenWidth, screenHeight) * 0.4,
       }"
-      :value="`${currentHost}#/punch_in/${passcode}`"
+      :value="`${currentHost}/punch_in/${passcode}`"
       tag="svg"
     ></vue-qrcode>
     <div class="text-h4" style="text-align: center">簽到碼：{{ passcode }}</div>
-    <img alt="cksc" class="qrcode__image" src="icon.png" v-if="$q.screen.gt.sm" />
+    <img alt="cksc" class="qrcode__image" src="/icon.png" v-if="$q.screen.gt.sm" />
   </figure>
 </template>
 
 <script lang="ts" setup>
 import VueQrcode from '@chenfengyuan/vue-qrcode';
 
-const currentHost = window.location.origin + (window.location.origin.endsWith('/') ? '' : '/');
+const currentHost = window.location.origin.replace(/\/+$/, '');
 const screenHeight = screen.height;
 const screenWidth = screen.width;
 defineProps({

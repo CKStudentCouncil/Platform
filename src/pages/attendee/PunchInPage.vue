@@ -74,7 +74,7 @@ async function checkPunchedIn() {
 async function onDetect(detectedCodes: any) {
   if (detectedCodes.length == 0) return;
   const code = detectedCodes[0].rawValue as string;
-  const realPasscode = code.split('#/punch_in/')[1];
+  const realPasscode = code.split('/punch_in/')[1];
   if (!realPasscode) return;
   tempPasscode.value = realPasscode;
   scanning.value = false;

@@ -278,7 +278,7 @@ function del(row: any) {
 }
 
 async function copyLink(row: any) {
-  const url = window.location.origin + (window.location.origin.endsWith('/') ? '' : '/') + '#/schedule_absence/' + row.id;
+  const url = window.location.origin.replace(/\/+$/, '') + '/schedule_absence/' + row.id;
   await navigator.clipboard.writeText(url);
   notifySuccess('已複製請假連結');
 }
@@ -385,7 +385,7 @@ ${votables}
     result.meetingTime = meeting.start.valueOf();
     try {
       await navigator.clipboard.writeText(JSON.stringify(result));
-      window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+      window.open('https://law.cksc.tw/manage/document/from_template');
     } catch (e) {
       Dialog.create({
         title: '起草會議記錄',
@@ -396,7 +396,7 @@ ${votables}
           model: JSON.stringify(result),
         },
       }).onOk(() => {
-        window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+        window.open('https://law.cksc.tw/manage/document/from_template');
       });
     }
   } catch (e) {
@@ -465,7 +465,7 @@ ${proposals}
     result.meetingTime = meeting.start.valueOf();
     try {
       await navigator.clipboard.writeText(JSON.stringify(result));
-      window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+      window.open('https://law.cksc.tw/manage/document/from_template');
     } catch (e) {
       Dialog.create({
         title: '起草會議記錄',
@@ -476,7 +476,7 @@ ${proposals}
           model: JSON.stringify(result),
         },
       }).onOk(() => {
-        window.open('https://cksc-legislation.firebaseapp.com/manage/document/from_template');
+        window.open('https://law.cksc.tw/manage/document/from_template');
       });
     }
   } catch (e) {
