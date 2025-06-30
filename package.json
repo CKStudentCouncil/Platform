@@ -20,7 +20,7 @@
     "@volar/language-server": "2.4.12",
     "@vue/language-server": "^2.2.10",
     "exceljs": "^4.4.0",
-    "firebase": "^11.5.0",
+    "firebase": "^11.10.0",
     "qrcode": "1",
     "quasar": "^2.18.1",
     "vue": "^3.5.13",
