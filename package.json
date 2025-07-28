@@ -28,7 +28,7 @@
     "vue-gtag": "^2.1.2",
     "vue-qrcode-reader": "^5.7.1",
     "vue-router": "^4.5.1",
-    "vuefire": "^3.2.1"
+    "vuefire": "^3.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
