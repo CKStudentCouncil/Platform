@@ -5262,10 +5262,10 @@ vue-eslint-parser@^10.1.1:
     lodash "^4.17.21"
     semver "^7.6.3"
 
-vue-gtag@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/vue-gtag/-/vue-gtag-2.1.2.tgz#d9604735dc2f5b1ed3ff6080a969bc1a17197240"
-  integrity sha512-9eTGfIApQ3XpsxJjLNiRP51x0v3c93YJxVO8rKWSLJwbUuICwTMGGfB7x0RLEijFoK3lakgFvR5pR+JF5la2KA==
+vue-gtag@^3.5.2:
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/vue-gtag/-/vue-gtag-3.5.2.tgz#ef56195ddec0ce9bdccf5636baee982e50ead9cc"
+  integrity sha512-efTY4yrkNraFSu6CZqhFZLX5LggqCr44d6kcPnPPtzYhvu5ywrTFUnuvM2Vm238QC+YT43HkVEXV/L1OYnHvNg==
 
 vue-qrcode-reader@^5.7.1:
   version "5.7.1"
