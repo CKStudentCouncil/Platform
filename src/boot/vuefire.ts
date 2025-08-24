@@ -5,13 +5,13 @@ import type { Analytics} from 'firebase/analytics';
 import { initializeAnalytics } from 'firebase/analytics';
 import type { HttpsCallable} from '@firebase/functions';
 import { getFunctions, httpsCallable } from '@firebase/functions';
-import VueGtag from 'vue-gtag';
+import { configure } from 'vue-gtag';
 
 let analytics: Analytics | null = null;
 
 // "async" is optional;
 // more info on params: https://v2.quasar.dev/quasar-cli/boot-files
-export default boot(({ app, router }) => {
+export default boot(({ app }) => {
   // something to do
   const firebaseApp = initializeApp({
     apiKey: 'AIzaSyDVpsV2SN10S6Oirk6NWU0GZzWLHJ0TUyw',
@@ -27,13 +27,10 @@ export default boot(({ app, router }) => {
     firebaseApp,
     modules: [VueFireAuth()],
   });
-  app.use(
-    VueGtag,
-    {
-      config: { id: firebaseApp.options.measurementId! },
-    },
-    router,
-  );
+  configure({
+    appName: 'CKSC Platform Quasar App',
+    tagId: firebaseApp.options.measurementId!
+  })
 });
 
 export function useFunction(name: string): HttpsCallable {

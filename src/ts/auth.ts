@@ -65,7 +65,7 @@ export function login() {
       loggedInUser.value = auth.currentUser;
       Loading.hide();
       notifySuccess('登入成功');
-      event('login_with_google');
+      event('login_with_google', {});
     })
     .catch((error) => {
       console.error('Failed to log in.');
@@ -82,7 +82,7 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
     loggedInUser.value = auth.currentUser;
     Loading.hide();
     notifySuccess('登入成功');
-    event('login_with_schoolId');
+    event('login_with_schoolId', {});
   } catch (e) {
     console.error('Failed to log in.');
     Loading.hide();
