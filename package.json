@@ -18,7 +18,7 @@
     "@chenfengyuan/vue-qrcode": "2",
     "@quasar/extras": "^1.17.0",
     "@volar/language-server": "2.4.23",
-    "@vue/language-server": "^2.2.10",
+    "@vue/language-server": "^3.1.0",
     "exceljs": "^4.4.0",
     "firebase": "^12.1.0",
     "qrcode": "1",
