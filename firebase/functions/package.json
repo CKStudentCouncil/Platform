@@ -20,7 +20,7 @@
     "googleapis": "^156.0.0"
   },
   "devDependencies": {
-    "typescript-eslint": "^8.39.1",
+    "typescript-eslint": "^8.46.0",
     "@typescript-eslint/parser": "^8.36.0",
     "eslint": "^9.33.0",
     "eslint-config-google": "^0.14.0",
