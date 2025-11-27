@@ -1,7 +1,7 @@
 import { useFirebaseAuth } from 'vuefire';
 import type { User } from 'firebase/auth';
 import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import type { Ref} from 'vue';
+import type { Ref } from 'vue';
 import { reactive, ref } from 'vue';
 import { Loading } from 'quasar';
 import type * as models from 'src/ts/models.ts';
@@ -117,4 +117,9 @@ export function translateRole(role: number | undefined) {
 
 export async function getAllUsers(): Promise<models.User[]> {
   return (await useFunction('getAllUsers')()).data as models.User[];
+}
+
+const getAllProposalFunction = useFunction('getAllProposal');
+export async function getAllProposal(): Promise<models.Proposal[]> {
+  return (await getAllProposalFunction()).data as models.Proposal[];
 }

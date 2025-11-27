@@ -3,6 +3,7 @@
     <q-tabs>
       <q-route-tab label="檢視班代出席時數" to="/attendance" />
       <q-route-tab label="列出連續未出席者" to="/attendance/serial_absence" />
+      <q-route-tab label="生成職務訴訟文書" to="/attendance/export_indictment" />
       <q-route-tab label="列出請假情況" to="/attendance/scheduled_absence" />
       <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
     </q-tabs>
@@ -42,7 +43,7 @@ function updateAttendance() {
   const participants = [] as string[][];
   const scheduledAbsences = [] as string[][];
   for (const meeting of meetings.value) {
-    if (!meeting||meeting.exemptFromAttendance) continue;
+    if (!meeting || meeting.exemptFromAttendance) continue;
     participants.push(meeting.participants);
     scheduledAbsences.push(Object.keys(meeting.absences));
   }

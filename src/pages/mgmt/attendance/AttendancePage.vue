@@ -3,6 +3,7 @@
     <q-tabs>
       <q-route-tab label="檢視班代出席時數" to="/attendance" />
       <q-route-tab label="列出連續未出席者" to="/attendance/serial_absence" />
+      <q-route-tab label="生成職務訴訟文書" to="/attendance/export_indictment" />
       <q-route-tab label="列出請假情況" to="/attendance/scheduled_absence" />
       <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
     </q-tabs>
@@ -26,7 +27,7 @@ import type { User } from 'src/ts/models.ts';
 import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import type { QTableColumn } from 'quasar';
-import {currentReign, notifyError} from 'src/ts/utils.ts';
+import { currentReign, notifyError } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
@@ -99,7 +100,7 @@ function updateAttendance() {
   }
   let meetingsCount = 0;
   for (const meeting of meetings.value) {
-    if (!meeting||meeting.exemptFromAttendance) continue;
+    if (!meeting || meeting.exemptFromAttendance) continue;
     for (const clazz of meeting.participants) {
       if (!tempAttendance[clazz]) continue;
       tempAttendance[clazz].attendedMeetings++;
@@ -121,20 +122,22 @@ function updateAttendance() {
   attendance.value = Object.values(tempAttendance);
 }
 
-getAllUsers().then((users) => {
-  accounts.value = users;
-  watch(
-    meetings,
-    () => {
-      updateAttendance();
-    },
-    { deep: true },
-  );
-  updateAttendance();
-}).catch(e => notifyError('載入資料失敗', e))
-.finally(()=> {
-  loading.value = false;
-});
+getAllUsers()
+  .then((users) => {
+    accounts.value = users;
+    watch(
+      meetings,
+      () => {
+        updateAttendance();
+      },
+      { deep: true },
+    );
+    updateAttendance();
+  })
+  .catch((e) => notifyError('載入資料失敗', e))
+  .finally(() => {
+    loading.value = false;
+  });
 </script>
 
 <style scoped></style>

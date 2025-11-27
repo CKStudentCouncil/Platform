@@ -88,7 +88,6 @@ export function meetingCollectionOfReign(reign: Ref<string>) {
   return useCollection(meetingsQuery);
 }
 
-
 export function rawMeetingsOfCurrentReignQuery() {
   return query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign));
 }
