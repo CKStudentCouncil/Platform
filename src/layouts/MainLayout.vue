@@ -109,6 +109,12 @@ const endpoints = [
     icon: 'groups',
     role: Role.Secretary,
   },
+  /*{
+    name: '提案管理',
+    url: '/manage_proposals',
+    icon: 'description',
+    role: Role.Secretary,
+  },*/
   {
     name: '主持會議',
     url: '/meeting_host',
@@ -126,6 +132,11 @@ const endpoints = [
     icon: 'construction',
     role: Role.Secretary,
   },
+  /*{
+    name: '提案',
+    url: '/proposal',
+    icon: 'book',
+  },*/
   {
     name: '關於',
     url: '/about',

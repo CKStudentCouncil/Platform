@@ -70,12 +70,23 @@ const routes: RouteRecordRaw[] = [
       { path: 'serial_absence', component: () => import('pages/mgmt/attendance/SerialAbsencePage.vue') },
       { path: 'scheduled_absence', component: () => import('pages/mgmt/attendance/ScheduledAbsencePage.vue') },
       { path: 'export', component: () => import('pages/mgmt/attendance/ExportAttendancePage.vue') },
+      { path: 'export_indictment', component: () => import('pages/mgmt/attendance/ExportIndictmentPage.vue') },
     ],
   },
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+  },
+  {
+    path: '/proposal',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/propose/ProposalPage.vue') }],
+  },
+  {
+    path: '/manage_proposals',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/propose/ManageProposalPage.vue') }],
   },
   {
     path: '/about',

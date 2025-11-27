@@ -2,6 +2,7 @@
   <q-tabs>
     <q-route-tab label="檢視班代出席時數" to="/attendance" />
     <q-route-tab label="列出連續未出席者" to="/attendance/serial_absence" />
+    <q-route-tab label="生成職務訴訟文書" to="/attendance/export_indictment" />
     <q-route-tab label="列出請假情況" to="/attendance/scheduled_absence" />
     <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
   </q-tabs>
@@ -16,7 +17,7 @@ import { rawMeetingsOfCurrentReignQuery } from 'src/ts/models.ts';
 import ExcelJS from 'exceljs';
 import { exportFile, Loading } from 'quasar';
 import { getDocs } from 'firebase/firestore';
-import {cleanseName, notifyError} from 'src/ts/utils.ts';
+import { cleanseName, notifyError } from 'src/ts/utils.ts';
 
 async function exp() {
   Loading.show();
@@ -38,12 +39,12 @@ async function exp() {
       if (!account.clazz) continue;
       let serviceHours = 0;
       for (const meeting of meetings) {
-        if (!meeting||meeting.data()?.exemptFromAttendance) continue;
+        if (!meeting || meeting.data()?.exemptFromAttendance) continue;
         if (meeting.data()?.participants.includes(account.clazz)) {
           serviceHours++;
         }
       }
-      const attRate = serviceHours / meetings.filter(f => f.data() && !f.data()!.exemptFromAttendance).length;
+      const attRate = serviceHours / meetings.filter((f) => f.data() && !f.data()!.exemptFromAttendance).length;
       let awardType;
       if (attRate == 1) {
         awardType = '小功乙支';

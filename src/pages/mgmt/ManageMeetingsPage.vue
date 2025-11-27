@@ -114,7 +114,14 @@
         <q-checkbox v-model="targetMeeting.exemptFromAttendance" label="不記入出缺席 (委員會會議用)" />
         <div class="row">
           <q-checkbox :model-value="!!targetMeeting.customAttendanceBar" @update:model-value="editCustomAttendanceBar" label="自訂開會門檻" />
-          <q-input class="q-ml-sm" v-if="targetMeeting.customAttendanceBar" v-model.number="targetMeeting.customAttendanceBar" type="number" dense label="開會門檻" />
+          <q-input
+            class="q-ml-sm"
+            v-if="targetMeeting.customAttendanceBar"
+            v-model.number="targetMeeting.customAttendanceBar"
+            type="number"
+            dense
+            label="開會門檻"
+          />
         </div>
         <p class="q-mb-none">開會日期：</p>
         <div class="row q-gutter-md q-ml-none">
@@ -229,7 +236,7 @@ async function submit() {
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
         exemptFromAttendance: targetMeeting.exemptFromAttendance,
-        customAttendanceBar: (targetMeeting.customAttendanceBar) ? targetMeeting.customAttendanceBar : null,
+        customAttendanceBar: targetMeeting.customAttendanceBar ? targetMeeting.customAttendanceBar : null,
         punchInPasscode: targetMeeting.punchInPasscode,
       });
     } else if (action.value === 'add') {
@@ -247,7 +254,7 @@ async function submit() {
         reign: targetMeeting.reign,
         registration: targetMeeting.registration,
         exemptFromAttendance: targetMeeting.exemptFromAttendance,
-        customAttendanceBar: (targetMeeting.customAttendanceBar) ? targetMeeting.customAttendanceBar : null,
+        customAttendanceBar: targetMeeting.customAttendanceBar ? targetMeeting.customAttendanceBar : null,
       } as unknown as Meeting);
     }
   } catch (e) {
