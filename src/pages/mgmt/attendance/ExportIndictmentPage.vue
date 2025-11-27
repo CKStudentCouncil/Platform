@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <q-tabs align="left">
+    <q-tabs>
       <q-route-tab label="檢視班代出席時數" to="/attendance" />
       <q-route-tab label="列出連續未出席者" to="/attendance/serial_absence" />
       <q-route-tab label="生成職務訴訟文書" to="/attendance/export_indictment" />
