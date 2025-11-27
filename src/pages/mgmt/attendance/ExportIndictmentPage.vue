@@ -203,7 +203,7 @@ function getRocDate() {
   return `中華民國 ${rocYear} 年 ${datePart}`;
 }
 
-async function exportIndictment(records: SerialAbsenceRecord[]) {
+function exportIndictment(records: SerialAbsenceRecord[]) {
   if (records.length !== 1) {
     notifyError('無法生成訴狀', '只能針對單一班級代表起草訴狀。請透過表格右側按鈕操作。');
     return;
@@ -290,7 +290,7 @@ async function exportIndictment(records: SerialAbsenceRecord[]) {
   }
 }
 
-async function exportSpeakerAdvisory(records: SerialAbsenceRecord[]) {
+function exportSpeakerAdvisory(records: SerialAbsenceRecord[]) {
   const record = records[0]!;
   currentClazz.value = record.clazz;
 
