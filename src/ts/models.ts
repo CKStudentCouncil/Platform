@@ -1,9 +1,9 @@
 import { collection, doc, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import type { FirestoreDataConverter } from '@firebase/firestore';
-import { currentReign } from 'src/ts/utils.ts';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
+import { getCurrentReign } from 'src/ts/utils.ts';
 
 export enum Role {
   Admin = 999,
@@ -89,7 +89,7 @@ export function meetingCollectionOfReign(reign: Ref<string>) {
 }
 
 export function rawMeetingsOfCurrentReignQuery() {
-  return query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', currentReign));
+  return query(query(rawMeetingCollection(), orderBy('start', 'desc')), where('reign', '==', getCurrentReign()));
 }
 
 export function meetingCollectionOfCurrentReign() {

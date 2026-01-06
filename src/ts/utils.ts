@@ -63,7 +63,21 @@ export function cleanseName(name: string | null | undefined): string | null {
   return name?.replace(/ck[0-9]+/, '') ?? null;
 }
 
-const date = new Date();
-export const currentReign = date.getMonth() > 6 || date.getMonth() < 1 ?
-  `${date.getFullYear() - 1945}-1` : // August to January
-  `${date.getFullYear() - 1945 - 1}-2`; // February to July
+export function getReign(date: Date) {
+  let year: number;
+  if (date.getMonth() < 7) {
+    // jan ~ july
+    year = date.getFullYear() - 1945 - 1;
+  } else {
+    year = date.getFullYear() - 1945;
+  }
+  if (date.getMonth() > 6 || date.getMonth() == 0) {
+    // aug ~ jan
+    return `${year}-1`;
+  }
+  return `${year}-2`;
+}
+
+export function getCurrentReign() {
+  return getReign(new Date());
+}

@@ -4,7 +4,7 @@
       <q-route-tab label="我的提案" to="/proposal" />
     </q-tabs>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="proposals" :title="`${currentReign} 我的提案`" row-key="id" :loading="loading">
+      <q-table :columns="columns" :filter="filter" :loading="loading" :rows="proposals" :title="`${getCurrentReign()} 我的提案`" row-key="id">
         <template v-slot:top-right>
           <q-btn color="primary" label="新增提案" @click="showAddDialog = true" class="q-mr-md" />
           <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
@@ -47,23 +47,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import type { QTableColumn } from 'quasar';
-import { Notify, Loading } from 'quasar';
-import { addDoc, deleteDoc, doc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { Loading, Notify } from 'quasar';
+import { deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { loggedInUser } from 'src/ts/auth.ts';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import {
-  rawUserProposalCollectionLaw as collectlaw,
-  rawUserProposalCollectionGeneral as collectgeneral,
-  rawUserProposalCollectionPresentation as collectpresentation,
   generateProposalId,
+  rawUserProposalCollectionGeneral as collectgeneral,
+  rawUserProposalCollectionLaw as collectlaw,
+  rawUserProposalCollectionPresentation as collectpresentation,
   translateProposalType,
 } from 'src/ts/proposalmodels.ts';
-import { currentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
-import { Role } from 'src/ts/models.ts';
 
 const filter = ref('');
 const loading = ref(false);
@@ -81,7 +80,7 @@ const newProposal = ref({
   content: '',
   type: 'law',
   proposer: '',
-  reign: currentReign,
+  reign: getCurrentReign(),
   basis: '',
   done: false,
   attachments: [] as string[],
@@ -191,7 +190,7 @@ async function addProposal() {
       content: '',
       type: 'law',
       proposer: '',
-      reign: currentReign,
+      reign: getCurrentReign(),
       basis: '',
       done: false,
       attachments: [],

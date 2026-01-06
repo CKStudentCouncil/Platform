@@ -14,7 +14,7 @@
       :loading="loading"
       :pagination="{ rowsPerPage: 25 }"
       :rows="absences"
-      :title="`${currentReign} 班代請假情況`"
+      :title="`${getCurrentReign()} 班代請假情況`"
       row-key="name"
     >
       <template v-slot:top-right>
@@ -34,7 +34,7 @@ import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { computed, ref, watch } from 'vue';
 import type { QTableColumn } from 'quasar';
 import { getAllUsers } from 'src/ts/auth.ts';
-import { currentReign, notifyError } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();

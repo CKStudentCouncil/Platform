@@ -4,7 +4,7 @@
       <q-route-tab label="所有提案" to="/proposal/manage" />
     </q-tabs>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="proposals" :title="`${currentReign} 所有提案`" row-key="id" :loading="loading">
+      <q-table :columns="columns" :filter="filter" :rows="proposals" :title="`${getCurrentReign()} 所有提案`" row-key="id" :loading="loading">
         <template v-slot:top-right>
           <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
             <template v-slot:append>
@@ -57,7 +57,7 @@ import { getDocs, doc, updateDoc, deleteDoc, collection } from 'firebase/firesto
 import { useFirestore } from 'vuefire';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
-import { currentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { getAllUsers } from 'src/ts/auth.ts';
 
 const filter = ref('');

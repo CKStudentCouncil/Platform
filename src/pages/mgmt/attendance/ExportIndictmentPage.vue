@@ -22,7 +22,7 @@
     <q-table
       :rows="filtered_serial_absences"
       :columns="tableColumns"
-      :title="`${currentReign} 班代連續缺席名單`"
+      :title="`${getCurrentReign()} 班代連續缺席名單`"
       :loading="!accounts"
       row-key="clazz"
       class="rounded-borders shadow-2 q-ma-md"
@@ -68,11 +68,11 @@
 <script lang="ts" setup>
 import { getAllUsers } from 'src/ts/auth.ts';
 import { computed, reactive, ref, watch } from 'vue';
-import type { User, Meeting } from 'src/ts/models.ts';
-import { Role, meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
-import { notifyError, notifySuccess, currentReign } from 'src/ts/utils';
-import { Dialog, Loading, date, copyToClipboard, Notify } from 'quasar';
+import type { User } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, Role } from 'src/ts/models.ts';
+import { getCurrentReign, notifyError } from 'src/ts/utils';
 import type { QTableColumn } from 'quasar';
+import { copyToClipboard, date, Loading, Notify } from 'quasar';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

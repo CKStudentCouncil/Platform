@@ -98,12 +98,12 @@
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <q-input v-model="targetMeeting.name" label="會議名稱" />
-        <span class="template-link" @click="targetMeeting.name = `${currentReign} 第次常務會議`"> 常務會議 </span>
-        <span class="template-link" @click="targetMeeting.name = `${currentReign} 第次臨時會議`"> 臨時會議 </span>
+        <span class="template-link" @click="targetMeeting.name = `${getCurrentReign()} 第次常務會議`"> 常務會議 </span>
+        <span class="template-link" @click="targetMeeting.name = `${getCurrentReign()} 第次臨時會議`"> 臨時會議 </span>
         <span
           class="template-link"
           @click="
-            targetMeeting.name = `${currentReign} 預備會議`;
+            targetMeeting.name = `${getCurrentReign()} 預備會議`;
             targetMeeting.registration = true;
           "
         >
@@ -152,7 +152,7 @@ import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc } from 'fire
 import type { QTableColumn } from 'quasar';
 import { date, Dialog, Loading } from 'quasar';
 import { useFirestore } from 'vuefire';
-import { cleanseName, currentReign, generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { cleanseName, generateRandomText, getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { useRoute, useRouter } from 'vue-router';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { exportVotingData } from 'pages/mgmt/common.ts';
@@ -182,7 +182,7 @@ const targetMeeting = reactive({} as EditableMeeting);
 const db = useFirestore();
 const route = useRoute();
 const router = useRouter();
-const reign = ref(currentReign);
+const reign = ref(getCurrentReign());
 const meetings = meetingCollectionOfReign(reign);
 const selected = computed({
   get: () => route.params.id,
@@ -213,7 +213,7 @@ function add() {
   targetMeeting.name = '';
   targetMeeting.startDate = date.formatDate(new Date(), 'YYYY-MM-DD');
   targetMeeting.startTime = date.formatDate(new Date(), 'HH:mm:ss');
-  targetMeeting.reign = currentReign;
+  targetMeeting.reign = getCurrentReign();
   targetMeeting.registration = false;
   targetMeeting.exemptFromAttendance = false;
   targetMeeting.customAttendanceBar = null;
@@ -496,7 +496,7 @@ ${proposals}
 function changeReign() {
   Dialog.create({
     title: '更改屆期',
-    message: `請輸入要檢視的屆期 (例如：${currentReign})`,
+    message: `請輸入要檢視的屆期 (例如：${getCurrentReign()})`,
     prompt: {
       model: `${reign.value}`,
       label: '屆期',
