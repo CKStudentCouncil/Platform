@@ -146,10 +146,18 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
 });
 
 export function getReign(date: Date) {
-  if (date.getMonth() > 7 || date.getMonth() < 1) { // -1
-    return `${date.getFullYear() - 1945}-1`;
+  let year: number;
+  if (date.getMonth() < 7) {
+    // jan ~ july
+    year = date.getFullYear() - 1945 - 1;
+  } else {
+    year = date.getFullYear() - 1945;
   }
-  return `${date.getFullYear() - 1945 - 1}-2`;
+  if (date.getMonth() > 6 || date.getMonth() == 0) {
+    // aug ~ jan
+    return `${year}-1`;
+  }
+  return `${year}-2`;
 }
 
 export function getCurrentReign() {
