@@ -8,7 +8,7 @@
       <q-route-tab label="匯出期末時數與記功嘉獎表" to="/attendance/export" />
     </q-tabs>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="attendance" :title="`${currentReign} 班代出席時數`" row-key="name" :loading="loading">
+      <q-table :columns="columns" :filter="filter" :rows="attendance" :title="`${getCurrentReign()} 班代出席時數`" row-key="name" :loading="loading">
         <template v-slot:top-right>
           <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
             <template v-slot:append>
@@ -27,7 +27,7 @@ import type { User } from 'src/ts/models.ts';
 import { meetingCollectionOfCurrentReign } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import type { QTableColumn } from 'quasar';
-import { currentReign, notifyError } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError } from 'src/ts/utils.ts';
 
 const accounts = ref(null as User[] | null);
 const meetings = meetingCollectionOfCurrentReign();
