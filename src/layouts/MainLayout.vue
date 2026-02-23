@@ -136,6 +136,7 @@ const endpoints = [
     name: '提案',
     url: '/proposal',
     icon: 'book',
+    role: Role.ClassRep,
   },
   {
     name: '關於',

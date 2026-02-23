@@ -21,8 +21,11 @@
       </q-table>
     </div>
 
-    <q-dialog v-model="showAddDialog" persistent>
-      <q-card style="min-width: 500px">
+    <q-dialog 
+        v-model="showAddDialog"
+        persistent
+      >
+      <q-card style="max-width: 100%;">
         <q-card-section>
           <h6 class="q-ma-none">新增提案</h6>
         </q-card-section>
