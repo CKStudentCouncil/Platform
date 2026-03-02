@@ -50,14 +50,14 @@ function updateAttendance() {
   participants.reverse();
   scheduledAbsences.reverse(); // Default sorting order is latest first, so we need to reverse it
   for (const user of accounts.value) {
-    const clazz = user.clazz;
-    if (!clazz) continue;
-    absence_map[clazz] = 0;
+    const name = user.name;
+    if (!name) continue;
+    absence_map[name] = 0;
     participants.forEach((participant, i) => {
-      if (!participant.includes(clazz) && !scheduledAbsences[i]?.includes(clazz)) {
-        absence_map[clazz]!++;
+      if (!participant.includes(user.clazz ?? '') && !scheduledAbsences[i]?.includes(name)) {
+        absence_map[name]!++;
       } else {
-        absence_map[clazz] = 0;
+        absence_map[name] = 0;
       }
     });
   }

@@ -87,17 +87,17 @@ function updateAbsences() {
   if (!accounts.value) return;
   const toWrite = [] as AbsenceInfo[];
   for (const user of accounts.value) {
-    if (!user.clazz) continue;
+    if (!user.name) continue;
     for (const meeting of meetings.value) {
-      if (meeting?.absences[user.clazz]) {
+      if (meeting?.absences[user.name]) {
         const data = {
           meeting: meeting.name,
           clazz: user.clazz,
           name: user.name,
-          scheduledAt: meeting.absences[user.clazz]!.scheduledAt,
-          reason: meeting.absences[user.clazz]!.reason,
+          scheduledAt: meeting.absences[user.name]!.scheduledAt,
+          reason: meeting.absences[user.name]!.reason,
         };
-        toWrite.push(data);
+        toWrite.push(<AbsenceInfo>data);
       }
     }
   }

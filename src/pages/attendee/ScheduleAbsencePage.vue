@@ -5,8 +5,8 @@
       <div class="text-h5">{{ meeting.value.name }} 請假</div>
       <div class="text-h5">開會時間：{{ meeting.value.start.toLocaleString() }}</div>
       <q-input v-model="reason" label="請假原因" />
-      <div v-if="meeting.value.absences && meeting.value.absences[loggedInUserClaims.clazz]" class="q-gutter-md">
-        <div class="text-h6">你已在 {{ meeting.value.absences[loggedInUserClaims.clazz]?.scheduledAt.toLocaleString() }} 請假</div>
+      <div v-if="meeting.value.absences && userDisplayName && meeting.value.absences[userDisplayName]" class="q-gutter-md">
+        <div class="text-h6">你已在 {{ meeting.value.absences[userDisplayName]?.scheduledAt.toLocaleString() }} 請假</div>
         <q-btn color="primary" label="編輯請假原因" @click="scheduleAbsence" />
         <q-btn color="negative" label="取消請假" @click="cancelAbsence()" />
       </div>
@@ -24,7 +24,7 @@ import { getMeeting, rawMeetingCollection } from 'src/ts/models.ts';
 import { useRoute } from 'vue-router';
 import LoginDialog from 'components/LoginDialog.vue';
 import { computed, ref, watch } from 'vue';
-import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
+import { loggedInUser } from 'src/ts/auth.ts';
 import { deleteField, doc, updateDoc } from 'firebase/firestore';
 import { notifyError } from 'src/ts/utils.ts';
 
@@ -33,6 +33,7 @@ const meetingId = ref(route.params.id as string);
 const meeting = computed(() => getMeeting(meetingId.value));
 const loginDialog = ref(false);
 const reason = ref('');
+const userDisplayName = computed(() => loggedInUser.value?.displayName ?? '');
 
 if (!loggedInUser.value) {
   loginDialog.value = true;
@@ -55,8 +56,8 @@ watch(
 watch(meeting, (meeting) => updateAbsenceReason(meeting), { deep: true });
 
 function updateAbsenceReason(meeting: any) {
-  if (meeting.value && meeting.value.absences && meeting.value.absences[loggedInUserClaims.clazz]) {
-    reason.value = meeting.value.absences[loggedInUserClaims.clazz].reason;
+  if (meeting.value && meeting.value.absences && userDisplayName.value && meeting.value.absences[userDisplayName.value]) {
+    reason.value = meeting.value.absences[userDisplayName.value].reason;
   }
 }
 
@@ -65,8 +66,12 @@ async function scheduleAbsence() {
     notifyError('請填寫請假原因');
     return;
   }
+  if (!userDisplayName.value) {
+    notifyError('無法取得使用者名稱');
+    return;
+  }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {
-    ['absences.' + loggedInUserClaims.clazz]: {
+    ['absences.' + userDisplayName.value]: {
       reason: reason.value,
       scheduledAt: new Date(),
     },
@@ -74,8 +79,12 @@ async function scheduleAbsence() {
 }
 
 async function cancelAbsence() {
+  if (!userDisplayName.value) {
+    notifyError('無法取得使用者名稱');
+    return;
+  }
   await updateDoc(doc(rawMeetingCollection(), meetingId.value), {
-    ['absences.' + loggedInUserClaims.clazz]: deleteField(),
+    ['absences.' + userDisplayName.value]: deleteField(),
   });
 }
 </script>

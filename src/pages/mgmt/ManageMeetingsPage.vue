@@ -305,7 +305,7 @@ async function getAttendanceData(meeting: Meeting) {
     }
     if (meeting.participants.includes(clazz)) {
       data.attended.push(clazz);
-    } else if (Object.keys(meeting.absences).includes(clazz)) {
+    } else if (Object.keys(meeting.absences).includes(account.name)) {
       data.scheduledAbsence.push(clazz);
     } else {
       data.absent.push(clazz);

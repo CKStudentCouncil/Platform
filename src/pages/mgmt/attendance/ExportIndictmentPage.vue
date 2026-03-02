@@ -24,16 +24,16 @@
       :columns="tableColumns"
       :title="`${getCurrentReign()} 班代連續缺席名單`"
       :loading="!accounts"
-      row-key="clazz"
+      row-key="name"
       class="rounded-borders shadow-2 q-ma-md"
     >
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" style="text-align: center">
           <q-btn icon="edit" class="text-blue-9" round flat size="md" @click="exportSpeakerAdvisory([props.row])">
-            <q-tooltip>{{ props.row.clazz }} 起草議長函</q-tooltip>
+            <q-tooltip>{{ props.row.name }} ({{ props.row.clazz }}班) 起草議長函</q-tooltip>
           </q-btn>
           <q-btn icon="description" class="text-amber-9" round flat size="" @click="exportIndictment([props.row])">
-            <q-tooltip>{{ props.row.clazz }} 起草訴狀</q-tooltip>
+            <q-tooltip>{{ props.row.name }} ({{ props.row.clazz }}班) 起草訴狀</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -78,6 +78,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const tableColumns: QTableColumn[] = [
+  { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
   { name: 'clazz', label: '班級', field: 'clazz', sortable: true, align: 'left' },
   { name: 'count', label: '連續缺席次數', field: 'count', sortable: true, align: 'left', format: (val: number) => `${val} 次` },
   { name: 'actions', label: '操作', field: 'actions', align: 'center' },
@@ -98,13 +99,17 @@ const generatedJson = ref('');
 const currentClazz = ref('');
 
 interface SerialAbsenceRecord {
+  name: string;
   clazz: string;
   count: number;
 }
 
 const serial_absences_data = computed(() => {
   return Object.entries(absence_map)
-    .map(([clazz, count]) => ({ clazz, count }))
+    .map(([name, count]) => {
+      const user = accounts.value?.find((u) => u.name === name);
+      return { name, clazz: user?.clazz || '', count };
+    })
     .sort((a, b) => b.count - a.count);
 });
 
@@ -128,16 +133,16 @@ function updateAttendance() {
   scheduledAbsences.reverse();
 
   for (const user of accounts.value) {
-    const clazz = user.clazz;
-    if (!clazz) continue;
+    const name = user.name;
+    if (!name) continue;
 
-    absence_map[clazz] = 0;
+    absence_map[name] = 0;
 
     participants.forEach((participant, i) => {
-      if (!participant.includes(clazz) && !scheduledAbsences[i]?.includes(clazz)) {
-        absence_map[clazz]!++;
+      if (!participant.includes(user.clazz ?? '') && !scheduledAbsences[i]?.includes(name)) {
+        absence_map[name]!++;
       } else {
-        absence_map[clazz] = 0;
+        absence_map[name] = 0;
       }
     });
   }
