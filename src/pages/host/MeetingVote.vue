@@ -46,7 +46,7 @@
         <q-separator />
         <q-card-section>
           <transition v-for="voter of selectedVotable.results[choice] as string[]" :key="voter" appear enter-active-class="animated heartBeat">
-            <q-chip removable @remove="removeVoter(choice, voter)">{{ voter }} 班代</q-chip>
+            <q-chip removable @remove="removeVoter(choice, voter)">{{ voter }}</q-chip>
           </transition>
         </q-card-section>
       </q-card>

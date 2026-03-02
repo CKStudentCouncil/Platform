@@ -7,7 +7,7 @@
     <div v-if="activeProposal && !activeVotable">
       <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
       <q-btn
-        v-if="!activeProposal.speakRequests.includes(loggedInUserClaims.clazz)"
+        v-if="!activeProposal.speakRequests.includes(userDisplayName)"
         class="q-mb-md text-h6 full-width"
         color="primary"
         icon="chat"
@@ -98,11 +98,12 @@ const router = useRouter();
 const viewingOtherProposals = ref(false);
 const lastViewingOtherProposals = ref(false);
 const proposals = ref([] as ProposalId[]);
+const userDisplayName = computed(() => loggedInUser.value?.displayName ?? '');
 const voted = computed(() => {
-  if (!activeVotable.value) return false;
+  if (!activeVotable.value || !userDisplayName.value) return false;
   const results = activeVotable.value.results;
   for (const [choice, voters] of Object.entries(results)) {
-    if (voters.includes(loggedInUserClaims.clazz)) {
+    if (voters.includes(userDisplayName.value)) {
       return choice;
     }
   }
@@ -178,9 +179,13 @@ watch(
 
 async function select(choice: string) {
   if (selectedChoice.value == choice) {
+    if (!userDisplayName.value) {
+      notifyError('無法取得使用者名稱');
+      return;
+    }
     try {
       const update = {} as any;
-      update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
+      update[('results.' + choice) as keyof typeof update] = arrayUnion(userDisplayName.value);
       await updateDoc(doc(rawVotableCollection(id, activeProposalId.value as string), activeVotableId.value as string), update);
     } catch (e) {
       notifyError('投票失敗', e);
@@ -192,9 +197,13 @@ async function select(choice: string) {
 }
 
 async function requestToSpeak() {
+  if (!userDisplayName.value) {
+    notifyError('無法取得使用者名稱');
+    return;
+  }
   try {
     await updateDoc(doc(rawProposalCollection(id), activeProposalId.value!), {
-      speakRequests: arrayUnion(loggedInUserClaims.clazz),
+      speakRequests: arrayUnion(userDisplayName.value),
     });
     notifySuccess('請求發言成功');
   } catch (e) {
@@ -203,9 +212,13 @@ async function requestToSpeak() {
 }
 
 async function withdrawSpeakRequest() {
+  if (!userDisplayName.value) {
+    notifyError('無法取得使用者名稱');
+    return;
+  }
   try {
     await updateDoc(doc(rawProposalCollection(id), activeProposalId.value!), {
-      speakRequests: arrayRemove(loggedInUserClaims.clazz),
+      speakRequests: arrayRemove(userDisplayName.value),
     });
     notifySuccess('撤回發言請求成功');
   } catch (e) {
