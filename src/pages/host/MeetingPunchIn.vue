@@ -17,7 +17,7 @@
               <div style="display: table-row">
                 <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
                 <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-                >/ {{ selectedMeeting.customAttendanceBar }} ( {{ absences }} 位請假)</span
+                  >/ {{ selectedMeeting.customAttendanceBar }} ( {{ absences }} 位請假)</span
                 >
               </div>
               <div class="text-h6">人已簽到 / 開會門檻</div>
@@ -26,7 +26,7 @@
               <div style="display: table-row">
                 <h1 style="display: table-cell">{{ selectedMeeting!.participants.length }}</h1>
                 <span class="text-h6" style="display: table-cell; vertical-align: bottom"
-                >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
+                  >/ {{ Math.ceil((totalMembers - absences) / 5) }} / {{ totalMembers }} (- {{ absences }} 位請假)</span
                 >
               </div>
               <div class="text-h6">人已簽到 / 開會門檻 / 班代總額</div>
@@ -35,7 +35,7 @@
             <q-btn v-else color="negative" flat icon="close" label="未達法定開會人數門檻" />
           </div>
           <div v-else>
-            <q-spinner class="text-h4 q-mr-md"/>
+            <q-spinner class="text-h4 q-mr-md" />
             <span class="text-h4"> 正在載入班代總額</span>
           </div>
         </div>
@@ -101,7 +101,7 @@ async function getRequirement() {
       count++;
     }
   }
-  totalMembers.value = count + 2; // +議長副議長
+  totalMembers.value = count; // + 2; // +議長副議長 (not used in dtjh)
 }
 
 void getRequirement();

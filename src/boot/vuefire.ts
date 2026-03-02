@@ -14,13 +14,13 @@ let analytics: Analytics | null = null;
 export default boot(({ app }) => {
   // something to do
   const firebaseApp = initializeApp({
-    apiKey: 'AIzaSyDVpsV2SN10S6Oirk6NWU0GZzWLHJ0TUyw',
-    authDomain: 'cksc-platform.firebaseapp.com',
-    projectId: 'cksc-platform',
-    storageBucket: 'cksc-platform.appspot.com',
-    messagingSenderId: '405143921937',
-    appId: '1:405143921937:web:904e9dbe70c475afd5d8b0',
-    measurementId: 'G-0DEL084RDJ',
+    apiKey: 'AIzaSyAoSuo1wBtDr61ish7CXIwPC7KWRJ3osKI',
+    authDomain: 'dtjh-platform.firebaseapp.com',
+    projectId: 'dtjh-platform',
+    storageBucket: 'dtjh-platform.firebasestorage.app',
+    messagingSenderId: '210431459437',
+    appId: '1:210431459437:web:d2b3b6a1bb3a20aa083f64',
+    measurementId: 'G-DW3XVWZCPB',
   });
   analytics = initializeAnalytics(firebaseApp);
   app.use(VueFire, {
@@ -28,7 +28,7 @@ export default boot(({ app }) => {
     modules: [VueFireAuth()],
   });
   configure({
-    appName: 'CKSC Platform Quasar App',
+    appName: 'DTJH Platform Quasar App',
     tagId: firebaseApp.options.measurementId!
   })
 });

@@ -8,7 +8,7 @@ export async function checkRole(request: https.CallableRequest, role: Role) {
   if (!request.auth) {
     throw new https.HttpsError('unauthenticated', 'You must be authenticated');
   }
-  if (request.auth.uid == '38fWtZ4AKRU3oAZjfrt9nBq7d8B2') {
+  if (request.auth.uid == 'P3XE9BhyvGPqkQk0v2OQ33drAhv1') {
     // Root account
     return;
   }

@@ -15,9 +15,7 @@ export function generateRandomText(length: number, bannedPrefix: string | null):
 }
 
 export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
-  return schoolNumber.startsWith('11100')
-    ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
-    : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
+  return `dt${schoolNumber}@dtjh.ptc.edu.tw`;
 }
 
 export function notifySuccess(message: string): void {
@@ -67,9 +65,9 @@ export function getReign(date: Date) {
   let year: number;
   if (date.getMonth() < 7) {
     // jan ~ july
-    year = date.getFullYear() - 1945 - 1;
+    year = date.getFullYear() - 1911 - 1;
   } else {
-    year = date.getFullYear() - 1945;
+    year = date.getFullYear() - 1911;
   }
   if (date.getMonth() > 6 || date.getMonth() == 0) {
     // aug ~ jan

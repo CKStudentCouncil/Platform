@@ -108,7 +108,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
       requestBody: {
         name: getCurrentReign(),
         mimeType: 'application/vnd.google-apps.folder',
-        parents: ['1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
+        parents: ['1hcMcziCrw6t9sNaQ0GXncABXpH3t3aG2']
       },
       fields: 'id'
     })).data.id;
@@ -119,7 +119,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
     requestBody: {
       name,
       mimeType,
-      parents: [folder ?? '1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
+      parents: [folder ?? '1hcMcziCrw6t9sNaQ0GXncABXpH3t3aG2']
     },
     media: {
       mimeType,
@@ -149,9 +149,9 @@ export function getReign(date: Date) {
   let year: number;
   if (date.getMonth() < 7) {
     // jan ~ july
-    year = date.getFullYear() - 1945 - 1;
+    year = date.getFullYear() - 1911 - 1;
   } else {
-    year = date.getFullYear() - 1945;
+    year = date.getFullYear() - 1911;
   }
   if (date.getMonth() > 6 || date.getMonth() == 0) {
     // aug ~ jan
