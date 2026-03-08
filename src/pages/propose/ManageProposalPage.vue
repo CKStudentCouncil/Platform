@@ -1,10 +1,5 @@
 <template>
   <q-page>
-    <!--
-    <q-tabs>
-      <q-route-tab label="所有提案" to="/proposal/manage" />
-    </q-tabs>
-    -->
     <div class="q-ma-md">
       <q-table :columns="columns" :filter="filter" :rows="proposals" :title="`${getCurrentReign()} 所有提案`" row-key="id" :loading="loading">
         <template v-slot:top-right>
@@ -14,9 +9,11 @@
             </template>
           </q-input>
         </template>
-
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
+            <q-btn class="text-purple-9 q-ml-sm q-mr-sm" round icon="post_add" @click="openAddToMeeting(props.row)">
+              <q-tooltip>加入會議</q-tooltip>
+            </q-btn>
             <q-btn class="text-blue-9 q-ml-sm q-mr-sm" round icon="link" @click="copyProposalLink(props.row)">
               <q-tooltip>複製提案附件</q-tooltip>
             </q-btn>
@@ -40,6 +37,29 @@
       </q-table>
     </div>
 
+    <q-dialog v-model="showAddToMeetingDialog" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">加入會議</div>
+          <div class="text-caption text-grey">提案：{{ proposalToAdd?.title }}</div>
+        </q-card-section>
+        <q-card-section class="q-gutter-sm">
+          <q-select
+            v-model="selectedMeeting"
+            :options="meetingOptions"
+            :option-label="(m) => m.name"
+            :loading="meetingsLoading"
+            label="選擇會議"
+            clearable
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="取消" v-close-popup />
+          <q-btn flat label="加入" color="primary" :disable="!selectedMeeting" @click="submitAddToMeeting" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <q-dialog v-model="showDeleteDialog">
       <q-card>
         <q-card-section>
@@ -58,12 +78,15 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
 import type { QTableColumn } from 'quasar';
-import { getDocs, doc, updateDoc, deleteDoc, collection } from 'firebase/firestore';
+import { getDocs, doc, updateDoc, deleteDoc, collection, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
-import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError, notifySuccess, generateRandomText } from 'src/ts/utils.ts';
 import { getAllUsers } from 'src/ts/auth.ts';
+import { Loading } from 'quasar';
+import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/models.ts';
+import type { MeetingId } from 'src/ts/models.ts';
 
 const filter = ref('');
 const loading = ref(false);
@@ -71,6 +94,12 @@ const proposals = ref<ProposalId[]>([]);
 const showDeleteDialog = ref(false);
 const proposalToDelete = ref<ProposalId | null>(null);
 const db = useFirestore();
+
+const showAddToMeetingDialog = ref(false);
+const proposalToAdd = ref<(ProposalId & { userId: string }) | null>(null);
+const selectedMeeting = ref<MeetingId | null>(null);
+const meetingOptions = meetingCollectionOfCurrentReign();
+const meetingsLoading = ref(false);
 
 const PROPOSAL_TYPES = ['law', 'general', 'presentation'] as const;
 type ProposalType = (typeof PROPOSAL_TYPES)[number];
@@ -98,7 +127,7 @@ const columns: QTableColumn[] = [
     name: 'done',
     label: '狀態',
     field: 'done',
-    format: (val: boolean) => (val ? '未審議' : '審議完成'),
+    format: (val: boolean) => (val ? '審議完成' : '未審議'),
     sortable: true,
     align: 'left',
   },
@@ -207,6 +236,40 @@ async function deleteProposal() {
     await loadProposals();
   } catch (e) {
     notifyError('刪除提案失敗', e);
+  }
+}
+
+function openAddToMeeting(proposal: ProposalId & { userId: string }) {
+  proposalToAdd.value = proposal;
+  selectedMeeting.value = null;
+  showAddToMeetingDialog.value = true;
+}
+
+async function submitAddToMeeting() {
+  if (!proposalToAdd.value || !selectedMeeting.value) return;
+
+  Loading.show();
+  try {
+    const toProps = rawProposalCollection(selectedMeeting.value.id);
+    const order = (await getCountFromServer(toProps)).data().count;
+    const newId = generateRandomText(6, null);
+
+    await setDoc(doc(toProps, newId), {
+      title: proposalToAdd.value.title,
+      proposer: proposalToAdd.value.proposer,
+      content: proposalToAdd.value.content ?? '',
+      attachments: proposalToAdd.value.attachments ?? [],
+      order,
+      activeVotable: null,
+      speakRequests: [],
+    });
+
+    notifySuccess(`已將提案「${proposalToAdd.value.title}」加入「${selectedMeeting.value.name}」`);
+    showAddToMeetingDialog.value = false;
+  } catch (e) {
+    notifyError('加入會議失敗', e);
+  } finally {
+    Loading.hide();
   }
 }
 

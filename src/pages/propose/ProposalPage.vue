@@ -114,7 +114,7 @@ const columns: QTableColumn[] = [
     name: 'done',
     label: '狀態',
     field: 'done',
-    format: (val: boolean) => (val ? '未審議' : '審議完成'),
+    format: (val: boolean) => (val ? '審議完成' : '未審議'),
     sortable: true,
     align: 'left',
   },
