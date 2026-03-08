@@ -1,8 +1,10 @@
 <template>
   <q-page>
+    <!--
     <q-tabs>
       <q-route-tab label="我的提案" to="/proposal" />
     </q-tabs>
+    -->
     <div class="q-ma-md">
       <q-table :columns="columns" :filter="filter" :loading="loading" :rows="proposals" :title="`${getCurrentReign()} 我的提案`" row-key="id">
         <template v-slot:top-right>
@@ -15,17 +17,14 @@
         </template>
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn flat dense icon="delete" @click="deleteProposal(props.row)" />
+            <q-btn class="text-red-9 q-ml-sm q-mr-sm" round icon="delete" @click="deleteProposal(props.row)" />
           </q-td>
         </template>
       </q-table>
     </div>
 
-    <q-dialog 
-        v-model="showAddDialog"
-        persistent
-      >
-      <q-card style="max-width: 100%;">
+    <q-dialog v-model="showAddDialog" persistent>
+      <q-card style="max-width: 100%">
         <q-card-section>
           <h6 class="q-ma-none">新增提案</h6>
         </q-card-section>
@@ -115,7 +114,7 @@ const columns: QTableColumn[] = [
     name: 'done',
     label: '狀態',
     field: 'done',
-    format: (val: boolean) => (val ? '已完成' : '進行中'),
+    format: (val: boolean) => (val ? '審議完成' : '未審議'),
     sortable: true,
     align: 'left',
   },
