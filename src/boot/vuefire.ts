@@ -1,11 +1,12 @@
 import { boot } from 'quasar/wrappers';
 import { initializeApp } from 'firebase/app';
 import { useFirebaseApp, VueFire, VueFireAuth } from 'vuefire';
-import type { Analytics} from 'firebase/analytics';
+import type { Analytics } from 'firebase/analytics';
 import { initializeAnalytics } from 'firebase/analytics';
-import type { HttpsCallable} from '@firebase/functions';
+import type { HttpsCallable } from '@firebase/functions';
 import { getFunctions, httpsCallable } from '@firebase/functions';
 import { configure } from 'vue-gtag';
+import { FIREBASE_CONFIG, FIREBASE_REGION } from '../../constants';
 
 let analytics: Analytics | null = null;
 
@@ -13,15 +14,7 @@ let analytics: Analytics | null = null;
 // more info on params: https://v2.quasar.dev/quasar-cli/boot-files
 export default boot(({ app }) => {
   // something to do
-  const firebaseApp = initializeApp({
-    apiKey: 'AIzaSyAoSuo1wBtDr61ish7CXIwPC7KWRJ3osKI',
-    authDomain: 'dtjh-platform.firebaseapp.com',
-    projectId: 'dtjh-platform',
-    storageBucket: 'dtjh-platform.firebasestorage.app',
-    messagingSenderId: '210431459437',
-    appId: '1:210431459437:web:d2b3b6a1bb3a20aa083f64',
-    measurementId: 'G-DW3XVWZCPB',
-  });
+  const firebaseApp = initializeApp(FIREBASE_CONFIG);
   analytics = initializeAnalytics(firebaseApp);
   app.use(VueFire, {
     firebaseApp,
@@ -29,12 +22,12 @@ export default boot(({ app }) => {
   });
   configure({
     appName: 'DTJH Platform Quasar App',
-    tagId: firebaseApp.options.measurementId!
-  })
+    tagId: firebaseApp.options.measurementId!,
+  });
 });
 
 export function useFunction(name: string): HttpsCallable {
-  return httpsCallable(getFunctions(useFirebaseApp(), 'asia-east1'), name);
+  return httpsCallable(getFunctions(useFirebaseApp(), FIREBASE_REGION), name);
 }
 
 export function useAnalytics(): Analytics {

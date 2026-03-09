@@ -14,9 +14,7 @@ export function generateRandomText(length: number, bannedPrefix: string | null):
   return result;
 }
 
-export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
-  return `dt${schoolNumber}@dtjh.ptc.edu.tw`;
-}
+import { schoolEmailFromSchoolNumber, getReign, getCurrentReign } from './shared-utils';
 
 export function notifySuccess(message: string): void {
   Notify.create({
@@ -37,10 +35,10 @@ export function notifyError(message: string, exception?: any): void {
   if (exception) {
     console.error(exception);
     event('exception', {
-      description: message + ': ' +  exception?.message,
+      description: message + ': ' + exception?.message,
       stack: exception?.stack,
       fatal: false,
-    })
+    });
   }
 }
 
@@ -61,21 +59,4 @@ export function cleanseName(name: string | null | undefined): string | null {
   return name?.replace(/ck[0-9]+/, '') ?? null;
 }
 
-export function getReign(date: Date) {
-  let year: number;
-  if (date.getMonth() < 7) {
-    // jan ~ july
-    year = date.getFullYear() - 1911 - 1;
-  } else {
-    year = date.getFullYear() - 1911;
-  }
-  if (date.getMonth() > 6 || date.getMonth() == 0) {
-    // aug ~ jan
-    return `${year}-1`;
-  }
-  return `${year}-2`;
-}
-
-export function getCurrentReign() {
-  return getReign(new Date());
-}
+export { schoolEmailFromSchoolNumber, getReign, getCurrentReign };
