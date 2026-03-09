@@ -10,13 +10,15 @@
 // @formatter:off
 import * as admin from 'firebase-admin';
 admin.initializeApp(); // This is required to run before everything else
-import {addUserWithRole, checkRole, editUserClaims} from './auth';
-import {onCall} from 'firebase-functions/v2/https';
-import {Role, User} from './models';
-import {drive_v3, google} from 'googleapis';
+import { addUserWithRole, checkRole, editUserClaims } from './auth';
+import { DRIVE_ROOT_FOLDER_ID } from '../../../constants';
+import { getCurrentReign } from '../../../src/ts/shared-utils';
+import { onCall } from 'firebase-functions/v2/https';
+import { Role, User } from './models';
+import { drive_v3, google } from 'googleapis';
 import * as Stream from 'stream';
-import {getFirestore} from 'firebase-admin/firestore';
-import {https} from 'firebase-functions';
+import { getFirestore } from 'firebase-admin/firestore';
+import { https } from 'firebase-functions';
 // @formatter:on
 
 // const db = admin.firestore();
@@ -76,7 +78,7 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
       schoolNumber: user.customClaims?.schoolNumber,
       clazz: user.customClaims?.clazz,
       name: user.displayName,
-      seatNumber: user.customClaims?.seatNumber
+      seatNumber: user.customClaims?.seatNumber,
     };
   });
 });
@@ -84,10 +86,7 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
 export const register = onCall(globalFunctionOptions, async (request) => {
   const activeMeeting = await db.collection('meetings').where('active', '==', true).get();
   if (activeMeeting.size == 0 || !activeMeeting.docs[0]?.data().registration) {
-    throw new https.HttpsError(
-      'permission-denied',
-      'Registration disabled.'
-    );
+    throw new https.HttpsError('permission-denied', 'Registration disabled.');
   }
   const user = request.data as User;
   user.role = Role.ClassRep;
@@ -100,18 +99,20 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
   const { name, content, mimeType } = request.data;
   const folderQuery = await driveAPI.files.list({
     q: `mimeType='application/vnd.google-apps.folder' and name='${getCurrentReign()}'`,
-    fields: 'files(id)'
+    fields: 'files(id)',
   });
   let folder: string | null | undefined = null;
   if ((folderQuery.data.files?.length ?? 0) == 0) {
-    folder = (await driveAPI.files.create({
-      requestBody: {
-        name: getCurrentReign(),
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: ['1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
-      },
-      fields: 'id'
-    })).data.id;
+    folder = (
+      await driveAPI.files.create({
+        requestBody: {
+          name: getCurrentReign(),
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [DRIVE_ROOT_FOLDER_ID],
+        },
+        fields: 'id',
+      })
+    ).data.id;
   } else {
     folder = folderQuery.data.files?.[0]?.id;
   }
@@ -119,47 +120,28 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
     requestBody: {
       name,
       mimeType,
-      parents: [folder ?? '1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0']
+      parents: [folder ?? DRIVE_ROOT_FOLDER_ID],
     },
     media: {
       mimeType,
-      body: new Stream.PassThrough().end(Buffer.from(content, 'base64'))
+      body: new Stream.PassThrough().end(Buffer.from(content, 'base64')),
     },
-    fields: 'id,webViewLink'
+    fields: 'id,webViewLink',
   });
   await driveAPI.permissions.create({
     fileId: file.data.id ?? '',
     requestBody: {
       role: 'reader',
-      type: 'anyone'
-    }
+      type: 'anyone',
+    },
   });
   await driveAPI.permissions.create({
     fileId: file.data.id ?? '',
     requestBody: {
       role: 'writer',
       type: 'user',
-      emailAddress: 'cksc77th@gmail.com'
-    }
+      emailAddress: 'cksc77th@gmail.com',
+    },
   });
   return { success: true, url: file.data.webViewLink };
 });
-
-export function getReign(date: Date) {
-  let year: number;
-  if (date.getMonth() < 7) {
-    // jan ~ july
-    year = date.getFullYear() - 1945 - 1;
-  } else {
-    year = date.getFullYear() - 1945;
-  }
-  if (date.getMonth() > 6 || date.getMonth() == 0) {
-    // aug ~ jan
-    return `${year}-1`;
-  }
-  return `${year}-2`;
-}
-
-export function getCurrentReign() {
-  return getReign(new Date());
-}

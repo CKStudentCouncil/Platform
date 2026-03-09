@@ -1,6 +1,7 @@
 import { https } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { Role, User } from './models';
+import { ROOT_USER_ID } from '../../../constants';
 
 const auth = admin.auth();
 
@@ -8,7 +9,7 @@ export async function checkRole(request: https.CallableRequest, role: Role) {
   if (!request.auth) {
     throw new https.HttpsError('unauthenticated', 'You must be authenticated');
   }
-  if (request.auth.uid == '38fWtZ4AKRU3oAZjfrt9nBq7d8B2') {
+  if (request.auth.uid == ROOT_USER_ID) {
     // Root account
     return;
   }
