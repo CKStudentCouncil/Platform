@@ -14,7 +14,7 @@ export function generateRandomText(length: number, bannedPrefix: string | null):
   return result;
 }
 
-import { schoolEmailFromSchoolNumber, getReign, getCurrentReign } from './shared-utils';
+import { schoolEmailFromSchoolNumber, getReign, getCurrentReign } from '../../shared/utils';
 
 export function notifySuccess(message: string): void {
   Notify.create({

@@ -1,7 +1,7 @@
 import { https } from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { Role, User } from './models';
-import { ROOT_USER_ID } from '../../../constants';
+import { ROOT_USER_ID } from '../../../shared/constants';
+import { Role, User } from '../../../shared/models';
 
 const auth = admin.auth();
 

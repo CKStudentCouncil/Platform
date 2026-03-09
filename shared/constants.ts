@@ -1,4 +1,4 @@
-// Shared constants for the project root
+// Shared constants across frontend and functions
 export const ROOT_USER_ID = '38fWtZ4AKRU3oAZjfrt9nBq7d8B2';
 export const DRIVE_ROOT_FOLDER_ID = '1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0';
 export const REIGN_YEAR_BASE = 1945;

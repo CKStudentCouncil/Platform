@@ -11,14 +11,14 @@
 import * as admin from 'firebase-admin';
 admin.initializeApp(); // This is required to run before everything else
 import { addUserWithRole, checkRole, editUserClaims } from './auth';
-import { DRIVE_ROOT_FOLDER_ID } from '../../../constants';
-import { getCurrentReign } from '../../../src/ts/shared-utils';
+import { DRIVE_ROOT_FOLDER_ID } from '../../../shared/constants';
+import { getCurrentReign } from '../../../shared/utils';
 import { onCall } from 'firebase-functions/v2/https';
-import { Role, User } from './models';
 import { drive_v3, google } from 'googleapis';
 import * as Stream from 'stream';
 import { getFirestore } from 'firebase-admin/firestore';
 import { https } from 'firebase-functions';
+import { Role, User } from '../../../shared/models';
 // @formatter:on
 
 // const db = admin.firestore();

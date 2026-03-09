@@ -40,10 +40,10 @@ export default defineConfig((/* ctx */) => {
       typescript: {
         strict: true,
         vueShim: true,
-        extendTsConfig (tsConfig) {
+        extendTsConfig(tsConfig) {
           tsConfig.exclude!.push('./../firebase');
           tsConfig.compilerOptions!.allowImportingTsExtensions = true;
-        }
+        },
       },
 
       vueRouterMode: 'history', // available values: 'hash', 'history'
@@ -70,12 +70,17 @@ export default defineConfig((/* ctx */) => {
           'vite-plugin-checker',
           {
             vueTsc: true,
-            eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
-              useFlatConfig: true,
-            },
           },
           { server: false },
+        ],
+        [
+          'vite-plugin-eslint2',
+          {
+            lintInWorker: true,
+            lintOnStart: true,
+            include: ['src/**/*.{ts,js,mjs,cjs,vue}', 'quasar.config.ts', 'eslint.config.js'],
+          },
+          { server: true, client: false },
         ],
       ],
     },
