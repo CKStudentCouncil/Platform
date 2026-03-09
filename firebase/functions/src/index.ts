@@ -101,7 +101,7 @@ export const uploadAttachment = onCall(globalFunctionOptions, async (request) =>
     q: `mimeType='application/vnd.google-apps.folder' and name='${getCurrentReign()}'`,
     fields: 'files(id)',
   });
-  let folder: string | null | undefined = null;
+  let folder: string | null | undefined;
   if ((folderQuery.data.files?.length ?? 0) == 0) {
     folder = (
       await driveAPI.files.create({
