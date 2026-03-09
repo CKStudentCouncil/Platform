@@ -6,7 +6,7 @@ import { initializeAnalytics } from 'firebase/analytics';
 import type { HttpsCallable } from '@firebase/functions';
 import { getFunctions, httpsCallable } from '@firebase/functions';
 import { configure } from 'vue-gtag';
-import { FIREBASE_CONFIG, FIREBASE_REGION } from '../../constants';
+import { FIREBASE_CONFIG, FIREBASE_REGION } from '../../shared/constants';
 
 let analytics: Analytics | null = null;
 

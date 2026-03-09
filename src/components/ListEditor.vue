@@ -45,8 +45,8 @@ function addItem() {
   });
 }
 
-function removeItem(index: number) {
-  parentValue.value.splice(index, 1);
+function removeItem(index: string | number) {
+  parentValue.value.splice(Number(index), 1);
 }
 </script>
 

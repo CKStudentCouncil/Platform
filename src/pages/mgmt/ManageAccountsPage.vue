@@ -69,7 +69,7 @@ import type { QTableColumn } from 'quasar';
 import { Dialog, Loading } from 'quasar';
 import { useCurrentUser } from 'vuefire';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
-import { ROOT_USER_ID } from 'app/constants.ts';
+import { ROOT_USER_ID } from 'app/shared/constants.ts';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },

@@ -1,4 +1,4 @@
-import { REIGN_YEAR_BASE } from '../../constants';
+import { REIGN_YEAR_BASE } from './constants';
 
 export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
   return `dt${schoolNumber}@dtjh.ptc.edu.tw`;
