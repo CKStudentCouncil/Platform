@@ -1,7 +1,7 @@
 import { REIGN_YEAR_BASE } from './constants';
 
 export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
-  return schoolNumber.startsWith('11100') ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw` : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
+  return `${schoolNumber}@gs.hs.ntnu.edu.tw`;
 }
 
 export function getReign(date: Date) {
