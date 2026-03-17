@@ -7,11 +7,19 @@ export enum Role {
   Anonymous = 0,
 }
 
+export interface UserClaims {
+  role: number;
+  schoolNumber: string;
+  clazz: string;
+  seatNumber: string;
+}
+
 export interface User {
+  uid?: string;
   name: string;
   email: string;
   role: number;
   schoolNumber: string;
-  clazz: string; // class, but to avoid internal keyword conflict
+  clazz: string;
   seatNumber: string;
 }

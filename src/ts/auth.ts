@@ -13,7 +13,6 @@ import { event } from 'vue-gtag';
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
 export const loggedInUserClaims = reactive({} as UserClaims);
-export const rootUID = '38fWtZ4AKRU3oAZjfrt9nBq7d8B2';
 
 export function init() {
   auth = useFirebaseAuth()!;

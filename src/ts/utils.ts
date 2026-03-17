@@ -14,11 +14,7 @@ export function generateRandomText(length: number, bannedPrefix: string | null):
   return result;
 }
 
-export function schoolEmailFromSchoolNumber(schoolNumber: string): string {
-  return schoolNumber.startsWith('11100')
-    ? `ck${schoolNumber.replace('11100', '1110')}@gl.ck.tp.edu.tw`
-    : `ck${schoolNumber}@gl.ck.tp.edu.tw`;
-}
+import { schoolEmailFromSchoolNumber, getReign, getCurrentReign } from '../../shared/utils';
 
 export function notifySuccess(message: string): void {
   Notify.create({
@@ -39,10 +35,10 @@ export function notifyError(message: string, exception?: any): void {
   if (exception) {
     console.error(exception);
     event('exception', {
-      description: message + ': ' +  exception?.message,
+      description: message + ': ' + exception?.message,
       stack: exception?.stack,
       fatal: false,
-    })
+    });
   }
 }
 
@@ -63,21 +59,4 @@ export function cleanseName(name: string | null | undefined): string | null {
   return name?.replace(/ck[0-9]+/, '') ?? null;
 }
 
-export function getReign(date: Date) {
-  let year: number;
-  if (date.getMonth() < 7) {
-    // jan ~ july
-    year = date.getFullYear() - 1945 - 1;
-  } else {
-    year = date.getFullYear() - 1945;
-  }
-  if (date.getMonth() > 6 || date.getMonth() == 0) {
-    // aug ~ jan
-    return `${year}-1`;
-  }
-  return `${year}-2`;
-}
-
-export function getCurrentReign() {
-  return getReign(new Date());
-}
+export { schoolEmailFromSchoolNumber, getReign, getCurrentReign };
