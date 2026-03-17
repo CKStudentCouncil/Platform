@@ -29,7 +29,15 @@
         <q-card-section class="q-pa-md">
           <q-input area-required v-model="newProposal.title" label="標題" stack-label />
           <q-input area-required v-model="newProposal.basis" label="法源依據" stack-label />
-          <q-input v-model="newProposal.proposer" label="提案人" stack-label class="q-mt-sm" />
+
+          <div class="q-mt-sm">
+            <div class="text-caption text-grey-7 q-mb-xs">提案人</div>
+            <div class="row q-gutter-sm items-center">
+              <q-input v-model="newProposal.proposer.classNum" label="班級" dense class="col-2" />
+              <q-input v-model="newProposal.proposer.jobTitle" label="職稱" dense class="col-3" />
+              <q-input v-model="newProposal.proposer.name" label="姓名" dense class="col" />
+            </div>
+          </div>
 
           <div class="q-mt-sm">
             <div class="text-caption text-grey-7 q-mb-xs">連署人</div>
@@ -107,7 +115,7 @@ const newProposal = ref({
   title: '',
   content: '',
   type: 'law',
-  proposer: '' as string,
+  proposer: { classNum: '', jobTitle: '', name: '' } as PersonRecord,
   reign: getCurrentReign(),
   basis: '',
   cosigners: [] as PersonRecord[],
@@ -247,7 +255,7 @@ async function addProposal() {
       title: '',
       content: '',
       type: 'law',
-      proposer: '',
+      proposer: { classNum: '', jobTitle: '', name: '' },
       reign: getCurrentReign(),
       basis: '',
       cosigners: [],
