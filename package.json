@@ -21,6 +21,8 @@
     "@vue/language-server": "^3.1.2",
     "exceljs": "^4.4.0",
     "firebase": "^12.1.0",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "qrcode": "1",
     "quasar": "^2.18.2",
     "vue": "^3.5.19",
