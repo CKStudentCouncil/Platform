@@ -69,7 +69,15 @@ export default defineConfig((/* ctx */) => {
         [
           'vite-plugin-checker',
           {
+<<<<<<< HEAD
+            vueTsc: false, // use TypeScript's own checking instead of vue-tsc
+            eslint: {
+              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
+              useFlatConfig: true,
+            },
+=======
             vueTsc: true,
+>>>>>>> 4a4bdd5fa5907ec2d1e4c484c5f419ba0f07f159
           },
           { server: false },
         ],
