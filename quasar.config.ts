@@ -69,13 +69,18 @@ export default defineConfig((/* ctx */) => {
         [
           'vite-plugin-checker',
           {
-            vueTsc: false, // use TypeScript's own checking instead of vue-tsc
-            eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
-              useFlatConfig: true,
-            },
+            vueTsc: true,
           },
           { server: false },
+        ],
+        [
+          'vite-plugin-eslint2',
+          {
+            lintInWorker: true,
+            lintOnStart: true,
+            include: ['src/**/*.{ts,js,mjs,cjs,vue}', 'quasar.config.ts', 'eslint.config.js'],
+          },
+          { server: true, client: false },
         ],
       ],
     },

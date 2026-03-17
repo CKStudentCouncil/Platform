@@ -31,7 +31,7 @@
             <q-btn class="text-yellow-9 q-ml-sm q-mr-sm" icon="edit" round @click="edit(props.row)">
               <q-tooltip>編輯</q-tooltip>
             </q-btn>
-            <q-btn class="text-red q-ml-sm q-mr-sm" icon="delete" round @click="del(props.row)">
+            <q-btn class="text-red q-ml-sm q-mr-sm" icon="delete" round :disable="props.row.uid === ROOT_USER_ID" @click="del(props.row)">
               <q-tooltip>刪除</q-tooltip>
             </q-btn>
           </q-td>
@@ -63,12 +63,13 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
 import type { User } from 'src/ts/models.ts';
-import { getAllUsers, rootUID, translateRole } from '../../ts/auth.ts';
+import { getAllUsers, translateRole } from '../../ts/auth.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import type { QTableColumn } from 'quasar';
 import { Dialog, Loading } from 'quasar';
 import { useCurrentUser } from 'vuefire';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { ROOT_USER_ID } from 'app/shared/constants.ts';
 
 const columns = [
   { name: 'name', label: '姓名', field: 'name', sortable: true, align: 'left' },
@@ -104,7 +105,7 @@ const dialog = computed(() => {
 async function load() {
   loading.value = true;
   accounts.length = 0; // Typescript magic
-  for (const acc of (await getAllUsers())) {
+  for (const acc of await getAllUsers()) {
     accounts.push(acc);
   }
   loading.value = false;
@@ -172,19 +173,28 @@ function bulkAddUser() {
 }
 
 function bulkRemoveUser() {
+  const currentUid = useCurrentUser().value?.uid;
+  const defaultSelected = accounts.map((a) => a.uid).filter((uid) => uid !== currentUid && uid !== ROOT_USER_ID);
+
   Dialog.create({
     title: '批次刪除帳號',
     message: '請勾選要刪除的帳號，預設全選除了目前登入之帳號',
     options: {
       type: 'checkbox',
-      model: accounts.map((a) => a.uid).filter((uid) => uid !== useCurrentUser().value?.uid && uid !== rootUID),
-      items: accounts.map((a) => ({ label: a.name, value: a.uid, disable: a.uid === rootUID })),
+      model: defaultSelected,
+      items: accounts.map((a) => ({ label: a.name, value: a.uid, disable: a.uid === ROOT_USER_ID })),
     },
     cancel: true,
     persistent: true,
   }).onOk(async (data: any) => {
+    const users = (Array.isArray(data) ? data : []).filter((uid) => uid !== currentUid && uid !== ROOT_USER_ID);
+    if (users.length === 0) {
+      notifyError('沒有可刪除的帳號');
+      return;
+    }
+
     try {
-      await useFunction('bulkRemoveUser')({ users: data });
+      await useFunction('bulkRemoveUser')({ users });
     } catch (e) {
       notifyError('刪除失敗', e);
     }
@@ -220,6 +230,11 @@ async function submit() {
 }
 
 function del(row: any) {
+  if (row.uid === ROOT_USER_ID) {
+    notifyError('無法刪除 Root 使用者');
+    return;
+  }
+
   Dialog.create({
     title: '刪除帳號',
     message: '確定要刪除此帳號嗎？',
