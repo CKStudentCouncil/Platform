@@ -80,13 +80,14 @@ import { ref, onMounted } from 'vue';
 import type { QTableColumn } from 'quasar';
 import { getDocs, doc, updateDoc, deleteDoc, collection, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
-import type { ProposalId, PersonRecord } from 'src/ts/proposalmodels.ts';
+import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
 import { getCurrentReign, notifyError, notifySuccess, generateRandomText } from 'src/ts/utils.ts';
 import { getAllUsers } from 'src/ts/auth.ts';
 import { Loading } from 'quasar';
 import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/models.ts';
 import type { MeetingId } from 'src/ts/models.ts';
+import type { PersonRecord } from 'src/ts/proposalmodels.ts';
 
 const filter = ref('');
 const loading = ref(false);
@@ -104,10 +105,10 @@ const meetingsLoading = ref(false);
 const PROPOSAL_TYPES = ['law', 'general', 'presentation'] as const;
 type ProposalType = (typeof PROPOSAL_TYPES)[number];
 
-function formatPersonRecord(val: PersonRecord | string | undefined): string {
-  if (!val) return '—';
-  if (typeof val === 'string') return val;
-  return `${val.classNum} ${val.jobTitle} ${val.name}`.trim();
+function formatPersonRecord(p: PersonRecord | string | undefined): string {
+  if (!p) return '—';
+  if (typeof p === 'string') return p;
+  return `${p.classNum} ${p.jobTitle} ${p.name}`.trim();
 }
 
 const columns: QTableColumn[] = [
@@ -120,11 +121,12 @@ const columns: QTableColumn[] = [
     sortable: true,
     align: 'left',
   },
+  { name: 'proposer', label: '提案人', field: 'proposer', sortable: true, align: 'left' },
   {
-    name: 'proposer',
-    label: '提案人',
-    field: 'proposer',
-    format: (val: PersonRecord | string) => formatPersonRecord(val),
+    name: 'cosigners',
+    label: '連署人',
+    field: 'cosigners',
+    format: (val: PersonRecord[]) => val?.map(formatPersonRecord).join('、') ?? '—',
     sortable: false,
     align: 'left',
   },
@@ -191,10 +193,12 @@ async function loadProposals() {
 
 async function copyProposalLink(proposal: ProposalId & { userId: string }) {
   const attachmentUrls = proposal.attachments?.filter((url) => url).join('\n') || '';
-  if (!attachmentUrls) {
+
+  if (!attachmentUrls || attachmentUrls === '') {
     notifyError('此提案無附件');
     return;
   }
+
   try {
     await navigator.clipboard.writeText(attachmentUrls);
     notifySuccess('已複製提案附件連結');
@@ -208,6 +212,7 @@ async function copyProposalcontent(proposal: ProposalId & { userId: string }) {
     notifyError('此提案無說明內容');
     return;
   }
+
   try {
     await navigator.clipboard.writeText(proposal.content);
     notifySuccess('已複製提案說明內容');
@@ -220,6 +225,7 @@ async function toggleDone(proposal: ProposalId & { userId: string }) {
   try {
     const collectionRef = getCollectionRef(proposal.type as ProposalType, proposal.userId);
     await updateDoc(doc(collectionRef, proposal.id), { done: !proposal.done });
+
     proposal.done = !proposal.done;
     notifySuccess(proposal.done ? '標記為已完成' : '標記為進行中');
   } catch (e) {
@@ -234,10 +240,12 @@ function confirmDelete(proposal: ProposalId & { userId: string }) {
 
 async function deleteProposal() {
   if (!proposalToDelete.value) return;
+
   try {
     const proposal = proposalToDelete.value as ProposalId & { userId: string };
     const collectionRef = getCollectionRef(proposal.type as ProposalType, proposal.userId);
     await deleteDoc(doc(collectionRef, proposal.id));
+
     notifySuccess('刪除提案成功');
     showDeleteDialog.value = false;
     await loadProposals();
@@ -264,7 +272,6 @@ async function submitAddToMeeting() {
     await setDoc(doc(toProps, newId), {
       title: proposalToAdd.value.title,
       proposer: proposalToAdd.value.proposer,
-      cosigners: proposalToAdd.value.cosigners ?? [],
       content: proposalToAdd.value.content ?? '',
       attachments: proposalToAdd.value.attachments ?? [],
       order,
