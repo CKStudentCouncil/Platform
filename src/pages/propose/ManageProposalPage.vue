@@ -129,6 +129,14 @@ const columns: QTableColumn[] = [
     align: 'left',
   },
   {
+    name: 'cosigners',
+    label: '連署人',
+    field: 'cosigners',
+    format: (val: PersonRecord[]) => val?.map(formatPersonRecord).join('、') ?? '—',
+    sortable: false,
+    align: 'left',
+  },
+  {
     name: 'uploadedAt',
     label: '上傳時間',
     field: 'uploadedAt',

@@ -22,7 +22,7 @@ export interface Proposal {
   title: string;
   content: string;
   type: string;
-  proposer: PersonRecord | string;
+  proposer: string;
   reign: string;
   basis?: string;
   done?: boolean;
