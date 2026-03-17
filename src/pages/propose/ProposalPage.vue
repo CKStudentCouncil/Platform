@@ -1,10 +1,5 @@
 <template>
   <q-page>
-    <!--
-    <q-tabs>
-      <q-route-tab label="我的提案" to="/proposal" />
-    </q-tabs>
-    -->
     <div class="q-ma-md">
       <q-table :columns="columns" :filter="filter" :loading="loading" :rows="proposals" :title="`${getCurrentReign()} 我的提案`" row-key="id">
         <template v-slot:top-right>
@@ -24,20 +19,57 @@
     </div>
 
     <q-dialog v-model="showAddDialog" persistent>
-      <q-card style="max-width: 100%">
+      <q-card style="max-width: 100%; min-width: 320px">
         <q-card-section>
-          <h6 class="q-ma-none">新增提案</h6>
+          <h6 v-if="newProposal.type === 'law'" class="q-ma-none">新增法律修正案</h6>
+          <h6 v-else-if="newProposal.type === 'general'" class="q-ma-none">新增一般提案</h6>
+          <h6 v-else class="q-ma-none">新增專案報告案</h6>
         </q-card-section>
 
-        <q-card-section>
-          <q-input area-required v-model="newProposal.title" label="標題" />
-          <q-input area-required v-model="newProposal.proposer" label="提案人" />
-          <q-select area-required v-model="newProposal.type" :options="proposalTypes" label="類型" emit-value map-options />
-          <q-input area-required v-model="newProposal.content" label="內容" type="textarea" />
+        <q-card-section class="q-pa-md">
+          <q-input area-required v-model="newProposal.title" label="標題" stack-label />
+          <q-input area-required v-model="newProposal.basis" label="法源依據" stack-label />
+
+          <div class="q-mt-sm">
+            <div class="text-caption text-grey-7 q-mb-xs">提案人</div>
+            <div class="row q-gutter-sm items-center">
+              <q-input v-model="newProposal.proposer.classNum" label="班級" dense class="col-2" />
+              <q-input v-model="newProposal.proposer.jobTitle" label="職稱" dense class="col-3" />
+              <q-input v-model="newProposal.proposer.name" label="姓名" dense class="col" />
+            </div>
+          </div>
+
+          <div class="q-mt-sm">
+            <div class="text-caption text-grey-7 q-mb-xs">連署人</div>
+            <div v-if="newProposal.cosigners.length > 0" class="q-mb-sm q-gutter-xs">
+              <q-chip
+                v-for="(cosigner, i) in newProposal.cosigners"
+                :key="i"
+                removable
+                @remove="newProposal.cosigners.splice(i, 1)"
+                color="primary"
+                text-color="white"
+                icon="person"
+              >
+                {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
+              </q-chip>
+            </div>
+            <div class="row q-gutter-sm items-center">
+              <q-input v-model="cosignerInput.classNum" label="班級" dense class="col-2" />
+              <q-input v-model="cosignerInput.jobTitle" label="職稱" dense class="col-3" />
+              <q-input v-model="cosignerInput.name" label="姓名" dense class="col" @keyup.enter="addCosigner" />
+              <q-btn round dense icon="add" color="primary" @click="addCosigner" />
+            </div>
+          </div>
+
+          <q-select area-required v-model="newProposal.type" :options="proposalTypes" label="類型" emit-value map-options class="q-mt-sm" />
+          <q-input area-required v-model="newProposal.content" label="提案說明" type="textarea" stack-label />
           <br />
-          <div>附件：</div>
-          <ListEditor v-model="newProposal.attachments" /><br />
-          <AttachmentUploader area-required ref="attachmentUploader" @uploaded="addAttachments" />
+          <div v-if="newProposal.type === 'law'">
+            <div>條文對照表：</div>
+            <ListEditor v-model="newProposal.attachments" /><br />
+            <AttachmentUploader area-required ref="attachmentUploader" @uploaded="addAttachments" />
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="取消" color="negative" @click="showAddDialog = false" />
@@ -54,7 +86,7 @@ import type { QTableColumn } from 'quasar';
 import { Loading, Notify } from 'quasar';
 import { deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { loggedInUser } from 'src/ts/auth.ts';
-import type { ProposalId } from 'src/ts/proposalmodels.ts';
+import type { ProposalId, PersonRecord } from 'src/ts/proposalmodels.ts';
 import {
   generateProposalId,
   rawUserProposalCollectionGeneral as collectgeneral,
@@ -71,6 +103,8 @@ const loading = ref(false);
 const showAddDialog = ref(false);
 const proposals = ref<any[]>([]);
 
+const cosignerInput = ref<PersonRecord>({ classNum: '', jobTitle: '', name: '' });
+
 const proposalTypes = [
   { label: '法律修正案', value: 'law' },
   { label: '一般提案', value: 'general' },
@@ -81,15 +115,22 @@ const newProposal = ref({
   title: '',
   content: '',
   type: 'law',
-  proposer: '',
+  proposer: { classNum: '', jobTitle: '', name: '' } as PersonRecord,
   reign: getCurrentReign(),
   basis: '',
+  cosigners: [] as PersonRecord[],
   done: false,
   attachments: [] as string[],
   uploadedAt: new Date(),
 });
 
 const attachmentUploader = ref<InstanceType<typeof AttachmentUploader> | null>(null);
+
+function formatPersonRecord(p: PersonRecord | string | undefined): string {
+  if (!p) return '—';
+  if (typeof p === 'string') return p;
+  return `${p.classNum} ${p.jobTitle} ${p.name}`.trim();
+}
 
 const columns: QTableColumn[] = [
   { name: 'title', label: '提案標題', field: 'title', sortable: true, align: 'left' },
@@ -101,7 +142,22 @@ const columns: QTableColumn[] = [
     sortable: true,
     align: 'left',
   },
-  { name: 'proposer', label: '提案人', field: 'proposer', sortable: true, align: 'left' },
+  {
+    name: 'proposer',
+    label: '提案人',
+    field: 'proposer',
+    format: (val: PersonRecord | string) => formatPersonRecord(val),
+    sortable: false,
+    align: 'left',
+  },
+  {
+    name: 'cosigners',
+    label: '連署人',
+    field: 'cosigners',
+    format: (val: PersonRecord[]) => val?.map(formatPersonRecord).join('、') ?? '—',
+    sortable: false,
+    align: 'left',
+  },
   {
     name: 'uploadedAt',
     label: '上傳時間',
@@ -146,6 +202,17 @@ function loadProposals(uid: string) {
   });
 }
 
+function addCosigner() {
+  const { classNum, jobTitle, name } = cosignerInput.value;
+  if (!name.trim()) return notifyError('請填寫連署人姓名');
+  const entry: PersonRecord = { classNum: classNum.trim(), jobTitle: jobTitle.trim(), name: name.trim() };
+  if (newProposal.value.cosigners.some((c) => c.name === entry.name)) {
+    return notifyError('該連署人已存在');
+  }
+  newProposal.value.cosigners.push(entry);
+  cosignerInput.value = { classNum: '', jobTitle: '', name: '' };
+}
+
 async function addProposal() {
   if (!loggedInUser.value) return notifyError('請先登入');
   if (!newProposal.value.title || !newProposal.value.content) return notifyError('請填寫提案標題和內容');
@@ -162,6 +229,7 @@ async function addProposal() {
       title: newProposal.value.title,
       content: newProposal.value.content,
       proposer: newProposal.value.proposer,
+      cosigners: newProposal.value.cosigners,
       reign: newProposal.value.reign,
       done: false,
       attachments: newProposal.value.attachments,
@@ -172,28 +240,25 @@ async function addProposal() {
       proposalData.basis = newProposal.value.basis;
     }
 
-    console.log('準備儲存的類型:', newProposal.value.type);
-    console.log('提案資料:', proposalData);
-
     let collectionRef;
     if (newProposal.value.type === 'law') collectionRef = collectlaw(loggedInUser.value.uid);
     else if (newProposal.value.type === 'general') collectionRef = collectgeneral(loggedInUser.value.uid);
     else collectionRef = collectpresentation(loggedInUser.value.uid);
-
-    console.log('Collection 路徑:', collectionRef.path);
 
     await setDoc(doc(collectionRef, proposalId), proposalData);
 
     notifySuccess('新增提案成功');
     showAddDialog.value = false;
 
+    cosignerInput.value = { classNum: '', jobTitle: '', name: '' };
     newProposal.value = {
       title: '',
       content: '',
       type: 'law',
-      proposer: '',
+      proposer: { classNum: '', jobTitle: '', name: '' },
       reign: getCurrentReign(),
       basis: '',
+      cosigners: [],
       done: false,
       attachments: [],
       uploadedAt: new Date(),

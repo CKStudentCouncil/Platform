@@ -2,15 +2,32 @@ import { collection, doc, orderBy, query, Timestamp } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import type { FirestoreDataConverter } from '@firebase/firestore';
 
+export type Person = [string, string, string];
+
+export interface PersonRecord {
+  classNum: string;
+  jobTitle: string;
+  name: string;
+}
+
+export function personToRecord(p: Person): PersonRecord {
+  return { classNum: p[0], jobTitle: p[1], name: p[2] };
+}
+
+export function recordToPerson(r: PersonRecord): Person {
+  return [r.classNum ?? '', r.jobTitle ?? '', r.name ?? ''];
+}
+
 export interface Proposal {
   title: string;
   content: string;
   type: string;
-  proposer: string;
+  proposer: PersonRecord | string;
   reign: string;
   basis?: string;
   done?: boolean;
   attachments?: string[];
+  cosigners?: PersonRecord[];
   uploadedAt: Date;
 }
 
@@ -20,22 +37,34 @@ export interface ProposalId extends Proposal {
 
 export const proposalConverter: FirestoreDataConverter<Proposal | null> = {
   toFirestore(data: any) {
-    if (data.uploadedAt) {
-      data.uploadedAt = Timestamp.fromDate(data.uploadedAt);
+    const out = { ...data };
+
+    if (out.uploadedAt) {
+      out.uploadedAt = Timestamp.fromDate(out.uploadedAt);
     }
-    return firestoreDefaultConverter.toFirestore(data);
+
+    if (Array.isArray(out.proposer)) {
+      out.proposer = personToRecord(out.proposer as Person);
+    }
+
+    if (Array.isArray(out.cosigners)) {
+      out.cosigners = out.cosigners.map((c: Person | PersonRecord) => (Array.isArray(c) ? personToRecord(c) : c));
+    }
+
+    return firestoreDefaultConverter.toFirestore(out);
   },
   fromFirestore(snapshot, options) {
     const data = firestoreDefaultConverter.fromFirestore(snapshot, options);
     if (!data) return null;
+
     if (data.uploadedAt) {
       data.uploadedAt = new Date(data.uploadedAt.toMillis());
     }
+
     return data as unknown as Proposal;
   },
 };
 
-//
 export function rawUserProposalCollectionLaw(userId: string) {
   const db = useFirestore();
   return collection(db, `proposal/law/${userId}/`).withConverter(proposalConverter);
@@ -49,7 +78,6 @@ export function getProposalLaw(userId: string, proposalId: string) {
   return useDocument(doc(rawUserProposalCollectionLaw(userId), proposalId));
 }
 
-//
 export function rawUserProposalCollectionGeneral(userId: string) {
   const db = useFirestore();
   return collection(db, `proposal/general/${userId}/`).withConverter(proposalConverter);
@@ -63,7 +91,6 @@ export function getProposalGeneral(userId: string, proposalId: string) {
   return useDocument(doc(rawUserProposalCollectionGeneral(userId), proposalId));
 }
 
-//
 export function rawUserProposalCollectionPresentation(userId: string) {
   const db = useFirestore();
   return collection(db, `proposal/presentation/${userId}/`).withConverter(proposalConverter);
