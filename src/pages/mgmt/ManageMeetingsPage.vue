@@ -274,9 +274,22 @@ function del(row: any) {
   }).onOk(async () => {
     Loading.show();
     try {
+      const proposals = await getDocs(rawProposalCollection(row.id));
+      for (const proposalDoc of proposals.docs) {
+        const votables = await getDocs(rawVotableCollection(row.id, proposalDoc.id));
+        const votableDeleteTasks = [];
+        for (const votableDoc of votables.docs) {
+          votableDeleteTasks.push(deleteDoc(votableDoc.ref));
+        }
+        await Promise.all(votableDeleteTasks);
+
+        await deleteDoc(proposalDoc.ref);
+      }
+
       await deleteDoc(doc(rawMeetingCollection(), row.id));
     } catch (e) {
       notifyError('刪除失敗', e);
+      Loading.hide();
       return;
     }
     Loading.hide();

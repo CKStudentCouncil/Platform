@@ -156,9 +156,17 @@ function del(id: string) {
   }).onOk(async () => {
     Loading.show();
     try {
+      const votables = await getDocs(rawVotableCollection(meetingId, id));
+      const votableDeleteTasks = [];
+      for (const votableDoc of votables.docs) {
+        votableDeleteTasks.push(deleteDoc(votableDoc.ref));
+      }
+      await Promise.all(votableDeleteTasks);
+
       await deleteDoc(doc(rawProposalCollection(meetingId), id));
     } catch (e) {
       notifyError('刪除失敗', e);
+      Loading.hide();
       return;
     }
     Loading.hide();
