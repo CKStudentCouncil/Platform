@@ -4,17 +4,32 @@ import type { FirestoreDataConverter } from '@firebase/firestore';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
 import { getCurrentReign } from 'src/ts/utils.ts';
-import type { User as SharedUser } from '../../shared/models';
 
-export { Role } from '../../shared/models';
-export type { UserClaims } from '../../shared/models';
-export type User = Omit<SharedUser, 'uid' | 'role' | 'schoolNumber' | 'clazz' | 'seatNumber'> & {
+export enum Role {
+  Admin = 999,
+  Chair = 200,
+  ViceChair = 150,
+  Secretary = 100,
+  ClassRep = 50,
+  Anonymous = 0,
+}
+
+export interface UserClaims {
+  role: number;
+  schoolNumber: string;
+  clazz: string; // class, but to avoid internal keyword conflict
+  seatNumber: string;
+}
+
+export interface User {
   uid: string;
+  name: string;
+  email: string;
   role?: number | undefined;
   schoolNumber?: string;
-  clazz?: string;
+  clazz?: string; // class, but to avoid internal keyword conflict
   seatNumber?: string;
-};
+}
 
 export interface Meeting extends DocumentType {
   active: boolean;

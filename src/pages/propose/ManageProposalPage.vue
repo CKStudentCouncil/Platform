@@ -87,6 +87,7 @@ import { getAllUsers } from 'src/ts/auth.ts';
 import { Loading } from 'quasar';
 import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/models.ts';
 import type { MeetingId } from 'src/ts/models.ts';
+import type { PersonRecord } from 'src/ts/proposalmodels.ts';
 
 const filter = ref('');
 const loading = ref(false);
@@ -104,6 +105,12 @@ const meetingsLoading = ref(false);
 const PROPOSAL_TYPES = ['law', 'general', 'presentation'] as const;
 type ProposalType = (typeof PROPOSAL_TYPES)[number];
 
+function formatPersonRecord(p: PersonRecord | string | undefined): string {
+  if (!p) return '—';
+  if (typeof p === 'string') return p;
+  return `${p.classNum} ${p.jobTitle} ${p.name}`.trim();
+}
+
 const columns: QTableColumn[] = [
   { name: 'title', label: '提案標題', field: 'title', sortable: true, align: 'left' },
   {
@@ -115,6 +122,14 @@ const columns: QTableColumn[] = [
     align: 'left',
   },
   { name: 'proposer', label: '提案人', field: 'proposer', sortable: true, align: 'left' },
+  {
+    name: 'cosigners',
+    label: '連署人',
+    field: 'cosigners',
+    format: (val: PersonRecord[]) => val?.map(formatPersonRecord).join('、') ?? '—',
+    sortable: false,
+    align: 'left',
+  },
   {
     name: 'uploadedAt',
     label: '上傳時間',
