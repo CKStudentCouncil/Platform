@@ -12,7 +12,13 @@
         </template>
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
-            <q-btn v-if="!props.row.submittedAt" class="text-blue-9 q-ml-sm q-mr-sm" round icon="link" @click="copyCoSignLink(props.row)">
+            <q-btn
+              v-if="!props.row.submittedAt && loggedInUserClaims.role !== 25"
+              class="text-blue-9 q-ml-sm q-mr-sm"
+              round
+              icon="link"
+              @click="copyCoSignLink(props.row)"
+            >
               <q-tooltip>複製連署連結</q-tooltip>
             </q-btn>
             <q-btn
@@ -50,7 +56,7 @@
             </div>
           </q-step>
 
-          <q-step :name="2" title="產生連署連結" icon="link" :done="step > 2">
+          <q-step :name="2" title="產生連署連結" icon="link" :done="step > 2" v-if="loggedInUserClaims.role !== 25">
             <div class="q-mb-md">
               <p>提案已建立。您可以複製以下連結分享給連署人：</p>
               <q-input
@@ -138,7 +144,7 @@
         </q-stepper>
 
         <q-card-actions align="right">
-          <q-btn v-if="step > 1" flat label="上一步" @click="step--" />
+          <q-btn v-if="step > 1" flat label="上一步" @click="prevStep" />
           <q-btn v-if="step < 3" flat label="下一步" color="primary" @click="nextStep" />
           <q-btn v-if="step === 3" flat label="上傳" color="positive" @click="submitProposal" />
           <q-btn v-if="step === 3" flat label="之後再上傳" color="warning" @click="laterUpload" />
@@ -151,10 +157,11 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
 import { Loading, Notify } from 'quasar';
 import { deleteDoc, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
-import { loggedInUser } from 'src/ts/auth.ts';
+import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
 import type { ProposalId, PersonRecord } from 'src/ts/proposalmodels.ts';
 import {
   generateProposalId,
@@ -319,7 +326,7 @@ async function createProposal() {
     });
 
     notifySuccess('提案建立成功');
-    step.value = 2;
+    step.value = loggedInUserClaims.role === 25 ? 3 : 2;
   } catch (e) {
     console.error('建立提案失敗:', e);
     Notify.create({
@@ -335,8 +342,16 @@ async function createProposal() {
 async function nextStep() {
   if (step.value === 1) {
     await createProposal();
-  } else if (step.value === 2) {
+  } else if (step.value === 2 || (step.value === 1 && loggedInUserClaims.role === 25)) {
     step.value = 3;
+  }
+}
+
+function prevStep() {
+  if (step.value === 3 && loggedInUserClaims.role === 25) {
+    step.value = 1;
+  } else {
+    step.value--;
   }
 }
 
@@ -489,7 +504,15 @@ async function copyCoSignLink(proposal: any) {
   }
 }
 
+const router = useRouter();
+
 onMounted(() => {
+  if (!loggedInUserClaims || loggedInUserClaims.role < 25) {
+    Notify.create({ type: 'negative', message: '您無權存取提案頁面。' });
+    void router.push('/');
+    return;
+  }
+
   if (loggedInUser.value) {
     loadProposals(loggedInUser.value.uid);
   }
