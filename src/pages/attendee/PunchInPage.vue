@@ -21,6 +21,7 @@ import LoginDialog from 'components/LoginDialog.vue';
 import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { notifyError } from 'src/ts/utils.ts';
+import { Notify } from 'quasar';
 
 const passcode = ref(useRoute().params.passcode as string);
 const tempPasscode = ref('');
@@ -28,6 +29,11 @@ const loginDialog = ref(false);
 const router = useRouter();
 const scanning = ref(false);
 const register = ref(false);
+
+if (loggedInUserClaims.role === 25) {
+  Notify.create({ type: 'negative', message: '其他部門使用者無法簽到。' });
+  void router.push('/');
+}
 
 async function submit() {
   passcode.value = tempPasscode.value;
