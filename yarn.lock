@@ -1303,7 +1303,7 @@
   resolved "https://registry.yarnpkg.com/@rolldown/pluginutils/-/pluginutils-1.0.0-rc.2.tgz#10324e74cb3396cb7b616042ea7e9e6aa7d8d458"
   integrity sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==
 
-"@rollup/pluginutils@^5.2.0":
+"@rollup/pluginutils@^5.3.0":
   version "5.3.0"
   resolved "https://registry.yarnpkg.com/@rollup/pluginutils/-/pluginutils-5.3.0.tgz#57ba1b0cbda8e7a3c597a4853c807b156e21a7b4"
   integrity sha512-5EdhGZtnu3V88ces7s53hhfK5KSASnJZv8Lulpc04cWO3REESroJXg73DFsOmgbU2BhwV0E20bu2IDZb3VKW4Q==
@@ -2491,7 +2491,7 @@ debug@2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@^4.3.1, debug@^4.3.2, debug@^4.4.0, debug@^4.4.1, debug@^4.4.3:
+debug@^4.3.1, debug@^4.3.2, debug@^4.4.0, debug@^4.4.3:
   version "4.4.3"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.4.3.tgz#c6ae432d9bd9662582fce08709b038c58e9e3d6a"
   integrity sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==
@@ -5167,13 +5167,13 @@ vite-plugin-checker@^0.12.0:
     tinyglobby "^0.2.15"
     vscode-uri "^3.1.0"
 
-vite-plugin-eslint2@^5.0.5:
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/vite-plugin-eslint2/-/vite-plugin-eslint2-5.0.5.tgz#676b00dc757c9eb70d8d8c44ddbf88480a699b81"
-  integrity sha512-Ek7K8z2t/FVD7n1sNsf0pqSAH48aWGoxm+2PBeWPBVdLXOXiPtXW1pNgflKu0gjhYLHAZxCLvGndLaRO1SB9Bw==
+vite-plugin-eslint2@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/vite-plugin-eslint2/-/vite-plugin-eslint2-5.1.0.tgz#c796d4dc852b35f91db508946a4833589adea319"
+  integrity sha512-fNuO/D7b+EZ5ejhuBA80tiaxWztZWDHc+lCZaXMOHgYfqFXq8WKmGwrudS+/jscp0UNAKGB71du+xoP8azSXiw==
   dependencies:
-    "@rollup/pluginutils" "^5.2.0"
-    debug "^4.4.1"
+    "@rollup/pluginutils" "^5.3.0"
+    debug "^4.4.3"
 
 vite@^8.0.0:
   version "8.0.2"
