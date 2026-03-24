@@ -81,7 +81,10 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/proposal',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/propose/ProposalPage.vue') }],
+    children: [
+      { path: '', component: () => import('pages/propose/ProposalPage.vue') },
+      { path: ':userId/:proposalId/cosign', component: () => import('pages/propose/CoSignProposalPage.vue') },
+    ],
   },
   {
     path: '/manage_proposals',

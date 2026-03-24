@@ -11,6 +11,9 @@
         </template>
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
+            <q-btn class="text-grey-9 q-ml-sm q-mr-sm" round icon="visibility" @click="viewProposalDetails(props.row)">
+              <q-tooltip>檢視詳細內容</q-tooltip>
+            </q-btn>
             <q-btn class="text-purple-9 q-ml-sm q-mr-sm" round icon="post_add" @click="openAddToMeeting(props.row)">
               <q-tooltip>加入會議</q-tooltip>
             </q-btn>
@@ -72,6 +75,61 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <q-dialog v-model="showDetailsDialog" persistent maximized>
+      <q-card v-if="proposalToView">
+        <q-card-section>
+          <div class="text-h6">{{ proposalToView.title }}(預覽)</div>
+          <div class="text-subtitle2">類型： {{ translateProposalType(proposalToView.type) }}</div>
+          <div class="text-subtitle2">提案人： {{ proposalToView.proposer }}</div>
+          <div v-if="proposalToView.basis" class="text-subtitle2">法源依據： {{ proposalToView.basis }}</div>
+        </q-card-section>
+        <q-card-section>
+          <div class="text-subtitle2 q-mb-sm">提案說明：</div>
+          <div class="text-body1">{{ proposalToView.content }}</div>
+        </q-card-section>
+        <q-card-section v-if="proposalToView.attachments && proposalToView.attachments.length > 0">
+          <div class="text-subtitle2 q-mb-sm">附件：</div>
+          <q-list>
+            <q-item v-for="attachment in proposalToView.attachments" :key="attachment">
+              <q-item-section style="overflow-wrap: anywhere">{{ attachment }}</q-item-section>
+              <q-item-section side>
+                <q-btn flat dense :href="attachment" icon="open_in_new" target="_blank">
+                  <q-tooltip>在新視窗開啟</q-tooltip>
+                </q-btn>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn flat dense icon="visibility" @click="activeUrl = attachment">
+                  <q-tooltip>在網頁內預覽</q-tooltip>
+                </q-btn>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+        <q-card-section>
+          <div class="text-subtitle2 q-mb-sm">連署人：</div>
+          <q-chip v-for="cosigner in proposalToView.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
+            {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
+          </q-chip>
+          <div v-if="!proposalToView.cosigners || proposalToView.cosigners.length === 0" class="text-grey-6">無連署人</div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="關閉" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog :model-value="!!activeUrl" persistent>
+      <q-card :style="$q.screen.lt.sm ? 'min-width: 100vw' : 'min-width: 60vw'">
+        <q-card-section style="width: 100%">
+          <q-btn class="q-mb-sm" color="negative" flat icon="close" style="float: right" @click="activeUrl = ''" />
+          <q-btn :href="activeUrl" flat icon="open_in_new" style="float: right" target="_blank" />
+        </q-card-section>
+        <q-card-section>
+          <iframe :height="$q.screen.height - 200" :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" width="100%" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -102,6 +160,10 @@ const selectedMeeting = ref<MeetingId | null>(null);
 const meetingOptions = meetingCollectionOfCurrentReign();
 const meetingsLoading = ref(false);
 
+const showDetailsDialog = ref(false);
+const proposalToView = ref<(ProposalId & { userId: string }) | null>(null);
+const activeUrl = ref('');
+
 const PROPOSAL_TYPES = ['law', 'general', 'presentation'] as const;
 type ProposalType = (typeof PROPOSAL_TYPES)[number];
 
@@ -131,10 +193,10 @@ const columns: QTableColumn[] = [
     align: 'left',
   },
   {
-    name: 'uploadedAt',
-    label: '上傳時間',
-    field: 'uploadedAt',
-    format: (val: Date) => new Date(val).toLocaleString('zh-TW'),
+    name: 'submittedAt',
+    label: '提交時間',
+    field: 'submittedAt',
+    format: (val: Date) => (val ? new Date(val).toLocaleString('zh-TW') : '—'),
     sortable: true,
     align: 'left',
   },
@@ -166,15 +228,17 @@ async function loadProposals() {
           const collectionRef = getCollectionRef(type, user.uid);
           const snapshot = await getDocs(collectionRef);
 
-          return snapshot.docs.map((d) => {
-            const data = d.data();
-            return {
-              id: d.id,
-              ...data,
-              type,
-              userId: user.uid,
-            } as ProposalId & { userId: string };
-          });
+          return snapshot.docs
+            .map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                ...data,
+                type,
+                userId: user.uid,
+              } as ProposalId & { userId: string };
+            })
+            .filter((proposal) => proposal.submittedAt); // Only show submitted proposals
         } catch (e) {
           console.warn(`無法載入 ${user.uid} 的 ${type} 提案:`, e);
           return [];
@@ -286,6 +350,27 @@ async function submitAddToMeeting() {
   } finally {
     Loading.hide();
   }
+}
+
+function viewProposalDetails(proposal: ProposalId & { userId: string }) {
+  proposalToView.value = proposal;
+  showDetailsDialog.value = true;
+}
+
+function getGoogleFileEmbed(input: string) {
+  let file_id = null;
+  const driveCapture = input.match(/https:\/\/drive\.google\.com\/file\/d\/(.*)\/view.*/);
+  if (driveCapture && driveCapture.length > 1) {
+    file_id = driveCapture[1];
+  }
+  const documentCapture = input.match(/https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/(.*)\/edit.*/);
+  if (documentCapture && documentCapture.length > 2) {
+    file_id = documentCapture[2];
+  }
+  if (file_id) {
+    return `https://drive.google.com/file/d/${file_id}/preview`;
+  }
+  return input;
 }
 
 onMounted(() => {
