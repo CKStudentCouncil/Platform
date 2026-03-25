@@ -4,6 +4,7 @@ export enum Role {
   ViceChair = 150,
   Secretary = 100,
   ClassRep = 50,
+  OtherDepartment = 25,
   Anonymous = 0,
 }
 

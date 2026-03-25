@@ -146,6 +146,12 @@ const endpoints = [
     name: '提案',
     url: '/proposal',
     icon: 'book',
+    role: Role.OtherDepartment,
+  },
+  {
+    name: '簽到',
+    url: '/punch_in',
+    icon: 'chat',
     role: Role.ClassRep,
   },
   {

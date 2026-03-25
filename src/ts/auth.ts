@@ -111,6 +111,9 @@ export function translateRole(role: number | undefined) {
   if (role >= 50) {
     return '班代';
   }
+  if (role >= 25) {
+    return '其他部門';
+  }
   return '未知';
 }
 

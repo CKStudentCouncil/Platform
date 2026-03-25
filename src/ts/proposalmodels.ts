@@ -29,6 +29,7 @@ export interface Proposal {
   attachments?: string[];
   cosigners?: PersonRecord[];
   uploadedAt: Date;
+  submittedAt?: Date;
 }
 
 export interface ProposalId extends Proposal {
@@ -41,6 +42,10 @@ export const proposalConverter: FirestoreDataConverter<Proposal | null> = {
 
     if (out.uploadedAt) {
       out.uploadedAt = Timestamp.fromDate(out.uploadedAt);
+    }
+
+    if (out.submittedAt) {
+      out.submittedAt = Timestamp.fromDate(out.submittedAt);
     }
 
     if (Array.isArray(out.proposer)) {
@@ -59,6 +64,10 @@ export const proposalConverter: FirestoreDataConverter<Proposal | null> = {
 
     if (data.uploadedAt) {
       data.uploadedAt = new Date(data.uploadedAt.toMillis());
+    }
+
+    if (data.submittedAt) {
+      data.submittedAt = new Date(data.submittedAt.toMillis());
     }
 
     return data as unknown as Proposal;

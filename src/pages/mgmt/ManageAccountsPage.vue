@@ -87,6 +87,7 @@ const columns = [
   { name: 'email', label: 'Email', field: 'email', sortable: true, align: 'left' },
 ] as QTableColumn[];
 const roleOptions = [
+  { label: '其他部門', value: 25 },
   { label: '班代', value: 50 },
   { label: '秘書', value: 100 },
   { label: '副議長', value: 150 },
