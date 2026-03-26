@@ -80,9 +80,17 @@ const db = useFirestore();
 const proposal = ref<ProposalId | null>(null);
 const loading = ref(true);
 const cosigner = ref<PersonRecord>({
-  classNum: loggedInUserClaims.clazz || '',
+  classNum: (Array.isArray(loggedInUserClaims.clazz) ? loggedInUserClaims.clazz[0] : loggedInUserClaims.clazz) ?? '',
   jobTitle:
-    loggedInUserClaims.role === 50 ? '班代' : loggedInUserClaims.role === 150 ? '副議長' : loggedInUserClaims.role === 200 || 999 ? '議長' : '',
+    loggedInUserClaims.role === 50
+      ? '班代'
+      : loggedInUserClaims.role === 150
+        ? '副議長'
+        : loggedInUserClaims.role === 200
+          ? '議長'
+          : loggedInUserClaims.role === 999
+            ? '議長'
+            : '',
   name: '',
 });
 const activeUrl = ref('');
@@ -120,8 +128,17 @@ async function addCosigner() {
   }
 
   const newCosigner: PersonRecord = {
-    classNum: loggedInUserClaims.clazz || cosigner.value.classNum.trim(),
-    jobTitle: cosigner.value.jobTitle.trim(),
+    classNum: (Array.isArray(loggedInUserClaims.clazz) ? loggedInUserClaims.clazz[0] : loggedInUserClaims.clazz) ?? cosigner.value.classNum.trim(),
+    jobTitle:
+      loggedInUserClaims.role === 50
+        ? '班代'
+        : loggedInUserClaims.role === 150
+          ? '副議長'
+          : loggedInUserClaims.role === 200
+            ? '議長'
+            : loggedInUserClaims.role === 999
+              ? '議長'
+              : '',
     name: cosigner.value.name.trim(),
   };
 
@@ -132,7 +149,7 @@ async function addCosigner() {
   }
 
   try {
-    const collectionRef = collection(db, `proposal/${proposal.value.type}/${route.params.userId}/`).withConverter(proposalConverter);
+    const collectionRef = collection(db, `proposal/${proposal.value.type}/${route.params.userId as string}/`).withConverter(proposalConverter);
     const updatedCosigners = [...(proposal.value.cosigners || []), newCosigner];
     await updateDoc(doc(collectionRef, proposal.value.id), { cosigners: updatedCosigners });
 
@@ -165,6 +182,6 @@ function getGoogleFileEmbed(input: string) {
 }
 
 onMounted(() => {
-  loadProposal();
+  void loadProposal();
 });
 </script>
