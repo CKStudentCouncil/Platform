@@ -31,7 +31,7 @@
           </q-list>
         </q-card-section>
         <q-card-section>
-          <div class="text-subtitle2 q-mb-sm">現有連署人:</div>
+          <div class="text-subtitle2 q-mb-sm">現有連署人：</div>
           <q-chip v-for="cosigner in proposal.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
             {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
           </q-chip>
@@ -40,8 +40,6 @@
         <q-card-section>
           <q-separator class="q-mb-md" />
           <div class="text-h6 q-mb-md">加入連署 <q-btn color="primary" label="加入連署" @click="addCosigner" class="q-ml-md align-right" /></div>
-          <q-input v-model="cosigner.classNum" label="班級" dense class="q-mr-sm" />
-          <q-input v-model="cosigner.jobTitle" label="職稱" dense class="q-mr-sm" />
           <q-input v-model="cosigner.name" label="姓名" dense class="q-mr-sm" @keyup.enter="addCosigner" />
         </q-card-section>
       </q-card>
@@ -73,14 +71,20 @@ import { useFirestore } from 'vuefire';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
-import { loggedInUser } from 'src/ts/auth.ts';
+import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
+import { log } from 'node:console';
 
 const route = useRoute();
 const db = useFirestore();
 const proposal = ref<ProposalId | null>(null);
 const loading = ref(true);
-const cosigner = ref<PersonRecord>({ classNum: '', jobTitle: '班代', name: '' });
+const cosigner = ref<PersonRecord>({
+  classNum: loggedInUserClaims.clazz || '',
+  jobTitle:
+    loggedInUserClaims.role === 50 ? '班代' : loggedInUserClaims.role === 150 ? '副議長' : loggedInUserClaims.role === 200 || 999 ? '議長' : '',
+  name: '',
+});
 const activeUrl = ref('');
 
 async function loadProposal() {
@@ -116,7 +120,7 @@ async function addCosigner() {
   }
 
   const newCosigner: PersonRecord = {
-    classNum: cosigner.value.classNum.trim(),
+    classNum: loggedInUserClaims.clazz || cosigner.value.classNum.trim(),
     jobTitle: cosigner.value.jobTitle.trim(),
     name: cosigner.value.name.trim(),
   };

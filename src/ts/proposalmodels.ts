@@ -137,11 +137,15 @@ export function parseProposalId(proposalId: string): { date: Date; index: number
   };
 }
 
-export function translateProposalType(type: string): string {
+export function translateProposalType(type: string, role?: number): string {
   const typeMap: Record<string, string> = {
     law: '法律修正案',
     general: '一般提案',
     presentation: '專案報告',
+    ...(role === 25 && {
+      nomination: '人事案',
+      election: '學代選舉案',
+    }),
   };
-  return typeMap[type] || type;
+  return typeMap[type] || '';
 }
