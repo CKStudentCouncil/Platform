@@ -95,7 +95,7 @@ export const register = onCall(globalFunctionOptions, async (request) => {
 });
 
 export const uploadAttachment = onCall(globalFunctionOptions, async (request) => {
-  await checkRole(request, Role.Secretary);
+  await checkRole(request, Role.OtherDepartment);
   const { name, content, mimeType } = request.data;
   const folderQuery = await driveAPI.files.list({
     q: `mimeType='application/vnd.google-apps.folder' and name='${getCurrentReign()}'`,
