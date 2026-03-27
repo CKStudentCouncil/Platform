@@ -113,7 +113,7 @@ export function getProposal(userId: string, proposalId: string) {
   return useDocument(doc(rawUserProposalCollectionPresentation(userId), proposalId));
 }
 
-export function generateProposalId(date: Date, clazz: string, seatnumber: string, proposername: string): string {
+export function generateProposalId(type: string, date: Date, clazz: string, seatnumber: string, proposername: string): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -121,7 +121,7 @@ export function generateProposalId(date: Date, clazz: string, seatnumber: string
   const minute = String(date.getMinutes()).padStart(2, '0');
   const second = String(date.getSeconds()).padStart(2, '0');
 
-  return `${year}${month}${day}_${hour}${minute}${second}_${clazz}_${seatnumber}_${proposername}`;
+  return `${type}_${year}${month}${day}_${hour}:${minute}:${second}_${clazz}${seatnumber}${proposername}`;
 }
 
 export function parseProposalId(proposalId: string): { date: Date; index: number } | null {

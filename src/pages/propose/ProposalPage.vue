@@ -302,7 +302,13 @@ async function createProposal() {
     loading.value = true;
     Loading.show({ message: '正在建立提案...' });
 
-    const proposalId = generateProposalId(new Date(), loggedInUserClaims.clazz, loggedInUserClaims.seatNumber, loggedInUserClaims.name);
+    const proposalId = generateProposalId(
+      newProposal.value.type,
+      new Date(),
+      loggedInUserClaims.clazz,
+      loggedInUserClaims.seatNumber,
+      loggedInUserClaims.name,
+    );
 
     createdProposalId.value = proposalId;
 
