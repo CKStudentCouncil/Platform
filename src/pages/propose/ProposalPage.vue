@@ -315,6 +315,8 @@ async function createProposal() {
       done: false,
       attachments: newProposal.value.attachments,
       uploadedAt: new Date(),
+      creater: loggedInUserClaims.name,
+      createrschoolnumber: loggedInUserClaims.schoolNumber,
     };
 
     let collectionRef;
