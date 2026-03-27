@@ -143,7 +143,7 @@ async function addCosigner() {
   };
 
   // Check if already cosigned
-  if (proposal.value.cosigners?.some((c) => c.name === newCosigner.name)) {
+  if (proposal.value.cosigners?.some((c) => c.classNum === newCosigner.classNum)) {
     notifyError('您已經連署過此提案');
     return;
   }
