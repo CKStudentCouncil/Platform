@@ -344,7 +344,12 @@ async function submitAddToMeeting() {
     await setDoc(doc(toProps, newId), {
       title: proposalToAdd.value.title,
       proposer: proposalToAdd.value.proposer,
-      content: proposalToAdd.value.content ?? '',
+      content:
+        '提案說明：\n' +
+        proposalToAdd.value.content +
+        (proposalToAdd.value.cosigners && proposalToAdd.value.cosigners.length > 0
+          ? '\n\n連署人：\n' + proposalToAdd.value.cosigners.map((c) => c.classNum + ' ' + c.jobTitle + ' ' + c.name).join('\n')
+          : ''),
       attachments: proposalToAdd.value.attachments ?? [],
       order,
       activeVotable: null,
