@@ -241,7 +241,7 @@ const columns: QTableColumn[] = [
     name: 'id',
     label: 'ID',
     field: 'id',
-    format: (documentId) => documentId.slice(0, 15),
+    format: (documentId) => documentId.slice(0, 200),
     sortable: false,
     align: 'left',
   },
