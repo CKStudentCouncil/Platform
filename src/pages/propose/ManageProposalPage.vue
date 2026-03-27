@@ -1,9 +1,13 @@
 <template>
   <q-page>
     <div class="q-ma-md">
-      <q-table :columns="columns" :filter="filter" :rows="proposals" :title="`${getCurrentReign()} 所有提案`" row-key="id" :loading="loading">
+      <q-table :columns="columns" :filter="search" :rows="filteredProposals" :title="`${getCurrentReign()} 提案管理`" row-key="id" :loading="loading">
+        <template v-slot:top-left>
+          <div class="text-h6 q-mr-md">{{ getCurrentReign() }} 提案管理</div>
+          <q-btn-toggle v-model="activeFilter" :options="filterOptions" />
+        </template>
         <template v-slot:top-right>
-          <q-input v-model="filter" debounce="300" dense placeholder="搜尋">
+          <q-input v-model="search" debounce="300" dense placeholder="搜尋">
             <template v-slot:append>
               <q-icon name="search" />
             </template>
@@ -134,7 +138,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import type { QTableColumn } from 'quasar';
 import { getDocs, doc, updateDoc, deleteDoc, collection, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
@@ -147,11 +151,34 @@ import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/m
 import type { MeetingId } from 'src/ts/models.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
 
-const filter = ref('');
+// ── Filter ────────────────────────────────────────────────────────────────────
+type FilterValue = 'all' | 'pending' | 'done';
+
+const activeFilter = ref<FilterValue>('all');
+const filterOptions = [
+  { label: '未審議', value: 'pending', color: 'warning' },
+  { label: '已審議', value: 'done', color: 'positive' },
+  { label: '全部', value: 'all', color: 'accent' },
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const search = ref('');
 const loading = ref(false);
-const proposals = ref<ProposalId[]>([]);
+const proposals = ref<(ProposalId & { userId: string })[]>([]);
+
+const filteredProposals = computed(() => {
+  switch (activeFilter.value) {
+    case 'pending':
+      return proposals.value.filter((p) => p.submittedAt && !p.done);
+    case 'done':
+      return proposals.value.filter((p) => p.submittedAt && p.done);
+    default:
+      return proposals.value; // 'all' — includes unsubmitted
+  }
+});
+
 const showDeleteDialog = ref(false);
-const proposalToDelete = ref<ProposalId | null>(null);
+const proposalToDelete = ref<(ProposalId & { userId: string }) | null>(null);
 const db = useFirestore();
 
 const showAddToMeetingDialog = ref(false);
@@ -173,6 +200,7 @@ function formatPersonRecord(p: PersonRecord | string | undefined): string {
   return `${p.classNum} ${p.jobTitle} ${p.name}`.trim();
 }
 
+// ── Table columns ─────────────────────────────────────────────────────────────
 const columns: QTableColumn[] = [
   { name: 'title', label: '提案標題', field: 'title', sortable: true, align: 'left' },
   {
@@ -219,6 +247,7 @@ const columns: QTableColumn[] = [
   },
 ];
 
+// ── Data loading ──────────────────────────────────────────────────────────────
 function getCollectionRef(type: ProposalType, userId: string) {
   return collection(db, `proposal/${type}/${userId}/`).withConverter(proposalConverter);
 }
@@ -236,17 +265,12 @@ async function loadProposals() {
           const collectionRef = getCollectionRef(type, user.uid);
           const snapshot = await getDocs(collectionRef);
 
-          return snapshot.docs
-            .map((d) => {
-              const data = d.data();
-              return {
-                id: d.id,
-                ...data,
-                type,
-                userId: user.uid,
-              } as ProposalId & { userId: string };
-            })
-            .filter((proposal) => proposal.submittedAt); // Only show submitted proposals
+          return snapshot.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+            type,
+            userId: user.uid,
+          })) as (ProposalId & { userId: string })[];
         } catch (e) {
           console.warn(`無法載入 ${user.uid} 的 ${type} 提案:`, e);
           return [];
@@ -263,14 +287,13 @@ async function loadProposals() {
   }
 }
 
+// ── Actions ───────────────────────────────────────────────────────────────────
 async function copyProposalLink(proposal: ProposalId & { userId: string }) {
   const attachmentUrls = proposal.attachments?.filter((url) => url).join('\n') || '';
-
-  if (!attachmentUrls || attachmentUrls === '') {
+  if (!attachmentUrls) {
     notifyError('此提案無附件');
     return;
   }
-
   try {
     await navigator.clipboard.writeText(attachmentUrls);
     notifySuccess('已複製提案附件連結');
@@ -284,7 +307,6 @@ async function copyProposalcontent(proposal: ProposalId & { userId: string }) {
     notifyError('此提案無說明內容');
     return;
   }
-
   try {
     await navigator.clipboard.writeText(proposal.content);
     notifySuccess('已複製提案說明內容');
@@ -297,7 +319,6 @@ async function toggleDone(proposal: ProposalId & { userId: string }) {
   try {
     const collectionRef = getCollectionRef(proposal.type as ProposalType, proposal.userId);
     await updateDoc(doc(collectionRef, proposal.id), { done: !proposal.done });
-
     proposal.done = !proposal.done;
     notifySuccess(proposal.done ? '標記為已完成' : '標記為進行中');
   } catch (e) {
@@ -312,12 +333,10 @@ function confirmDelete(proposal: ProposalId & { userId: string }) {
 
 async function deleteProposal() {
   if (!proposalToDelete.value) return;
-
   try {
-    const proposal = proposalToDelete.value as ProposalId & { userId: string };
+    const proposal = proposalToDelete.value;
     const collectionRef = getCollectionRef(proposal.type as ProposalType, proposal.userId);
     await deleteDoc(doc(collectionRef, proposal.id));
-
     notifySuccess('刪除提案成功');
     showDeleteDialog.value = false;
     await loadProposals();
@@ -334,7 +353,6 @@ function openAddToMeeting(proposal: ProposalId & { userId: string }) {
 
 async function submitAddToMeeting() {
   if (!proposalToAdd.value || !selectedMeeting.value) return;
-
   Loading.show();
   try {
     const toProps = rawProposalCollection(selectedMeeting.value.id);
@@ -373,16 +391,10 @@ function viewProposalDetails(proposal: ProposalId & { userId: string }) {
 function getGoogleFileEmbed(input: string) {
   let file_id = null;
   const driveCapture = input.match(/https:\/\/drive\.google\.com\/file\/d\/(.*)\/view.*/);
-  if (driveCapture && driveCapture.length > 1) {
-    file_id = driveCapture[1];
-  }
+  if (driveCapture && driveCapture.length > 1) file_id = driveCapture[1];
   const documentCapture = input.match(/https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/(.*)\/edit.*/);
-  if (documentCapture && documentCapture.length > 2) {
-    file_id = documentCapture[2];
-  }
-  if (file_id) {
-    return `https://drive.google.com/file/d/${file_id}/preview`;
-  }
+  if (documentCapture && documentCapture.length > 2) file_id = documentCapture[2];
+  if (file_id) return `https://drive.google.com/file/d/${file_id}/preview`;
   return input;
 }
 
