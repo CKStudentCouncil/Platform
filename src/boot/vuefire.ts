@@ -1,5 +1,6 @@
 import { boot } from 'quasar/wrappers';
 import { initializeApp } from 'firebase/app';
+import { getStorage } from 'firebase/storage';
 import { useFirebaseApp, VueFire, VueFireAuth } from 'vuefire';
 import type { Analytics } from 'firebase/analytics';
 import { initializeAnalytics } from 'firebase/analytics';
@@ -10,11 +11,11 @@ import { FIREBASE_CONFIG, FIREBASE_REGION } from '../../shared/constants';
 
 let analytics: Analytics | null = null;
 
+const firebaseApp = initializeApp(FIREBASE_CONFIG);
+
 // "async" is optional;
 // more info on params: https://v2.quasar.dev/quasar-cli/boot-files
 export default boot(({ app }) => {
-  // something to do
-  const firebaseApp = initializeApp(FIREBASE_CONFIG);
   analytics = initializeAnalytics(firebaseApp);
   app.use(VueFire, {
     firebaseApp,

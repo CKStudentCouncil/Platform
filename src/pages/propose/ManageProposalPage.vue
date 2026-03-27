@@ -209,6 +209,14 @@ const columns: QTableColumn[] = [
     align: 'left',
   },
   { name: 'actions', label: '操作', field: '', align: 'center' },
+  {
+    name: 'id',
+    label: 'ID',
+    field: 'id',
+    format: (documentId) => documentId.slice(0, 15),
+    sortable: false,
+    align: 'left',
+  },
 ];
 
 function getCollectionRef(type: ProposalType, userId: string) {
