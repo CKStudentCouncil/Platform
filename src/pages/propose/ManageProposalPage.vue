@@ -18,7 +18,7 @@
             <q-btn class="text-grey-9 q-ml-sm q-mr-sm" round icon="visibility" @click="viewProposalDetails(props.row)">
               <q-tooltip>檢視詳細內容</q-tooltip>
             </q-btn>
-            <q-btn class="text-purple-9 q-ml-sm q-mr-sm" round icon="post_add" @click="openAddToMeeting(props.row)">
+            <q-btn :disable="!props.row.submittedAt" class="text-purple-9 q-ml-sm q-mr-sm" round icon="post_add" @click="openAddToMeeting(props.row)">
               <q-tooltip>加入會議</q-tooltip>
             </q-btn>
             <q-btn class="text-blue-9 q-ml-sm q-mr-sm" round icon="link" @click="copyProposalLink(props.row)">
@@ -28,6 +28,7 @@
               <q-tooltip>複製提案說明</q-tooltip>
             </q-btn>
             <q-btn
+              :disable="!props.row.submittedAt"
               class="q-ml-sm q-mr-sm"
               round
               :text-color="props.row.done ? 'warning' : 'positive'"
@@ -36,7 +37,14 @@
             >
               <q-tooltip>{{ props.row.done ? '標記為未審議' : '標記為審議完成' }}</q-tooltip>
             </q-btn>
-            <q-btn class="q-ml-sm q-mr-sm" round icon="delete" text-color="negative" @click="confirmDelete(props.row)">
+            <q-btn
+              :disable="!props.row.submittedAt"
+              class="q-ml-sm q-mr-sm"
+              round
+              icon="delete"
+              text-color="negative"
+              @click="confirmDelete(props.row)"
+            >
               <q-tooltip>刪除</q-tooltip>
             </q-btn>
           </q-td>
@@ -151,7 +159,6 @@ import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/m
 import type { MeetingId } from 'src/ts/models.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
 
-// ── Filter ────────────────────────────────────────────────────────────────────
 type FilterValue = 'all' | 'pending' | 'done';
 
 const activeFilter = ref<FilterValue>('all');
