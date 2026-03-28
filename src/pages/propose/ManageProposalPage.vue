@@ -121,7 +121,7 @@
         <q-card-section>
           <div class="text-subtitle2 q-mb-sm">連署人：</div>
           <q-chip v-for="cosigner in proposalToView.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
-            {{ cosigner.classNum }}
+            {{ cosigner.classNum + cosigner.jobTitle + cosigner.name }}
           </q-chip>
           <div v-if="!proposalToView.cosigners || proposalToView.cosigners.length === 0" class="text-grey-6">無連署人</div>
         </q-card-section>
