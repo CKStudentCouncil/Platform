@@ -40,7 +40,7 @@
         <q-card-section>
           <q-separator class="q-mb-md" />
           <div class="text-h6 q-mb-md">加入連署 <q-btn color="primary" label="加入連署" @click="addCosigner" class="q-ml-md align-right" /></div>
-          <q-input v-model="cosigner.name" label="姓名" dense class="q-mr-sm" @keyup.enter="addCosigner" />
+          <q-input v-model="cosigner.name" label="姓名(不需填寫班級或職稱)" dense class="q-mr-sm" @keyup.enter="addCosigner" />
         </q-card-section>
       </q-card>
       <div v-else-if="loading" class="text-center q-mt-xl">
