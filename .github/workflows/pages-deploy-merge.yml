@@ -30,7 +30,7 @@ jobs:
           path: node_modules
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
       - run: yarn build
@@ -40,4 +40,4 @@ jobs:
           path: dist/spa
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
