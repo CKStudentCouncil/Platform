@@ -34,16 +34,16 @@ jobs:
         with:
           path: dist/spa
 
-  deploy:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.action != 'closed' }}
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages-pr
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy PR preview to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
-        with:
-          preview: true
+  # deploy:
+  #   if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.action != 'closed' }}
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
+  #   steps:
+  #     - name: Deploy PR preview to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v5
+  #       with:
+  #         preview: true
