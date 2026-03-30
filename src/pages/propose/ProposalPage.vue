@@ -43,14 +43,16 @@
       <q-card style="max-width: 100%; min-width: 320px">
         <q-stepper v-model="step" ref="stepper" color="primary" animated>
           <q-step :name="1" title="建立提案" icon="edit" :done="step > 1">
-            <q-input area-required v-model="newProposal.title" label="標題" stack-label />
-            <q-input area-required v-model="newProposal.basis" label="法源依據" stack-label />
-            <q-input area-required v-model="newProposal.proposer" label="提案人" stack-label class="q-mt-sm" />
+            <q-input area-required v-model="newProposal.title" label="標題 例：法規標準法修正案" stack-label />
+            <q-input area-required v-model="newProposal.basis" label="法源依據 例：班代大會議事規則第六條" stack-label />
+            <q-input area-required v-model="newProposal.proposer" label="提案人(班級 職稱 姓名) 例：322 班代 詹閎威" stack-label class="q-mt-sm" />
             <q-select area-required v-model="newProposal.type" :options="proposalTypes" label="類型" emit-value map-options class="q-mt-sm" />
             <q-input area-required v-model="newProposal.content" label="提案說明" type="textarea" stack-label />
-            <br v-if="newProposal.type === 'law'" />
-            <div v-if="newProposal.type === 'law'">
-              <div>條文對照表：</div>
+            <br v-if="newProposal.type === 'law' || loggedInUserClaims.role === 25" />
+            <div v-if="newProposal.type === 'law' || loggedInUserClaims.role === 25">
+              <div v-if="loggedInUserClaims.role >= 50">條文對照表：</div>
+              <div v-if="loggedInUserClaims.role === 25 && newProposal.type === 'law'">相關公文與條文對照表：</div>
+              <div v-if="loggedInUserClaims.role === 25 && newProposal.type != 'law'">相關公文：</div>
               <ListEditor v-model="newProposal.attachments" /><br />
               <AttachmentUploader area-required ref="attachmentUploader" @uploaded="addAttachments" />
             </div>
@@ -75,7 +77,7 @@
             </div>
             <div class="text-caption text-grey-7 q-mb-md">連署人必須登入系統才能連署。</div>
             <div v-if="currentProposal" class="q-mt-md">
-              <div class="text-subtitle2 q-mb-sm">目前連署人:</div>
+              <div class="text-subtitle2 q-mb-sm">目前連署人：</div>
               <q-chip v-for="cosigner in currentProposal.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
                 {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
               </q-chip>
@@ -95,15 +97,15 @@
             <q-card class="q-mt-md" v-if="currentProposal">
               <q-card-section>
                 <div class="text-h6">{{ currentProposal.title }}</div>
-                <div class="text-subtitle2">類型: {{ translateProposalType(currentProposal.type) }}</div>
-                <div class="text-subtitle2">提案人: {{ currentProposal.proposer }}</div>
-                <div v-if="currentProposal.basis" class="text-subtitle2">法源依據: {{ currentProposal.basis }}</div>
+                <div class="text-subtitle2">類型： {{ translateProposalType(currentProposal.type) }}</div>
+                <div class="text-subtitle2">提案人： {{ currentProposal.proposer }}</div>
+                <div v-if="currentProposal.basis" class="text-subtitle2">法源依據： {{ currentProposal.basis }}</div>
               </q-card-section>
               <q-card-section>
                 <div class="text-body1">{{ currentProposal.content }}</div>
               </q-card-section>
               <q-card-section v-if="currentProposal.attachments && currentProposal.attachments.length > 0">
-                <div class="text-subtitle2 q-mb-sm">附件:</div>
+                <div class="text-subtitle2 q-mb-sm">附件：</div>
                 <q-list>
                   <q-item v-for="attachment in currentProposal.attachments" :key="attachment">
                     <q-item-section style="overflow-wrap: anywhere">{{ attachment }}</q-item-section>
@@ -121,7 +123,7 @@
                 </q-list>
               </q-card-section>
               <q-card-section>
-                <div class="text-subtitle2 q-mb-sm">連署人:</div>
+                <div class="text-subtitle2 q-mb-sm">連署人：</div>
                 <q-chip v-for="cosigner in currentProposal.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
                   {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
                 </q-chip>
@@ -146,8 +148,8 @@
         <q-card-actions align="right">
           <q-btn v-if="step > 1" flat label="上一步" @click="prevStep" />
           <q-btn v-if="step < 3" flat label="下一步" color="primary" @click="nextStep" />
-          <q-btn v-if="step === 3" flat label="上傳" color="positive" @click="submitProposal" />
-          <q-btn v-if="step === 3" flat label="之後再上傳" color="warning" @click="laterUpload" />
+          <!-- <q-btn v-if="step === 3" flat label="上傳" color="positive" @click="submitProposal" /> -->
+          <q-btn v-if="step === 3" flat label="創建提案" color="positive" @click="laterUpload" />
           <q-btn flat label="取消" color="negative" @click="cancelDialog" />
         </q-card-actions>
       </q-card>
@@ -156,7 +158,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
 import { Loading, Notify } from 'quasar';
@@ -173,6 +175,7 @@ import {
 import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
 import ListEditor from 'components/ListEditor.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
+import { Role } from 'app/shared/models';
 
 const filter = ref('');
 const loading = ref(false);
@@ -185,15 +188,21 @@ const createdProposalId = ref('');
 const currentProposal = ref<any>(null);
 const activeUrl = ref('');
 
-const proposalTypes = [
+const proposalTypes = computed(() => [
   { label: '法律修正案', value: 'law' },
   { label: '一般提案', value: 'general' },
   { label: '專案報告', value: 'presentation' },
-];
+  ...(loggedInUserClaims.role === 25
+    ? [
+        { label: '人事案', value: 'nomination' },
+        { label: '學代選舉案', value: 'election' },
+      ]
+    : []),
+]);
 
 const newProposal = ref({
   title: '',
-  content: '',
+  content: loggedInUserClaims.role >= 50 ? '(提案說明)\n\n綜上，是否有當？敬請公決。' : '',
   type: 'law',
   proposer: '' as string,
   reign: getCurrentReign(),
@@ -209,7 +218,7 @@ const attachmentUploader = ref<InstanceType<typeof AttachmentUploader> | null>(n
 function formatPersonRecord(p: PersonRecord | string | undefined): string {
   if (!p) return '—';
   if (typeof p === 'string') return p;
-  return `${p.classNum} ${p.jobTitle} ${p.name}`.trim();
+  return `${p.classNum}`.trim();
 }
 
 const columns: QTableColumn[] = [
@@ -293,7 +302,14 @@ async function createProposal() {
     loading.value = true;
     Loading.show({ message: '正在建立提案...' });
 
-    const proposalId = generateProposalId(new Date(), Math.floor(Math.random() * 10000));
+    const proposalId = generateProposalId(
+      newProposal.value.type,
+      new Date(),
+      loggedInUserClaims.clazz,
+      loggedInUserClaims.seatNumber,
+      loggedInUserClaims.name,
+    );
+
     createdProposalId.value = proposalId;
 
     const proposalData: any = {
@@ -306,6 +322,8 @@ async function createProposal() {
       done: false,
       attachments: newProposal.value.attachments,
       uploadedAt: new Date(),
+      creater: loggedInUserClaims.name,
+      createrschoolnumber: loggedInUserClaims.schoolNumber,
     };
 
     let collectionRef;
@@ -316,7 +334,7 @@ async function createProposal() {
     await setDoc(doc(collectionRef, proposalId), proposalData);
 
     // Generate cosign link
-    cosignLink.value = `${window.location.origin}/proposal/${loggedInUser.value.uid}/${proposalId}/cosign`;
+    cosignLink.value = `${window.location.origin}/proposal/${loggedInUser.value.uid}/${proposalId}}/cosign`;
 
     // Start listening to the proposal for real-time co-signer updates
     const unsubscribe = onSnapshot(doc(collectionRef, proposalId), (docSnap) => {

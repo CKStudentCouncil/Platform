@@ -20,6 +20,7 @@ export interface UserClaims {
   schoolNumber: string;
   clazz: string; // class, but to avoid internal keyword conflict
   seatNumber: string;
+  name: string;
 }
 
 export interface User {

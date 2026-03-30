@@ -113,11 +113,15 @@ export function getProposal(userId: string, proposalId: string) {
   return useDocument(doc(rawUserProposalCollectionPresentation(userId), proposalId));
 }
 
-export function generateProposalId(date: Date, index: number): string {
+export function generateProposalId(type: string, date: Date, clazz: string, seatnumber: string, proposername: string): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  return `${year}${month}${day}_${index}`;
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  const second = String(date.getSeconds()).padStart(2, '0');
+
+  return `${type}_${year}${month}${day}_${hour}:${minute}:${second}_${clazz}${seatnumber}${proposername}`;
 }
 
 export function parseProposalId(proposalId: string): { date: Date; index: number } | null {
@@ -137,11 +141,15 @@ export function parseProposalId(proposalId: string): { date: Date; index: number
   };
 }
 
-export function translateProposalType(type: string): string {
+export function translateProposalType(type: string, role?: number): string {
   const typeMap: Record<string, string> = {
     law: '法律修正案',
     general: '一般提案',
     presentation: '專案報告',
+    ...(role === 25 && {
+      nomination: '人事案',
+      election: '學代選舉案',
+    }),
   };
-  return typeMap[type] || type;
+  return typeMap[type] || '';
 }

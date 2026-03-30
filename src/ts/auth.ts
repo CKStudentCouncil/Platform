@@ -43,11 +43,13 @@ async function updateCustomClaims() {
     loggedInUserClaims.schoolNumber = claims.claims.schoolNumber as string;
     loggedInUserClaims.clazz = claims.claims.clazz as string;
     loggedInUserClaims.seatNumber = claims.claims.seatNumber as string;
+    loggedInUserClaims.name = claims.claims.name as string;
   } else {
     loggedInUserClaims.role = 0;
     loggedInUserClaims.schoolNumber = '';
     loggedInUserClaims.clazz = '';
     loggedInUserClaims.seatNumber = '';
+    loggedInUserClaims.name = '';
   }
   console.log('Custom claims updated.');
 }

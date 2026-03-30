@@ -361,7 +361,11 @@ async function exportMeetingRecord(meeting: Meeting) {
       count++;
       const data = proposal.data();
       const title = data.title;
+      const contentHtml = (data.content ?? '未填寫').replace(/\n/g, '<br>');
+      const proposerHtml = (data.proposer ?? '未填寫').replace(/\n/g, '<br>');
       proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
+      proposals += `<div style="font-size: small">提案人：${proposerHtml}</font></div>`;
+      proposals += `<div style="font-size: small">提案說明：<br />${contentHtml}</font></div>`;
       Loading.show({ message: '正在取得投票資料 - ' + title });
       votables += `<div style="font-size: medium">${count}. ${title}</font></div>`;
       votables += exportVotingData(
@@ -437,7 +441,11 @@ async function exportMeetingNotice(meeting: Meeting) {
       count++;
       const data = proposal.data();
       const title = data.title;
+      const contentHtml = (data.content ?? '未填寫').replace(/\n/g, '<br>');
+      const proposerHtml = (data.proposer ?? '未填寫').replace(/\n/g, '<br>');
       proposals += `<div style="font-size: medium">${count}. ${title}</font></div>`;
+      proposals += `<div style="font-size: small">提案人：${proposerHtml}</font></div>`;
+      proposals += `<div style="font-size: small">提案說明：<br />${contentHtml}</font></div>`;
       Loading.show({ message: '正在取得投票資料 - ' + title });
       const votables = (await getDocs(query(rawVotableCollection((meeting as any).id, proposal.id), orderBy('order')))).docs.map((d) =>
         d.data(),

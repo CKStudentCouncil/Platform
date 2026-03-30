@@ -31,7 +31,7 @@
           </q-list>
         </q-card-section>
         <q-card-section>
-          <div class="text-subtitle2 q-mb-sm">現有連署人:</div>
+          <div class="text-subtitle2 q-mb-sm">現有連署人：</div>
           <q-chip v-for="cosigner in proposal.cosigners || []" :key="cosigner.name" color="primary" text-color="white" icon="person">
             {{ cosigner.classNum }} {{ cosigner.jobTitle }} {{ cosigner.name }}
           </q-chip>
@@ -40,9 +40,7 @@
         <q-card-section>
           <q-separator class="q-mb-md" />
           <div class="text-h6 q-mb-md">加入連署 <q-btn color="primary" label="加入連署" @click="addCosigner" class="q-ml-md align-right" /></div>
-          <q-input v-model="cosigner.classNum" label="班級" dense class="q-mr-sm" />
-          <q-input v-model="cosigner.jobTitle" label="職稱" dense class="q-mr-sm" />
-          <q-input v-model="cosigner.name" label="姓名" dense class="q-mr-sm" @keyup.enter="addCosigner" />
+          <q-input v-model="cosigner.name" label="姓名(不需填寫班級或職稱)" dense class="q-mr-sm" @keyup.enter="addCosigner" />
         </q-card-section>
       </q-card>
       <div v-else-if="loading" class="text-center q-mt-xl">
@@ -73,14 +71,28 @@ import { useFirestore } from 'vuefire';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
-import { loggedInUser } from 'src/ts/auth.ts';
+import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
+import { log } from 'node:console';
 
 const route = useRoute();
 const db = useFirestore();
 const proposal = ref<ProposalId | null>(null);
 const loading = ref(true);
-const cosigner = ref<PersonRecord>({ classNum: '', jobTitle: '班代', name: '' });
+const cosigner = ref<PersonRecord>({
+  classNum: (Array.isArray(loggedInUserClaims.clazz) ? loggedInUserClaims.clazz[0] : loggedInUserClaims.clazz) ?? '',
+  jobTitle:
+    loggedInUserClaims.role === 50
+      ? '班代'
+      : loggedInUserClaims.role === 150
+        ? '副議長'
+        : loggedInUserClaims.role === 200
+          ? '議長'
+          : loggedInUserClaims.role === 999
+            ? '議長'
+            : '',
+  name: '',
+});
 const activeUrl = ref('');
 
 async function loadProposal() {
@@ -116,19 +128,28 @@ async function addCosigner() {
   }
 
   const newCosigner: PersonRecord = {
-    classNum: cosigner.value.classNum.trim(),
-    jobTitle: cosigner.value.jobTitle.trim(),
+    classNum: (Array.isArray(loggedInUserClaims.clazz) ? loggedInUserClaims.clazz[0] : loggedInUserClaims.clazz) ?? cosigner.value.classNum.trim(),
+    jobTitle:
+      loggedInUserClaims.role === 50
+        ? '班代'
+        : loggedInUserClaims.role === 150
+          ? '副議長'
+          : loggedInUserClaims.role === 200
+            ? '議長'
+            : loggedInUserClaims.role === 999
+              ? '議長'
+              : '',
     name: cosigner.value.name.trim(),
   };
 
   // Check if already cosigned
-  if (proposal.value.cosigners?.some((c) => c.name === newCosigner.name)) {
+  if (proposal.value.cosigners?.some((c) => c.classNum === newCosigner.classNum)) {
     notifyError('您已經連署過此提案');
     return;
   }
 
   try {
-    const collectionRef = collection(db, `proposal/${proposal.value.type}/${route.params.userId}/`).withConverter(proposalConverter);
+    const collectionRef = collection(db, `proposal/${proposal.value.type}/${route.params.userId as string}/`).withConverter(proposalConverter);
     const updatedCosigners = [...(proposal.value.cosigners || []), newCosigner];
     await updateDoc(doc(collectionRef, proposal.value.id), { cosigners: updatedCosigners });
 
@@ -161,6 +182,6 @@ function getGoogleFileEmbed(input: string) {
 }
 
 onMounted(() => {
-  loadProposal();
+  void loadProposal();
 });
 </script>
