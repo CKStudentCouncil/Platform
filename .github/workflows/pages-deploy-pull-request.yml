@@ -13,12 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_and_preview:
+  build:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Cache packages
@@ -36,6 +33,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/spa
+
+  deploy:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.action != 'closed' }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy PR preview to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
