@@ -3292,7 +3292,7 @@ __metadata:
     globals: "npm:^17.4.0"
     prettier: "npm:^3.3.3"
     qrcode: "npm:1"
-    quasar: "npm:^2.18.7"
+    quasar: "npm:^2.19.1"
     typescript: "npm:~5.9.3"
     vite-plugin-checker: "npm:^0.12.0"
     vite-plugin-eslint2: "npm:^5.1.0"
@@ -3300,7 +3300,7 @@ __metadata:
     vue-draggable-plus: "npm:^0.6.0"
     vue-gtag: "npm:^3.5.2"
     vue-qrcode-reader: "npm:^5.7.3"
-    vue-router: "npm:^5.0.3"
+    vue-router: "npm:^5.0.4"
     vue-tsc: "npm:^3.0.5"
     vuefire: "npm:^3.2.2"
   languageName: unknown
@@ -6308,10 +6308,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quasar@npm:^2.18.7":
-  version: 2.18.7
-  resolution: "quasar@npm:2.18.7"
-  checksum: 10c0/856b007feb54593d83a2ca4ebb5a9f5967f9659ef5d9b504ed64f0cc87472bcb2a185c62a044d2ad38627a2981742290709ca1c98ae640c978677411adf221b1
+"quasar@npm:^2.19.1":
+  version: 2.19.2
+  resolution: "quasar@npm:2.19.2"
+  checksum: 10c0/9a948539232f17aac5b7e3a0a84cc835ec0899e2d5126846f5ff34d4118f6db7bfa39739065560312fe8aa9e4c06893e288a8f85bdcfa6a6ff28d66fab02f357
   languageName: node
   linkType: hard
 
@@ -7977,9 +7977,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-router@npm:^5.0.3":
-  version: 5.0.3
-  resolution: "vue-router@npm:5.0.3"
+"vue-router@npm:^5.0.4":
+  version: 5.0.4
+  resolution: "vue-router@npm:5.0.4"
   dependencies:
     "@babel/generator": "npm:^7.28.6"
     "@vue-macros/common": "npm:^3.1.1"
@@ -8010,7 +8010,7 @@ __metadata:
       optional: true
     pinia:
       optional: true
-  checksum: 10c0/ccb465bf62f2d9783586912ff8721efd690c4e4ba657caeab1882ea1db6238ac0b0a5122d6a30c55391a7e091a57b0bb4f89c0be6ee63d409060263c7fde84cd
+  checksum: 10c0/11309a44c3b5aaa6e4f960d8739ce94796e78afa2d9b517ccfe78fa982f029009a07aef30ffeafecaf383a1cbd870ae27f7d56f4b9a62bad61423d8e244eb94b
   languageName: node
   linkType: hard
 
