@@ -334,7 +334,7 @@ async function createProposal() {
     await setDoc(doc(collectionRef, proposalId), proposalData);
 
     // Generate cosign link
-    cosignLink.value = `${window.location.origin}/proposal/${loggedInUser.value.uid}/${proposalId}}/cosign`;
+    cosignLink.value = `${window.location.origin}/proposal/${loggedInUser.value.uid}/${proposalId}/cosign`;
 
     // Start listening to the proposal for real-time co-signer updates
     const unsubscribe = onSnapshot(doc(collectionRef, proposalId), (docSnap) => {
