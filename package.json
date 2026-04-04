@@ -23,7 +23,7 @@
     "firebase": "^12.11.0",
     "qrcode": "1",
     "quasar": "^2.19.1",
-    "vue": "^3.5.19",
+    "vue": "^3.5.32",
     "vue-draggable-plus": "^0.6.0",
     "vue-gtag": "^3.5.2",
     "vue-qrcode-reader": "^5.7.3",
