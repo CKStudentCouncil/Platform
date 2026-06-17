@@ -37,6 +37,7 @@ async function exp() {
   for (const account of accounts.sort((a, b) => a.clazz?.localeCompare(b.clazz!) ?? 0)) {
     try {
       if (!account.clazz) continue;
+      if (!account.role || account.role < 50) continue;
       let serviceHours = 0;
       for (const meeting of meetings) {
         if (!meeting || meeting.data()?.exemptFromAttendance) continue;
