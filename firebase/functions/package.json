@@ -17,7 +17,7 @@
   "dependencies": {
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.2.3",
-    "googleapis": "^171.4.0"
+    "googleapis": "^173.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
