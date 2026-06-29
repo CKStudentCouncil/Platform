@@ -44,7 +44,7 @@
     "typescript": "~6.0.3",
     "vite-plugin-checker": "^0.14.4",
     "vite-plugin-eslint2": "^5.1.0",
-    "vue-tsc": "^3.0.5"
+    "vue-tsc": "^3.3.5"
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
