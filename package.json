@@ -36,7 +36,7 @@
     "@types/node": "^26.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.9.0",
-    "autoprefixer": "^10.5.2",
+    "autoprefixer": "^10.5.4",
     "eslint": "^10",
     "eslint-plugin-vue": "^10.3.0",
     "globals": "^17.8.0",
