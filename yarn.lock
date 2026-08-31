@@ -1380,10 +1380,10 @@
     vite "^8.0.1"
     webpack-merge "^6.0.1"
 
-"@quasar/extras@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@quasar/extras/-/extras-2.0.3.tgz#b9cdc3fd8c584ee21a133598f27609ab92e559b2"
-  integrity sha512-tTw+5+2ZOugCpkagP20e/LJf7BgQyAQPlwyRwMYe2UpN1F4zYCZhvoAPio1hG2hr5FOlEiJVxSINJHhpdx5NZA==
+"@quasar/extras@^2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@quasar/extras/-/extras-2.0.4.tgz#d5dfe52f404b2343241231c22a730e877c931bf9"
+  integrity sha512-JWls5J+xkgEn6u86NSBLRUXf92RSTlImmYNcF77JtbOwuZgQfQTg7RpLskqRTmzpU3Kkpd3TLDcVT0xwWwiphA==
 
 "@quasar/render-ssr-error@1.0.4":
   version "1.0.4"
@@ -1921,19 +1921,6 @@
   version "3.3.11"
   resolved "https://registry.yarnpkg.com/@vue/language-core/-/language-core-3.3.11.tgz#e5b6b5ad1fa1a37e032cf7668458cda7a5566b37"
   integrity sha512-QJmpliwAVpC/OxubIByPAhNzsQPRc8/gxlN2qnVzVfIMjMDz/9RnXRFoetjz5yEgXVXyp4LqhXq3V53PjmNzFw==
-  dependencies:
-    "@volar/language-core" "2.4.28"
-    "@vue/compiler-dom" "^3.5.0"
-    "@vue/shared" "^3.5.0"
-    alien-signals "^3.2.1"
-    muggle-string "^0.4.1"
-    path-browserify "^1.0.1"
-    picomatch "^4.0.4"
-
-"@vue/language-core@3.3.9":
-  version "3.3.9"
-  resolved "https://registry.yarnpkg.com/@vue/language-core/-/language-core-3.3.9.tgz#c675857fcb74177e9a29f86cb749574949a10dd4"
-  integrity sha512-in/68oAa4BCtVY6n/nkuhLIkV8DHYd2UivedJ6cMZ6UYtlq9jaoaSNUBHYCVO44z3nKg7MdE5OBoHKt5SxeBKQ==
   dependencies:
     "@volar/language-core" "2.4.28"
     "@vue/compiler-dom" "^3.5.0"
