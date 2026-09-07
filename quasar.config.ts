@@ -1,9 +1,9 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
-import { defineConfig } from '#q-app/wrappers';
+import { defineConfig } from '#q-app';
 
-export default defineConfig((/* ctx */) => {
+export default defineConfig((ctx) => {
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -32,6 +32,18 @@ export default defineConfig((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
+      // @quasar/app-vite v3 ships only '@' -> /src and '#q-app'; it dropped the
+      // v2 folder aliases the codebase imports through ('app/…', 'src/…',
+      // 'boot/…', 'components/…', 'layouts/…', 'pages/…'). Re-declare them here.
+      alias: {
+        app: ctx.appPaths.appDir,
+        src: ctx.appPaths.srcDir,
+        boot: ctx.appPaths.resolve.src('boot'),
+        components: ctx.appPaths.resolve.src('components'),
+        layouts: ctx.appPaths.resolve.src('layouts'),
+        pages: ctx.appPaths.resolve.src('pages'),
+      },
+
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node22',
