@@ -3663,10 +3663,10 @@ quansync@^0.2.11:
   resolved "https://registry.yarnpkg.com/quansync/-/quansync-0.2.11.tgz#f9c3adda2e1272e4f8cf3f1457b04cbdb4ee692a"
   integrity sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==
 
-quasar@^2.28.0:
-  version "2.28.0"
-  resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.28.0.tgz#bf2f87d1da7e9fd334b458f82c734a97a8cf43a3"
-  integrity sha512-Ssbi8Mmf5DHyRqbgy0p757As6MHRdTNNOdNVO5sd9HJdbCyJdoaMG5xQkXVUl5a2eQ1xcGSnAn2n206XSoeXtw==
+quasar@^2.30.0:
+  version "2.30.0"
+  resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.30.0.tgz#8d4c3c487c0160af25e0ef91a1da4c606aace7f2"
+  integrity sha512-o2hdaj/D7m+DHckbvHNz7DqF3CpnTKD2qSrjDS2SwJSXaDHnurjikLu3bwisjbPygC2e/pYiBJBu8kPfOSLIkg==
 
 queue-microtask@^1.2.2:
   version "1.2.3"
