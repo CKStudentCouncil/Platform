@@ -9,6 +9,7 @@ import type { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
 import { event } from 'vue-gtag';
+import * as Sentry from '@sentry/vue';
 
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
@@ -51,7 +52,27 @@ async function updateCustomClaims() {
     loggedInUserClaims.seatNumber = '';
     loggedInUserClaims.name = '';
   }
+  updateSentryUser();
   console.log('Custom claims updated.');
+}
+
+// Tags every event with who hit it, so an issue can be traced back to a
+// specific account and class without digging through Firebase logs.
+function updateSentryUser() {
+  const user = loggedInUser.value;
+  if (!user) {
+    Sentry.setUser(null);
+    Sentry.setTag('role', undefined);
+    Sentry.setTag('clazz', undefined);
+    return;
+  }
+  Sentry.setUser({
+    id: user.uid,
+    // `exactOptionalPropertyTypes` forbids an explicit `undefined` here.
+    ...(loggedInUserClaims.schoolNumber ? { username: loggedInUserClaims.schoolNumber } : {}),
+  });
+  Sentry.setTag('role', translateRole(loggedInUserClaims.role));
+  Sentry.setTag('clazz', loggedInUserClaims.clazz || undefined);
 }
 
 export function login() {

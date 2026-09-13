@@ -15,3 +15,10 @@ export const FIREBASE_CONFIG = {
 };
 
 export const FIREBASE_REGION = 'asia-east1';
+
+// Sentry DSN used by the frontend (Vue app). Like FIREBASE_CONFIG above this
+// is a public, write-only identifier and is safe to ship in the bundle.
+// The org/project/token needed to *upload* source maps are build-time only and
+// live in CI instead — see quasar.config.ts.
+export const SENTRY_DSN =
+  'https://bf75698d546d78ccbfa0c932a3f2c5d5@o4512079922069504.ingest.us.sentry.io/4512080315613184';

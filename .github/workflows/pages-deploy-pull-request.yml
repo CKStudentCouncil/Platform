@@ -28,8 +28,12 @@ jobs:
           node-version: '24.x'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
+      # No SENTRY_AUTH_TOKEN here on purpose: PR builds are not deployed, so
+      # uploading their source maps would only add dead releases to Sentry.
       - run: yarn build
       - run: cp dist/spa/index.html dist/spa/404.html
+      - name: Strip source maps
+        run: find dist/spa -name '*.js.map' -delete
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/spa

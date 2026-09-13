@@ -17,6 +17,7 @@
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "2",
     "@quasar/extras": "^2.0.4",
+    "@sentry/vue": "^10.74.0",
     "@volar/language-server": "2.4.28",
     "@vue/language-server": "^3.3.11",
     "exceljs": "^4.4.0",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@eslint/js": "^10",
     "@quasar/app-vite": "^3.8.1",
+    "@sentry/vite-plugin": "^5.4.0",
     "@types/node": "^26.2.0",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.9.0",

@@ -2,6 +2,16 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+
+// Source map upload is a CI-only concern, so it is configured entirely from the
+// environment. When any of these is missing — every local `quasar build`, and
+// PR builds, which are never deployed — the plugin is left out and the build
+// stays offline.
+const sentryOrg = process.env.SENTRY_ORG;
+const sentryProject = process.env.SENTRY_PROJECT;
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const uploadSourceMaps = Boolean(sentryOrg && sentryProject && sentryAuthToken);
 
 export default defineConfig((ctx) => {
   return {
@@ -11,7 +21,7 @@ export default defineConfig((ctx) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['vuefire'],
+    boot: ['sentry', 'vuefire'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ['app.scss'],
@@ -77,7 +87,31 @@ export default defineConfig((ctx) => {
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
 
+      // Needed for readable stack traces in Sentry. 'hidden' emits the .map
+      // files without adding a `sourceMappingURL` comment to the bundles:
+      // sentryVitePlugin matches them via the debug IDs it injects into both,
+      // then deletes them after upload. Nothing points browsers at a map even
+      // if an upload is ever skipped.
+      sourcemap: 'hidden',
+
       vitePlugins: [
+        // sentryVitePlugin() returns several plugins, so spread its result.
+        ...(uploadSourceMaps
+          ? sentryVitePlugin({
+              org: sentryOrg!,
+              project: sentryProject!,
+              authToken: sentryAuthToken!,
+              sourcemaps: {
+                filesToDeleteAfterUpload: ['./dist/**/*.js.map'],
+              },
+              // Without a handler the plugin rethrows and fails the build. A
+              // rotated or expired token should not be able to block a deploy;
+              // we just lose un-minified stack traces for that release.
+              errorHandler: (err) => {
+                console.warn('[sentry] source map upload failed:', err.message);
+              },
+            })
+          : []),
         [
           'vite-plugin-checker',
           {

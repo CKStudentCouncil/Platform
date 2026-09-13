@@ -1,5 +1,6 @@
 import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
+import * as Sentry from '@sentry/vue';
 import type { Proposal } from 'src/ts/models.ts';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
@@ -38,6 +39,14 @@ export function notifyError(message: string, exception?: any): void {
       description: message + ': ' + exception?.message,
       stack: exception?.stack,
       fatal: false,
+    });
+    // Every caught failure in the app funnels through here, so this is the
+    // single place that needs to forward to Sentry. The notification text is
+    // attached as context — it says what the user was told went wrong, which
+    // the raw exception usually doesn't.
+    Sentry.captureException(exception, {
+      tags: { handled: 'true' },
+      extra: { notification: message },
     });
   }
 }

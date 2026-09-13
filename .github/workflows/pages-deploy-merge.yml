@@ -31,8 +31,17 @@ jobs:
           node-version: '24.x'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
-      - run: yarn build
+      - name: Build
+        # These three together turn on source map upload in quasar.config.ts.
+        # The build still succeeds without them, just with minified stack traces.
+        env:
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: yarn build
       - run: cp dist/spa/index.html dist/spa/404.html
+      - name: Strip any source maps that were not uploaded
+        run: find dist/spa -name '*.js.map' -delete
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/spa
