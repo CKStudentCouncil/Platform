@@ -2029,10 +2029,10 @@ googleapis-common@^9.0.0:
     qs "^6.7.0"
     url-template "^2.0.8"
 
-googleapis@^178.1.1:
-  version "178.1.1"
-  resolved "https://registry.yarnpkg.com/googleapis/-/googleapis-178.1.1.tgz#de752afae43aa705b9e35d3e7f670ade54330c8a"
-  integrity sha512-oCJCUpC0gjHtAO54rMj6wVRN9hAs6DWJqWmaZy4iaR4uXB5Hl78qylLA5xu5hmHWjb1vX/bRzZ3tbzWG6+Ej1w==
+googleapis@^180.0.0:
+  version "180.0.0"
+  resolved "https://registry.yarnpkg.com/googleapis/-/googleapis-180.0.0.tgz#14731e19353d5505c63b4cd9a55619cc90beb840"
+  integrity sha512-vuIkT4W09kDZn+dQbvSh1p2VU4DMZ7B/zLlxxlQgZjb06U0C6rA+5HSbZSlhp3DiSOZYHCOsuXJ+DUWIOQMVhw==
   dependencies:
     google-auth-library "^11.0.0"
     googleapis-common "^9.0.0"
