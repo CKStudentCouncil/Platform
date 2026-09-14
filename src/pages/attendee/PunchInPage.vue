@@ -23,17 +23,33 @@ import { QrcodeStream } from 'vue-qrcode-reader';
 import { notifyError } from 'src/ts/utils.ts';
 import { Notify } from 'quasar';
 
-const passcode = ref(useRoute().params.passcode as string);
+const passcode = ref((useRoute().params.passcode as string | undefined) ?? '');
 const tempPasscode = ref('');
 const loginDialog = ref(false);
 const router = useRouter();
 const scanning = ref(false);
 const register = ref(false);
+// Resolved here rather than inside the handlers: `rawMeetingCollection()` calls
+// VueFire's `useFirestore()`, which is only valid inside `setup()`.
+const meetings = rawMeetingCollection();
 
 if (loggedInUserClaims.role === 25) {
   Notify.create({ type: 'negative', message: '其他部門使用者無法簽到。' });
   void router.push('/');
 }
+
+// Registered once, at setup. It used to be created inside `punchIn()`, which
+// meant a new watcher on every retry — each one calling `punchIn()` again when
+// the login finally landed.
+watch(
+  loggedInUserClaims,
+  (claims) => {
+    if (!loginDialog.value || !claims?.clazz) return;
+    loginDialog.value = false;
+    void punchIn();
+  },
+  { deep: true },
+);
 
 async function submit() {
   passcode.value = tempPasscode.value;
@@ -44,36 +60,41 @@ async function punchIn() {
   if (!loggedInUserClaims || !loggedInUserClaims.clazz) {
     register.value = passcode.value.startsWith('reg'); // I know this looks lame, but it allows us to know whether this meeting allows registration without having to read the meeting from the database (we can't do it now, since we don't have an account yet)
     loginDialog.value = true;
-    watch(
-      loggedInUserClaims,
-      async (user) => {
-        if (user) {
-          loginDialog.value = false;
-          await punchIn();
-        }
-      },
-      { deep: true },
-    );
     return;
   }
-  const meeting = await getDocs(query(rawMeetingCollection(), where('punchInPasscode', '==', passcode.value)));
-  if (meeting.docs.length == 0) {
-    notifyError('簽到碼錯誤');
+  try {
+    const meeting = await getDocs(query(meetings, where('punchInPasscode', '==', passcode.value)));
+    if (meeting.docs.length == 0) {
+      notifyError('簽到碼錯誤');
+      passcode.value = '';
+      return;
+    }
+    await updateDoc(meeting.docs[0]!.ref, {
+      participants: arrayUnion(loggedInUserClaims.clazz),
+    });
+    await router.push('/attendee/' + meeting.docs[0]?.id);
+  } catch (e) {
+    notifyError('簽到失敗', e);
     passcode.value = '';
-    return;
   }
-  await updateDoc(meeting.docs[0]!.ref, {
-    participants: arrayUnion(loggedInUserClaims.clazz),
-  });
-  await router.push('/attendee/' + meeting.docs[0]?.id);
 }
 
 async function checkPunchedIn() {
-  const punchedIn = await getDocs(
-    query(rawMeetingCollection(), and(where('participants', 'array-contains', loggedInUserClaims.clazz), where('active', '==', true))),
-  );
-  if (punchedIn.docs.length != 0) {
-    await router.push('/attendee/' + punchedIn.docs[0]?.id);
+  // Reading `meetings` without an account is denied by `firestore.rules`, so
+  // there is nothing to look up until the user signs in.
+  if (!loggedInUserClaims?.clazz) return;
+  try {
+    const punchedIn = await getDocs(
+      query(meetings, and(where('participants', 'array-contains', loggedInUserClaims.clazz), where('active', '==', true))),
+    );
+    if (punchedIn.docs.length != 0) {
+      await router.push('/attendee/' + punchedIn.docs[0]?.id);
+    }
+  } catch (e) {
+    // This is a convenience redirect rather than something the user asked for,
+    // but staying on the passcode screen with no explanation after having
+    // already punched in is confusing enough to be worth saying out loud.
+    notifyError('無法檢查簽到狀態', e);
   }
 }
 
@@ -87,10 +108,21 @@ async function onDetect(detectedCodes: any) {
   await submit();
 }
 
-if (passcode.value && passcode.value.length != 0) {
+if (passcode.value.length != 0) {
   void punchIn();
-} else {
+} else if (loggedInUserClaims.clazz) {
   void checkPunchedIn();
+} else {
+  // Claims land a tick or two after the page mounts (the ID token has to be
+  // fetched first), so an immediate check would read an empty class and skip.
+  const stop = watch(
+    () => loggedInUserClaims.clazz,
+    (clazz) => {
+      if (!clazz) return;
+      stop();
+      void checkPunchedIn();
+    },
+  );
 }
 </script>
 

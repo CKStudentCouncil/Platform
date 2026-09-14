@@ -1,6 +1,13 @@
 import { useFirebaseAuth } from 'vuefire';
 import type { User } from 'firebase/auth';
-import { browserLocalPersistence, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
+} from 'firebase/auth';
 import type { Ref } from 'vue';
 import { reactive, ref } from 'vue';
 import { Loading } from 'quasar';
@@ -8,25 +15,61 @@ import type * as models from 'src/ts/models.ts';
 import type { UserClaims } from 'src/ts/models.ts';
 import { useFunction } from 'boot/vuefire.ts';
 import { notifyError, notifySuccess, schoolEmailFromSchoolNumber } from 'src/ts/utils.ts';
+import { describeAuthError, isCancelledByUser, shouldRetryWithRedirect } from 'src/ts/autherrors.ts';
 import { event } from 'vue-gtag';
 import * as Sentry from '@sentry/vue';
 
 let auth = useFirebaseAuth()!;
 export const loggedInUser: Ref<User | null> = ref(auth?.currentUser);
 export const loggedInUserClaims = reactive({} as UserClaims);
+let initialised = false;
 
 export function init() {
   auth = useFirebaseAuth()!;
   loggedInUser.value = auth.currentUser;
-  void auth.setPersistence(browserLocalPersistence).then(async () => {
-    console.log('Firebase auth persistence set.');
-    loggedInUser.value = auth.currentUser;
-    await updateCustomClaims();
-  });
-  auth.onAuthStateChanged(async (user) => {
+  // MainLayout wraps every route, so `init()` runs again on each layout
+  // remount. Re-registering `onAuthStateChanged` each time left a growing pile
+  // of listeners all racing to write the same claims.
+  if (initialised) return;
+  initialised = true;
+
+  void auth
+    .setPersistence(browserLocalPersistence)
+    .then(async () => {
+      console.log('Firebase auth persistence set.');
+      loggedInUser.value = auth.currentUser;
+      await updateCustomClaims();
+    })
+    // `setPersistence` and the token fetch behind `updateCustomClaims` both hit
+    // the network. On a phone that drops its connection mid-load this rejected
+    // with `auth/network-request-failed` and, with nothing attached to catch
+    // it, escaped to the browser as an unhandled rejection.
+    .catch((error: unknown) => {
+      reportAuthStartupFailure(error, 'setPersistence');
+    });
+
+  // Completes a `signInWithRedirect()` started by `login()` on a browser that
+  // cannot do popups. Returns null on a normal page load.
+  void getRedirectResult(auth)
+    .then((result) => {
+      if (!result) return;
+      console.log('Logged in successfully (redirect).');
+      loggedInUser.value = auth.currentUser;
+      notifySuccess('登入成功');
+      event('login_with_google', {});
+    })
+    .catch((error: unknown) => {
+      notifyLoginFailure(error);
+    });
+
+  auth.onAuthStateChanged((user) => {
     loggedInUser.value = user;
 
-    await updateCustomClaims();
+    // Deliberately not `async`: a rejection from an async `onAuthStateChanged`
+    // callback has nowhere to go but the global unhandled-rejection hook.
+    void updateCustomClaims().catch((error: unknown) => {
+      reportAuthStartupFailure(error, 'onAuthStateChanged');
+    });
     if (loggedInUser.value) {
       console.log('Logged In.');
     } else if (auth) {
@@ -35,6 +78,39 @@ export function init() {
       console.log('Firebase auth not ready.');
     }
   });
+}
+
+/**
+ * A token refresh that failed on the way in.
+ *
+ * Nothing to show the user: they are either signed out (and will be asked to
+ * log in) or working from a cached token that is still valid. It is worth a
+ * breadcrumb so it is visible under whatever fails next.
+ */
+function reportAuthStartupFailure(error: unknown, stage: string) {
+  const { report } = describeAuthError(error);
+  console.warn(`[auth] ${stage} failed:`, error);
+  if (!report) {
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      level: 'warning',
+      message: `${stage} failed`,
+      data: { error: (error as { message?: string })?.message },
+    });
+    return;
+  }
+  Sentry.captureException(error, { tags: { handled: 'true' }, extra: { stage } });
+}
+
+/** Shared by every login entry point so they report the same way. */
+function notifyLoginFailure(error: unknown) {
+  console.error('Failed to log in.', error);
+  if (isCancelledByUser(error)) {
+    // The user shut the popup. Nothing went wrong.
+    return;
+  }
+  const { message, report } = describeAuthError(error);
+  notifyError(message, error, { report });
 }
 
 async function updateCustomClaims() {
@@ -89,10 +165,25 @@ export function login() {
       notifySuccess('登入成功');
       event('login_with_google', {});
     })
-    .catch((error) => {
-      console.error('Failed to log in.');
+    .catch(async (error: unknown) => {
+      // Most students open these links from inside the LINE app, whose browser
+      // refuses `window.open`. There is nothing to recover from — the popup
+      // simply is not available — so hand the whole tab to Google instead;
+      // `getRedirectResult()` in `init()` picks the result back up.
+      if (shouldRetryWithRedirect(error)) {
+        console.warn('[auth] popup unavailable, falling back to redirect.', error);
+        Loading.show({ message: '正在前往 Google 登入頁面' });
+        try {
+          await signInWithRedirect(auth, provider);
+          return; // The browser navigates away; nothing after this runs.
+        } catch (redirectError: unknown) {
+          Loading.hide();
+          notifyLoginFailure(redirectError);
+          return;
+        }
+      }
       Loading.hide();
-      notifyError('登入失敗', error);
+      notifyLoginFailure(error);
     });
 }
 
@@ -106,9 +197,8 @@ export async function loginWithCredentials(schoolNumber: string, clazz: string) 
     notifySuccess('登入成功');
     event('login_with_schoolId', {});
   } catch (e) {
-    console.error('Failed to log in.');
     Loading.hide();
-    notifyError('登入失敗', e);
+    notifyLoginFailure(e);
   }
 }
 

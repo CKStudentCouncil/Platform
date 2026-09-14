@@ -27,6 +27,7 @@ import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/m
 import { computed, ref, watch } from 'vue';
 import { doc } from 'firebase/firestore';
 import { useDocument } from 'vuefire';
+import { guardListener } from 'src/ts/firestore.ts';
 import MeetingPunchIn from 'pages/host/MeetingPunchIn.vue';
 import MeetingProposal from 'pages/host/MeetingProposal.vue';
 import MeetingVote from 'pages/host/MeetingVote.vue';
@@ -43,7 +44,7 @@ const activeProposalQ = computed(() => {
   if (activeProposalId.value == null) return null;
   return doc(rawProposalCollection(activeMeeting.value!.id), activeProposalId.value);
 });
-const activeProposal = useDocument(activeProposalQ);
+const activeProposal = guardListener(useDocument(activeProposalQ), 'MeetingPassiveDisplay activeProposal');
 const activeVotableId = ref(null as string | null | undefined);
 watch(
   meetings,

@@ -2,7 +2,7 @@
   <q-page v-if="meeting" padding>
     <div v-if="!activeProposal" class="text-h6">
       {{ loggedInUserClaims.clazz }} {{ translateRole(loggedInUserClaims.role) }}
-      {{ cleanseName(loggedInUser?.displayName) }} 您好：<br>請等待會議主席開始審理議案
+      {{ cleanseName(loggedInUser?.displayName) }} 您好：<br />請等待會議主席開始審理議案
     </div>
     <div v-if="activeProposal && !activeVotable">
       <div class="text-h5 q-mb-sm q-mt-sm">正在審理議案</div>
@@ -82,17 +82,18 @@ import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts'
 import { cleanseName, notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import { useDocument } from 'vuefire';
+import { guardListener } from 'src/ts/firestore.ts';
 
 const id = useRoute().params.id as string;
 const meeting = getMeeting(id);
 const activeProposalId = ref(null as string | null);
 const activeProposalQ = computed(() => (activeProposalId.value == null ? null : doc(rawProposalCollection(id), activeProposalId.value)));
-const activeProposal = useDocument(activeProposalQ, { reset: true });
+const activeProposal = guardListener(useDocument(activeProposalQ, { reset: true }), 'AttendeePage activeProposal');
 const activeVotableId = ref(null as string | null);
 const activeVotableQ = computed(() =>
   activeVotableId.value == null ? null : doc(rawVotableCollection(id, activeProposalId.value!), activeVotableId.value),
 );
-const activeVotable = useDocument(activeVotableQ, { reset: true });
+const activeVotable = guardListener(useDocument(activeVotableQ, { reset: true }), 'AttendeePage activeVotable');
 const selectedChoice = ref(null as string | null);
 const router = useRouter();
 const viewingOtherProposals = ref(false);

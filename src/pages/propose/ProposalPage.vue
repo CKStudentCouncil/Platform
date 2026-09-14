@@ -158,10 +158,11 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, computed } from 'vue';
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
 import { Loading, Notify } from 'quasar';
+import type { Unsubscribe } from 'firebase/firestore';
 import { deleteDoc, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
 import type { ProposalId, PersonRecord } from 'src/ts/proposalmodels.ts';
@@ -173,6 +174,7 @@ import {
   translateProposalType,
 } from 'src/ts/proposalmodels.ts';
 import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { reportListenerError } from 'src/ts/firestore.ts';
 import ListEditor from 'components/ListEditor.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
 import { Role } from 'app/shared/models';
@@ -266,10 +268,26 @@ const columns: QTableColumn[] = [
   { name: 'actions', label: '操作', field: '', align: 'center' },
 ];
 
+// Every listener this page opens, so it can be torn down again. Without this
+// the listeners from the previous account stayed attached after a sign-out or
+// an account switch, kept pointing at a path the rules no longer allow, and
+// surfaced as unhandled `permission-denied` rejections.
+let listeners: Unsubscribe[] = [];
+
+function stopListeners() {
+  listeners.forEach((unsubscribe) => {
+    unsubscribe();
+  });
+  listeners = [];
+}
+
 watch(loggedInUser, (user) => {
+  stopListeners();
   if (user) loadProposals(user.uid);
   else proposals.value = [];
 });
+
+onUnmounted(stopListeners);
 
 function loadProposals(uid: string) {
   proposals.value = [];
@@ -280,14 +298,22 @@ function loadProposals(uid: string) {
   ];
 
   collections.forEach(({ ref, type }) => {
-    onSnapshot(ref, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        type,
-      }));
-      proposals.value = [...proposals.value.filter((p) => p.type !== type), ...docs];
-    });
+    listeners.push(
+      onSnapshot(
+        ref,
+        (snapshot) => {
+          const docs = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            type,
+          }));
+          proposals.value = [...proposals.value.filter((p) => p.type !== type), ...docs];
+        },
+        (error) => {
+          reportListenerError(error, `ProposalPage ${type} proposals`);
+        },
+      ),
+    );
   });
 }
 
@@ -336,12 +362,22 @@ async function createProposal() {
     // Generate cosign link
     cosignLink.value = `${window.location.origin}/proposal/${loggedInUser.value.uid}/${proposalId}/cosign`;
 
-    // Start listening to the proposal for real-time co-signer updates
-    const unsubscribe = onSnapshot(doc(collectionRef, proposalId), (docSnap) => {
-      if (docSnap.exists()) {
-        currentProposal.value = { id: docSnap.id, ...docSnap.data() };
-      }
-    });
+    // Start listening to the proposal for real-time co-signer updates. Tracked
+    // alongside the others so it is torn down with them rather than outliving
+    // the page.
+    listeners.push(
+      onSnapshot(
+        doc(collectionRef, proposalId),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            currentProposal.value = { id: docSnap.id, ...docSnap.data() };
+          }
+        },
+        (error) => {
+          reportListenerError(error, 'ProposalPage createdProposal');
+        },
+      ),
+    );
 
     notifySuccess('提案建立成功');
     step.value = loggedInUserClaims.role === 25 ? 3 : 2;

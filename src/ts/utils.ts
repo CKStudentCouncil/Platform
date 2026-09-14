@@ -26,7 +26,20 @@ export function notifySuccess(message: string): void {
   });
 }
 
-export function notifyError(message: string, exception?: any): void {
+export interface NotifyErrorOptions {
+  /**
+   * Whether this failure is worth a Sentry issue. Defaults to `true`.
+   *
+   * Pass `false` for failures the app cannot fix in code — a dropped mobile
+   * connection, a blocked popup, an account the Firebase project declines.
+   * The user still gets the notification and the event still lands as a
+   * breadcrumb, so it shows up as context underneath a later real failure
+   * instead of drowning it out with its own issue.
+   */
+  report?: boolean;
+}
+
+export function notifyError(message: string, exception?: any, options?: NotifyErrorOptions): void {
   Notify.create({
     message,
     color: 'negative',
@@ -40,6 +53,15 @@ export function notifyError(message: string, exception?: any): void {
       stack: exception?.stack,
       fatal: false,
     });
+    if (options?.report === false) {
+      Sentry.addBreadcrumb({
+        category: 'expected-failure',
+        level: 'warning',
+        message,
+        data: { code: exception?.code, error: exception?.message },
+      });
+      return;
+    }
     // Every caught failure in the app funnels through here, so this is the
     // single place that needs to forward to Sentry. The notification text is
     // attached as context — it says what the user was told went wrong, which

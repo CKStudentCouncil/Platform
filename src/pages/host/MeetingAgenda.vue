@@ -49,17 +49,21 @@
 import { useDocument, useFirestore } from 'vuefire';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, updateDoc } from 'firebase/firestore';
-import type { ProposalId} from 'src/ts/models.ts';
+import type { ProposalId } from 'src/ts/models.ts';
 import { meetingConverter, proposalCollection, rawMeetingCollection } from 'src/ts/models.ts';
 import { ref, watch } from 'vue';
 import { notifyError } from 'src/ts/utils.ts';
+import { guardListener } from 'src/ts/firestore.ts';
 import { QBtn } from 'quasar';
 import ManageProposalsPage from 'pages/mgmt/ManageProposalsPage.vue';
 
 const db = useFirestore();
 const route = useRoute();
 const router = useRouter();
-const selectedMeeting = useDocument(doc(db, 'meetings', route.params.id as string).withConverter(meetingConverter));
+const selectedMeeting = guardListener(
+  useDocument(doc(db, 'meetings', route.params.id as string).withConverter(meetingConverter)),
+  'MeetingAgenda selectedMeeting',
+);
 const proposals = proposalCollection(route.params.id as string);
 const managingProposals = ref(false);
 const activeProposalId = ref(null as string | null);

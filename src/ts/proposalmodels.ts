@@ -1,6 +1,7 @@
 import { collection, doc, orderBy, query, Timestamp } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import type { FirestoreDataConverter } from '@firebase/firestore';
+import { guardListener } from 'src/ts/firestore.ts';
 
 export type Person = [string, string, string];
 
@@ -80,11 +81,11 @@ export function rawUserProposalCollectionLaw(userId: string) {
 }
 
 export function userProposalCollectionLaw(userId: string) {
-  return useCollection(query(rawUserProposalCollectionLaw(userId), orderBy('uploadedAt', 'desc')));
+  return guardListener(useCollection(query(rawUserProposalCollectionLaw(userId), orderBy('uploadedAt', 'desc'))), 'userProposalCollectionLaw');
 }
 
 export function getProposalLaw(userId: string, proposalId: string) {
-  return useDocument(doc(rawUserProposalCollectionLaw(userId), proposalId));
+  return guardListener(useDocument(doc(rawUserProposalCollectionLaw(userId), proposalId)), 'getProposalLaw');
 }
 
 export function rawUserProposalCollectionGeneral(userId: string) {
@@ -93,11 +94,14 @@ export function rawUserProposalCollectionGeneral(userId: string) {
 }
 
 export function userProposalCollectionGeneral(userId: string) {
-  return useCollection(query(rawUserProposalCollectionGeneral(userId), orderBy('uploadedAt', 'desc')));
+  return guardListener(
+    useCollection(query(rawUserProposalCollectionGeneral(userId), orderBy('uploadedAt', 'desc'))),
+    'userProposalCollectionGeneral',
+  );
 }
 
 export function getProposalGeneral(userId: string, proposalId: string) {
-  return useDocument(doc(rawUserProposalCollectionGeneral(userId), proposalId));
+  return guardListener(useDocument(doc(rawUserProposalCollectionGeneral(userId), proposalId)), 'getProposalGeneral');
 }
 
 export function rawUserProposalCollectionPresentation(userId: string) {
@@ -106,11 +110,14 @@ export function rawUserProposalCollectionPresentation(userId: string) {
 }
 
 export function userProposalCollectionPresentation(userId: string) {
-  return useCollection(query(rawUserProposalCollectionPresentation(userId), orderBy('uploadedAt', 'desc')));
+  return guardListener(
+    useCollection(query(rawUserProposalCollectionPresentation(userId), orderBy('uploadedAt', 'desc'))),
+    'userProposalCollectionPresentation',
+  );
 }
 
 export function getProposal(userId: string, proposalId: string) {
-  return useDocument(doc(rawUserProposalCollectionPresentation(userId), proposalId));
+  return guardListener(useDocument(doc(rawUserProposalCollectionPresentation(userId), proposalId)), 'getProposalPresentation');
 }
 
 export function generateProposalId(type: string, date: Date, clazz: string, seatnumber: string, proposername: string): string {

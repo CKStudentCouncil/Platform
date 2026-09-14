@@ -99,8 +99,13 @@ interface ProposalId extends Proposal {
   id: string;
 }
 
-const meetingId = props.embed ? props.meetingId : (useRoute().params.id as string);
-const proposalId = useRoute().params.proposalId as string;
+// Both route params are optional (`:id?/proposals/:proposalId?`), so vue-router
+// leaves them `undefined` rather than empty when they are absent — reaching
+// `/meetings/<id>/proposals` with no proposal selected used to blow up the tab
+// bar below on `proposalId.length`.
+const route = useRoute();
+const meetingId = props.embed ? props.meetingId : ((route.params.id as string | undefined) ?? '');
+const proposalId = (route.params.proposalId as string | undefined) ?? '';
 const meetings = meetingCollectionOfCurrentReign();
 const meeting = getMeeting(meetingId);
 const proposals = proposalCollection(meetingId);

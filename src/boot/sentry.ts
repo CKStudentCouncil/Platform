@@ -1,6 +1,7 @@
 import { defineBoot } from '#q-app';
 import * as Sentry from '@sentry/vue';
 import { SENTRY_DSN } from '../../shared/constants';
+import { isChunkLoadError } from 'src/ts/chunkerrors.ts';
 
 const isDev = import.meta.env.DEV;
 
@@ -46,5 +47,18 @@ export default defineBoot(({ app, router }) => {
     // Do not attach IP addresses / cookies. User context is set explicitly in
     // `src/ts/auth.ts` once Firebase auth resolves.
     sendDefaultPii: false,
+
+    beforeSend(event, hint) {
+      // A missing chunk means the tab is running against a deploy that no
+      // longer exists. `src/ts/chunkerrors.ts` reloads it, so by the time
+      // anyone reads the issue the condition is gone and there is nothing to
+      // fix. Keep it as a breadcrumb-level signal instead: if the reload guard
+      // ever fails to recover, the user-visible symptom shows up as a
+      // different error.
+      if (isChunkLoadError(hint?.originalException) || isChunkLoadError(event.exception?.values?.[0]?.value)) {
+        return null;
+      }
+      return event;
+    },
   });
 });

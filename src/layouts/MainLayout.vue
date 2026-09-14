@@ -84,6 +84,7 @@ import { computed, ref } from 'vue';
 import { init, loggedInUser, loggedInUserClaims, logout } from 'src/ts/auth';
 import { rawMeetingCollection, Role } from 'src/ts/models.ts';
 import { useCollection } from 'vuefire';
+import { guardListener } from 'src/ts/firestore.ts';
 import LoginDialog from 'components/LoginDialog.vue';
 import { query, where } from 'firebase/firestore';
 import QRPasscode from 'components/QRPasscode.vue';
@@ -170,5 +171,18 @@ function toggleFullscreen() {
   }
 }
 
-const activeMeetings = useCollection(query(rawMeetingCollection(), where('active', '==', true)));
+// `firestore.rules` only lets a signed-in user read `meetings`, and the only
+// thing this binding feeds is the passcode block below, which is hidden from
+// anyone under ViceChair. Binding it unconditionally meant every anonymous
+// visitor — MainLayout wraps every route, including `/` and the public cosign
+// link — opened a listener the rules were always going to reject.
+//
+// Resolving the collection ref here rather than inside the getter matters:
+// `rawMeetingCollection()` calls VueFire's `useFirestore()`, which needs to be
+// inside `setup()`, whereas the getter re-runs later on every role change.
+const meetingCollection = rawMeetingCollection();
+const activeMeetings = guardListener(
+  useCollection(computed(() => (role.value >= Role.ViceChair.valueOf() ? query(meetingCollection, where('active', '==', true)) : null))),
+  'MainLayout activeMeetings',
+);
 </script>

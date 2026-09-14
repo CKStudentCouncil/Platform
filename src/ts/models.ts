@@ -4,6 +4,7 @@ import type { FirestoreDataConverter } from '@firebase/firestore';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
 import { getCurrentReign } from 'src/ts/utils.ts';
+import { guardListener } from 'src/ts/firestore.ts';
 
 export enum Role {
   Admin = 999,
@@ -87,7 +88,7 @@ export function rawMeetingCollection() {
 
 export function meetingCollectionOfReign(reign: Ref<string>) {
   const meetingsQuery = computed(() => query(rawMeetingCollection(), where('reign', '==', reign.value), orderBy('start', 'desc')));
-  return useCollection(meetingsQuery);
+  return guardListener(useCollection(meetingsQuery), 'meetingCollectionOfReign');
 }
 
 export function rawMeetingsOfCurrentReignQuery() {
@@ -95,11 +96,11 @@ export function rawMeetingsOfCurrentReignQuery() {
 }
 
 export function meetingCollectionOfCurrentReign() {
-  return useCollection(rawMeetingsOfCurrentReignQuery());
+  return guardListener(useCollection(rawMeetingsOfCurrentReignQuery()), 'meetingCollectionOfCurrentReign');
 }
 
 export function getMeeting(id: string) {
-  return useDocument(doc(rawMeetingCollection(), id));
+  return guardListener(useDocument(doc(rawMeetingCollection(), id)), 'getMeeting');
 }
 
 export interface Proposal extends DocumentType {
@@ -122,11 +123,11 @@ export function rawProposalCollection(meetingId: string) {
 }
 
 export function proposalCollection(meetingId: string) {
-  return useCollection(query(rawProposalCollection(meetingId), orderBy('order')));
+  return guardListener(useCollection(query(rawProposalCollection(meetingId), orderBy('order'))), 'proposalCollection');
 }
 
 export function getProposal(meetingId: string, proposalId: string) {
-  return useDocument(doc(rawProposalCollection(meetingId), proposalId));
+  return guardListener(useDocument(doc(rawProposalCollection(meetingId), proposalId)), 'getProposal');
 }
 
 export interface Votable extends DocumentType {
@@ -173,9 +174,9 @@ export function rawVotableCollection(meetingId: string, proposalId: string) {
 }
 
 export function votableCollection(meetingId: string, proposalId: string) {
-  return useCollection(query(rawVotableCollection(meetingId, proposalId), orderBy('order')));
+  return guardListener(useCollection(query(rawVotableCollection(meetingId, proposalId), orderBy('order'))), 'votableCollection');
 }
 
 export function getVotable(meetingId: string, proposalId: string, votableId: string) {
-  return useDocument(doc(rawVotableCollection(meetingId, proposalId), votableId));
+  return guardListener(useDocument(doc(rawVotableCollection(meetingId, proposalId), votableId)), 'getVotable');
 }

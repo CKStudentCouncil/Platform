@@ -73,7 +73,6 @@ import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
 import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
-import { log } from 'node:console';
 
 const route = useRoute();
 const db = useFirestore();
