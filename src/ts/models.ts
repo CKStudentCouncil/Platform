@@ -1,8 +1,8 @@
 import { collection, doc, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { firestoreDefaultConverter, useCollection, useDocument, useFirestore } from 'vuefire';
 import type { FirestoreDataConverter } from '@firebase/firestore';
-import type { Ref } from 'vue';
-import { computed } from 'vue';
+import type { MaybeRefOrGetter, Ref } from 'vue';
+import { computed, toValue } from 'vue';
 import { getCurrentReign } from 'src/ts/utils.ts';
 import { guardListener } from 'src/ts/firestore.ts';
 
@@ -99,8 +99,20 @@ export function meetingCollectionOfCurrentReign() {
   return guardListener(useCollection(rawMeetingsOfCurrentReignQuery()), 'meetingCollectionOfCurrentReign');
 }
 
-export function getMeeting(id: string) {
-  return guardListener(useDocument(doc(rawMeetingCollection(), id)), 'getMeeting');
+/**
+ * @param id - which meeting to watch. Accepts a getter so a caller can hold the
+ *   listener shut — by resolving to `null` — until it is allowed to read.
+ *   `firestore.rules` grants `meetings/**` to `request.auth != null` and nothing
+ *   else, so a page that opens this before Firebase Auth has restored the
+ *   session is asking for a denial rather than racing one: Firestore does not
+ *   retry a listener the rules rejected, it reports the error and gives up.
+ */
+export function getMeeting(id: MaybeRefOrGetter<string | null | undefined>) {
+  const meetingRef = computed(() => {
+    const meetingId = toValue(id);
+    return meetingId ? doc(rawMeetingCollection(), meetingId) : null;
+  });
+  return guardListener(useDocument(meetingRef, { reset: true }), 'getMeeting');
 }
 
 export interface Proposal extends DocumentType {

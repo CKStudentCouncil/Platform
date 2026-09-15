@@ -18,6 +18,12 @@
 
 const RELOAD_FLAG = 'cksc:chunk-reload';
 
+/**
+ * Set the moment a reload is started, and never cleared — the page is going
+ * away. See `isReloadingForNewVersion()`.
+ */
+let reloading = false;
+
 const CHUNK_ERROR_PATTERNS: readonly RegExp[] = [
   /Failed to fetch dynamically imported module/i,
   /Importing a module script failed/i,
@@ -60,12 +66,25 @@ export function clearChunkReloadFlag() {
 }
 
 /**
+ * Whether a reload is already on its way.
+ *
+ * Navigating away does not stop the current page: the router unwinds, watchers
+ * fire, components tear down, all against a module graph with a hole in it.
+ * Whatever breaks next is a symptom of the reload, not a defect, and is gone by
+ * the time anyone looks — so `beforeSend` uses this to stop reporting.
+ */
+export function isReloadingForNewVersion(): boolean {
+  return reloading;
+}
+
+/**
  * @param target - where to land after the reload. Defaults to the current URL.
  * @returns whether a reload was started (callers should stop what they are doing if so)
  */
 export function reloadForNewVersion(target?: string): boolean {
   if (typeof window === 'undefined' || alreadyReloaded()) return false;
   markReloaded();
+  reloading = true;
   console.warn('[chunk] assets missing — reloading for the current deploy.');
   if (target && target !== window.location.pathname + window.location.search) {
     window.location.assign(target);
@@ -76,14 +95,29 @@ export function reloadForNewVersion(target?: string): boolean {
 }
 
 /**
- * Vite raises `vite:preloadError` when a `<link rel=modulepreload>` target 404s
- * — the "Unable to preload CSS" case, which never reaches the router because
- * nothing awaited it. Left alone, Vite rethrows it as an uncaught error.
+ * Vite raises `vite:preloadError` when a preload target 404s — the "Unable to
+ * preload CSS" case, which never reaches the router because nothing awaited it.
+ * Left alone, Vite rethrows it as an uncaught error.
+ *
+ * The same event also fires when the route chunk *itself* fails, and there
+ * `preventDefault()` is not a free way to keep the console quiet. Vite's
+ * preload helper ends in `baseModule().catch(handlePreloadError)`, and
+ * `handlePreloadError` only rethrows when the event was left alone — so calling
+ * `preventDefault()` makes the failed `import()` *resolve*, with `undefined`.
+ * vue-router takes that for the route's component and throws `Couldn't resolve
+ * component "default" at "/attendee"`: the same dead tab, now wearing a message
+ * that points at the route table instead of at the deploy.
+ *
+ * So only swallow it when the page is being replaced anyway. When the reload
+ * guard declines, letting Vite rethrow is strictly better — the import rejects
+ * with the browser's own wording, which `Router.onError` and `isChunkLoadError`
+ * both recognise.
  */
 export function installPreloadErrorHandler() {
   if (typeof window === 'undefined') return;
   window.addEventListener('vite:preloadError', (event) => {
-    event.preventDefault();
-    reloadForNewVersion();
+    if (reloadForNewVersion()) {
+      event.preventDefault();
+    }
   });
 }

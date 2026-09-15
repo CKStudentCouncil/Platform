@@ -85,7 +85,11 @@ import { useDocument } from 'vuefire';
 import { guardListener } from 'src/ts/firestore.ts';
 
 const id = useRoute().params.id as string;
-const meeting = getMeeting(id);
+// `/attendee/<id>` is the QR code students scan on the way into the room, so a
+// cold, signed-out load is the normal case here rather than an edge one. Waiting
+// for auth keeps the listener shut until the rules can say yes; opening it early
+// only bought a `permission-denied` that Firestore never retries.
+const meeting = getMeeting(() => (loggedInUser.value ? id : null));
 const activeProposalId = ref(null as string | null);
 const activeProposalQ = computed(() => (activeProposalId.value == null ? null : doc(rawProposalCollection(id), activeProposalId.value)));
 const activeProposal = guardListener(useDocument(activeProposalQ, { reset: true }), 'AttendeePage activeProposal');

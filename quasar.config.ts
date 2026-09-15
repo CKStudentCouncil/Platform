@@ -84,7 +84,25 @@ export default defineConfig((ctx) => {
       // polyfillModulePreload: true,
       // distDir
 
-      // extendViteConf (viteConf) {},
+      // Vite ships a polyfill for `<link rel=modulepreload>` aimed at browsers
+      // that do not support the hint — Safari below 17, which is a good share of
+      // the phones this runs on. The polyfill warms each link with a bare
+      // `fetch()` and attaches nothing to the promise, so any asset request that
+      // fails — a deploy rotated the hashes, the phone lost signal mid-load —
+      // becomes an unhandled rejection raised from inside Vite's own runtime.
+      // There is no seam to catch it from: no `vite:preloadError`, no importer,
+      // on Safari not even a message beyond `TypeError: Load failed`.
+      //
+      // Turning it off costs close to nothing. Vite's preloader then emits
+      // `<link rel=preload as=script>` on exactly the browsers that lacked
+      // `modulepreload`, which preloads the same chunks under the browser's own
+      // error handling; only the static hints in index.html go unused there, and
+      // those chunks are still fetched by the module graph a moment later.
+      extendViteConf(viteConf) {
+        viteConf.build ??= {};
+        viteConf.build.modulePreload = { polyfill: false };
+      },
+
       // viteVuePluginOptions: {},
 
       // Needed for readable stack traces in Sentry. 'hidden' emits the .map

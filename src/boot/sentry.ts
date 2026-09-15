@@ -1,7 +1,8 @@
 import { defineBoot } from '#q-app';
 import * as Sentry from '@sentry/vue';
 import { SENTRY_DSN } from '../../shared/constants';
-import { isChunkLoadError } from 'src/ts/chunkerrors.ts';
+import { isChunkLoadError, isReloadingForNewVersion } from 'src/ts/chunkerrors.ts';
+import { isUnhandledTransportFailure } from 'src/ts/networkerrors.ts';
 
 const isDev = import.meta.env.DEV;
 
@@ -58,6 +59,23 @@ export default defineBoot(({ app, router }) => {
       if (isChunkLoadError(hint?.originalException) || isChunkLoadError(event.exception?.values?.[0]?.value)) {
         return null;
       }
+
+      // Once that reload is under way, everything still running in this tab is
+      // running against a module graph that is half gone, and failing for that
+      // reason rather than on its own merits. Those knock-on errors are worth
+      // less than nothing: they are unreproducible, they are already fixed by
+      // the reload in progress, and they group under whatever wording the
+      // framework that tripped over the hole happens to use.
+      if (isReloadingForNewVersion()) {
+        return null;
+      }
+
+      // A long-poll the phone's network dropped, that nothing was awaiting.
+      // See `src/ts/networkerrors.ts`.
+      if (isUnhandledTransportFailure(event)) {
+        return null;
+      }
+
       return event;
     },
   });

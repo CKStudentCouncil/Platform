@@ -1,4 +1,4 @@
-import { watch } from 'vue';
+import { watchEffect } from 'vue';
 import type { FirestoreError } from 'firebase/firestore';
 import * as Sentry from '@sentry/vue';
 
@@ -65,17 +65,35 @@ interface ListenerSource {
  * escapes as an unhandled rejection. The handler is attached synchronously, and
  * re-attached whenever a reactive source rebinds the listener.
  *
+ * Two details here are load-bearing and easy to undo by accident:
+ *
+ * `watchEffect`, with the promise read into a local rather than returned. Vue
+ * runs a watcher's tracked function through `callWithAsyncErrorHandling`, which
+ * looks at the *return value*: hand back a promise and Vue attaches its own
+ * `.catch` and forwards the rejection to `app.config.errorHandler`. Returning
+ * `source.promise.value` therefore reported every denied listener to Sentry a
+ * second time — as an unhandled error against whichever component happened to
+ * own the scope, carrying a `runtime-2` (watcher getter) hook and a stack made
+ * entirely of Firestore internals — no matter how thoroughly we caught it here.
+ *
+ * `flush: 'sync'`, because VueFire swaps `promise.value` as part of rebinding.
+ * Anything later than synchronous coalesces, and a promise that is both created
+ * and replaced inside one tick is then never observed — which is precisely the
+ * unhandled rejection this function exists to prevent.
+ *
  * @param context - which listener this is, used when reporting
  */
 export function guardListener<T extends ListenerSource>(source: T, context: string): T {
-  watch(
-    () => source.promise.value,
-    (promise) => {
-      void promise?.catch((error: unknown) => {
-        reportListenerError(error, context);
-      });
+  watchEffect(
+    () => {
+      const promise = source.promise.value;
+      if (promise) {
+        void promise.catch((error: unknown) => {
+          reportListenerError(error, context);
+        });
+      }
     },
-    { immediate: true },
+    { flush: 'sync' },
   );
   return source;
 }
