@@ -34,7 +34,7 @@
     "@eslint/js": "^10",
     "@quasar/app-vite": "^3.8.3",
     "@sentry/vite-plugin": "^5.4.0",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.1",
     "@types/qrcode": "^1.5.6",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.9.0",
