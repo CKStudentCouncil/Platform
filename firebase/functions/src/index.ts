@@ -11,13 +11,13 @@
 import * as admin from 'firebase-admin';
 admin.initializeApp(); // This is required to run before everything else
 import { addUserWithRole, checkRole, editUserClaims } from './auth';
-import { DRIVE_ROOT_FOLDER_ID } from '../../../shared/constants';
+import { DRIVE_ROOT_FOLDER_ID, MAX_ATTACHMENT_BYTES } from '../../../shared/constants';
 import { getCurrentReign } from '../../../shared/utils';
 import { onCall } from 'firebase-functions/v2/https';
 import { drive_v3, google } from 'googleapis';
 import * as Stream from 'stream';
 import { getFirestore } from 'firebase-admin/firestore';
-import { https } from 'firebase-functions';
+import { https, logger } from 'firebase-functions';
 import { Role, User } from '../../../shared/models';
 // @formatter:on
 
@@ -94,54 +94,104 @@ export const register = onCall(globalFunctionOptions, async (request) => {
   return { success: true };
 });
 
-export const uploadAttachment = onCall(globalFunctionOptions, async (request) => {
-  await checkRole(request, Role.OtherDepartment);
-  const { name, content, mimeType } = request.data;
+const DEFAULT_MIME_TYPE = 'application/octet-stream';
+const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
+const ATTACHMENT_OWNER_EMAIL = 'cksc77th@gmail.com';
+
+// Drive's query language only escapes backslashes and single quotes inside a string literal.
+function escapeDriveQueryValue(value: string) {
+  return value.replace(/[\\']/g, (match) => `\\${match}`);
+}
+
+async function getOrCreateReignFolder(reign: string) {
   const folderQuery = await driveAPI.files.list({
-    q: `mimeType='application/vnd.google-apps.folder' and name='${getCurrentReign()}'`,
+    q: [
+      `mimeType = '${FOLDER_MIME_TYPE}'`,
+      `name = '${escapeDriveQueryValue(reign)}'`,
+      `'${DRIVE_ROOT_FOLDER_ID}' in parents`,
+      'trashed = false',
+    ].join(' and '),
     fields: 'files(id)',
+    pageSize: 1,
   });
-  let folder: string | null | undefined;
-  if ((folderQuery.data.files?.length ?? 0) == 0) {
-    folder = (
-      await driveAPI.files.create({
-        requestBody: {
-          name: getCurrentReign(),
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [DRIVE_ROOT_FOLDER_ID],
-        },
-        fields: 'id',
-      })
-    ).data.id;
-  } else {
-    folder = folderQuery.data.files?.[0]?.id;
+  const existing = folderQuery.data.files?.[0]?.id;
+  if (existing) {
+    return existing;
   }
-  const file = await driveAPI.files.create({
+  const created = await driveAPI.files.create({
     requestBody: {
-      name,
-      mimeType,
-      parents: [folder ?? DRIVE_ROOT_FOLDER_ID],
+      name: reign,
+      mimeType: FOLDER_MIME_TYPE,
+      parents: [DRIVE_ROOT_FOLDER_ID],
     },
-    media: {
-      mimeType,
-      body: new Stream.PassThrough().end(Buffer.from(content, 'base64')),
-    },
-    fields: 'id,webViewLink',
+    fields: 'id',
   });
-  await driveAPI.permissions.create({
-    fileId: file.data.id ?? '',
-    requestBody: {
-      role: 'reader',
-      type: 'anyone',
-    },
-  });
-  await driveAPI.permissions.create({
-    fileId: file.data.id ?? '',
-    requestBody: {
-      role: 'writer',
-      type: 'user',
-      emailAddress: 'cksc77th@gmail.com',
-    },
-  });
-  return { success: true, url: file.data.webViewLink };
+  return created.data.id ?? DRIVE_ROOT_FOLDER_ID;
+}
+
+export const uploadAttachment = onCall({ ...globalFunctionOptions, memory: '512MiB' as const, timeoutSeconds: 120 }, async (request) => {
+  await checkRole(request, Role.OtherDepartment);
+  const data = request.data ?? {};
+  const { name, content } = data;
+  // Older bundles send `mimetype`; accept both spellings so they keep working after this deploy.
+  const mimeType: string = data.mimeType || data.mimetype || DEFAULT_MIME_TYPE;
+
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    throw new https.HttpsError('invalid-argument', 'A file name is required.');
+  }
+  if (typeof content !== 'string' || content.length === 0) {
+    throw new https.HttpsError('invalid-argument', `The contents of "${name}" are missing or could not be read.`);
+  }
+
+  const body = Buffer.from(content, 'base64');
+  if (body.length === 0) {
+    throw new https.HttpsError('invalid-argument', `The contents of "${name}" are empty.`);
+  }
+  if (body.length > MAX_ATTACHMENT_BYTES) {
+    throw new https.HttpsError(
+      'invalid-argument',
+      `"${name}" is ${Math.round(body.length / 1024 / 1024)} MB, over the ${Math.floor(MAX_ATTACHMENT_BYTES / 1024 / 1024)} MB limit.`,
+    );
+  }
+
+  try {
+    const folder = await getOrCreateReignFolder(getCurrentReign());
+    const file = await driveAPI.files.create({
+      requestBody: {
+        name,
+        mimeType,
+        parents: [folder],
+      },
+      media: {
+        mimeType,
+        body: Stream.Readable.from(body),
+      },
+      fields: 'id,webViewLink',
+    });
+    const fileId = file.data.id;
+    if (!fileId) {
+      throw new Error('Drive accepted the upload but returned no file id');
+    }
+    await driveAPI.permissions.create({
+      fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+    await driveAPI.permissions.create({
+      fileId,
+      requestBody: {
+        role: 'writer',
+        type: 'user',
+        emailAddress: ATTACHMENT_OWNER_EMAIL,
+      },
+    });
+    return { success: true, url: file.data.webViewLink };
+  } catch (e) {
+    // Anything thrown past this point reaches the browser as an opaque "INTERNAL",
+    // so record what actually failed and hand the caller something it can display.
+    logger.error('uploadAttachment failed', { name, mimeType, bytes: body.length, error: e });
+    throw new https.HttpsError('internal', `Google Drive rejected the upload: ${(e as Error).message}`);
+  }
 });

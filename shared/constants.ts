@@ -3,6 +3,11 @@ export const ROOT_USER_ID = '38fWtZ4AKRU3oAZjfrt9nBq7d8B2';
 export const DRIVE_ROOT_FOLDER_ID = '1nvd__dCm-_yUR-QpV0rn6NKdavxcN2B0';
 export const REIGN_YEAR_BASE = 1945;
 
+// Callable functions reject requests larger than 32 MiB and base64 inflates a file by ~4/3,
+// so cap the raw file below that and fail fast with a readable message instead of a
+// transport-level error the client can only report as 'internal'.
+export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+
 // Firebase configuration used by the frontend (Vue app)
 export const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyDVpsV2SN10S6Oirk6NWU0GZzWLHJ0TUyw',
