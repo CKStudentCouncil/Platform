@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
-    "@quasar/app-vite": "^3.8.3",
+    "@quasar/app-vite": "^3.9.0",
     "@sentry/vite-plugin": "^5.4.0",
     "@types/node": "^26.5.1",
     "@types/qrcode": "^1.5.6",
