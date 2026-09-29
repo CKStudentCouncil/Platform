@@ -110,7 +110,7 @@
                   <q-item v-for="attachment in currentProposal.attachments" :key="attachment">
                     <q-item-section style="overflow-wrap: anywhere">{{ attachment }}</q-item-section>
                     <q-item-section side>
-                      <q-btn flat dense :href="attachment" icon="open_in_new" target="_blank">
+                      <q-btn flat dense :href="blockJavascriptUrl(attachment)" icon="open_in_new" target="_blank">
                         <q-tooltip>在新視窗開啟</q-tooltip>
                       </q-btn>
                     </q-item-section>
@@ -135,10 +135,16 @@
               <q-card :style="$q.screen.lt.sm ? 'min-width: 100vw' : 'min-width: 60vw'">
                 <q-card-section style="width: 100%">
                   <q-btn class="q-mb-sm" color="negative" flat icon="close" style="float: right" @click="activeUrl = ''" />
-                  <q-btn :href="activeUrl" flat icon="open_in_new" style="float: right" target="_blank" />
+                  <q-btn :href="blockJavascriptUrl(activeUrl)" flat icon="open_in_new" style="float: right" target="_blank" />
                 </q-card-section>
                 <q-card-section>
-                  <iframe :height="$q.screen.height - 200" :src="getGoogleFileEmbed(activeUrl)" allow="autoplay" class="no-print" width="100%" />
+                  <iframe
+                    :height="$q.screen.height - 200"
+                    :src="blockJavascriptUrl(getGoogleFileEmbed(activeUrl))"
+                    allow="autoplay"
+                    class="no-print"
+                    width="100%"
+                  />
                 </q-card-section>
               </q-card>
             </q-dialog>
@@ -173,7 +179,7 @@ import {
   rawUserProposalCollectionPresentation as collectpresentation,
   translateProposalType,
 } from 'src/ts/proposalmodels.ts';
-import { getCurrentReign, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { getCurrentReign, notifyError, notifySuccess, blockJavascriptUrl, getGoogleFileEmbed } from 'src/ts/utils.ts';
 import { reportListenerError } from 'src/ts/firestore.ts';
 import ListEditor from 'components/ListEditor.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
@@ -416,22 +422,6 @@ async function copyCosignLink() {
   } catch (e) {
     notifyError('複製失敗', e);
   }
-}
-
-function getGoogleFileEmbed(input: string) {
-  let file_id = null;
-  const driveCapture = input.match(/https:\/\/drive\.google\.com\/file\/d\/(.*)\/view.*/);
-  if (driveCapture && driveCapture.length > 1) {
-    file_id = driveCapture[1];
-  }
-  const documentCapture = input.match(/https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/(.*)\/edit.*/);
-  if (documentCapture && documentCapture.length > 2) {
-    file_id = documentCapture[2];
-  }
-  if (file_id) {
-    return `https://drive.google.com/file/d/${file_id}/preview`;
-  }
-  return input;
 }
 
 function refreshCurrentProposal() {
