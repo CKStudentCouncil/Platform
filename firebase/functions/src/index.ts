@@ -12,7 +12,7 @@ import * as admin from 'firebase-admin';
 admin.initializeApp(); // This is required to run before everything else
 import { addUserWithRole, checkRole, editUserClaims } from './auth';
 import { DRIVE_ROOT_FOLDER_ID, MAX_ATTACHMENT_BYTES } from '../../../shared/constants';
-import { getCurrentReign } from '../../../shared/utils';
+import { getCurrentReign, schoolEmailFromSchoolNumber } from '../../../shared/utils';
 import { onCall } from 'firebase-functions/v2/https';
 import { drive_v3, google } from 'googleapis';
 import * as Stream from 'stream';
@@ -89,8 +89,14 @@ export const register = onCall(globalFunctionOptions, async (request) => {
     throw new https.HttpsError('permission-denied', 'Registration disabled.');
   }
   const user = request.data as User;
+  if (typeof user?.schoolNumber !== 'string') {
+    throw new https.HttpsError('invalid-argument', 'A school number is required.');
+  }
   user.role = Role.ClassRep;
-  await addUserWithRole(user);
+  // Register the school address of this number, never an email the caller picked.
+  user.email = schoolEmailFromSchoolNumber(user.schoolNumber);
+  // Anyone can call this, so it may only set up accounts that have no claims yet.
+  await addUserWithRole(user, false);
   return { success: true };
 });
 
