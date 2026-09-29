@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /meetings/{document=**} {
-      allow read: if (request.auth != null);
+      allow read: if (request.auth != null) && (request.auth.token.role >= 25); // 25 = Role.OtherDepartment, the lowest provisioned role
       // Creating, editing and deleting meetings, proposals and votables is management work for the
       // Secretary and above: the ManageMeetings/ManageProposals/ManageVotables pages and meeting hosting.
       allow write: if hasRole(100);
