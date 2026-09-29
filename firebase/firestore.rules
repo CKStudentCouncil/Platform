@@ -4,15 +4,122 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /meetings/{document=**} {
       allow read: if (request.auth != null);
-      allow write: if (request.auth != null) && ('token' in request.auth) && (request.auth.token.role >= 50);
-      // TODO: better safety
-    //   allow update: if
-    // 		request.auth != null &&
-    // (
-    //   request.resource.data.winners.size() == resource.data.winners.size() + 1 // Ensure only one item was added.
-    //   &&
-    //   resource.data.winners == request.resource.data.winners[0:resource.data.winners.size()]
-    // );
+      // Creating, editing and deleting meetings, proposals and votables is management work for the
+      // Secretary and above: the ManageMeetings/ManageProposals/ManageVotables pages and meeting hosting.
+      allow write: if hasRole(100);
+    }
+
+    // A ClassRep may only make the narrow, own-class updates the attendee pages make.
+    match /meetings/{meetingId} {
+      allow update: if isAttendee() && (punchesInOwnClass() || schedulesOwnAbsence());
+    }
+
+    match /meetings/{meetingId}/proposals/{proposalId} {
+      allow update: if isAttendee() && togglesOwnSpeakRequest();
+    }
+
+    match /meetings/{meetingId}/proposals/{proposalId}/votables/{votableId} {
+      allow update: if isAttendee() && castsOwnVote(meetingId, proposalId, votableId);
+    }
+
+    function hasRole(minRole) {
+      return (request.auth != null) && ('token' in request.auth) && (request.auth.token.role >= minRole);
+    }
+
+    function ownClazz() {
+      return request.auth.token.clazz;
+    }
+
+    function isAttendee() {
+      return hasRole(50) && ownClazz() is string && ownClazz().size() > 0;
+    }
+
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function unchanged() {
+      return request.resource.data.diff(resource.data).affectedKeys().size() == 0;
+    }
+
+    // PunchInPage: `participants: arrayUnion(clazz)`. Only the caller's own class may be appended, and
+    // only while the meeting is in progress (`active`, set by the host's 開會 and cleared by 散會), so a
+    // past or future meeting's attendance cannot be rewritten. No class can be removed. Repeating a
+    // punch-in that is already recorded changes nothing and stays allowed. The punch-in passcode is not
+    // part of the write, so it cannot be checked here.
+    function punchesInOwnClass() {
+      let before = resource.data.get('participants', []);
+      let after = request.resource.data.get('participants', []);
+      return onlyChanges(['participants'])
+        && (after == before
+          || (resource.data.get('active', false) == true
+            && !(ownClazz() in before)
+            && after == before.concat([ownClazz()])));
+    }
+
+    // ScheduleAbsencePage: set or clear `absences.<clazz>` for the caller's own class, before the
+    // meeting starts, in the `{ reason, scheduledAt }` shape that meetingConverter reads back.
+    function schedulesOwnAbsence() {
+      let before = resource.data.get('absences', {});
+      let after = request.resource.data.get('absences', {});
+      return onlyChanges(['absences'])
+        && request.time < resource.data.start
+        && after.diff(before).affectedKeys().hasOnly([ownClazz()])
+        && (!(ownClazz() in after) || isAbsence(after[ownClazz()]));
+    }
+
+    function isAbsence(absence) {
+      return absence is map
+        && absence.keys().hasAll(['reason', 'scheduledAt'])
+        && absence.keys().hasOnly(['reason', 'scheduledAt'])
+        && absence.reason is string
+        && absence.scheduledAt is timestamp;
+    }
+
+    // AttendeePage: `speakRequests: arrayUnion(clazz)` / `arrayRemove(clazz)` for the caller's own class.
+    function togglesOwnSpeakRequest() {
+      let before = resource.data.get('speakRequests', []);
+      let after = request.resource.data.get('speakRequests', []);
+      return onlyChanges(['speakRequests'])
+        && (after == before
+          || after == before.removeAll([ownClazz()])
+          || (!(ownClazz() in before) && after == before.concat([ownClazz()])));
+    }
+
+    // AttendeePage: `results.<choice>: arrayUnion(clazz)` together with `voters.<clazz>: choice`.
+    // `voters` maps every class that has voted to its choice, so "one vote per class" is a single key
+    // lookup rather than a scan over every choice. The caller's class must have punched in, the
+    // votable must be the one the host has opened, and the class must not be in `voters` yet. The
+    // only change allowed is adding the caller's own class to `voters` and to that one choice's
+    // results. Repeating a vote that is already recorded changes nothing and stays allowed.
+    function castsOwnVote(meetingId, proposalId, votableId) {
+      return unchanged()
+        || (onlyChanges(['results', 'voters'])
+          && isOpenVoteOfPunchedInClass(meetingId, proposalId, votableId)
+          && addsOneOwnVote(ownClazz()));
+    }
+
+    function isOpenVoteOfPunchedInClass(meetingId, proposalId, votableId) {
+      let meeting = get(/databases/$(database)/documents/meetings/$(meetingId)).data;
+      let proposal = get(/databases/$(database)/documents/meetings/$(meetingId)/proposals/$(proposalId)).data;
+      return meeting.get('activeProposal', null) == proposalId
+        && proposal.get('activeVotable', null) == votableId
+        && ownClazz() in meeting.get('participants', []);
+    }
+
+    // A votable written before `voters` existed has no such field and is treated as having no voters.
+    function addsOneOwnVote(clazz) {
+      let votersBefore = resource.data.get('voters', {});
+      let votersAfter = request.resource.data.get('voters', {});
+      let resultsBefore = resource.data.get('results', {});
+      let resultsAfter = request.resource.data.get('results', {});
+      let choice = votersAfter.get(clazz, null);
+      return !(clazz in votersBefore)
+        && votersAfter.diff(votersBefore).affectedKeys().hasOnly([clazz])
+        && choice in resource.data.choices
+        && !(clazz in resultsBefore.get(choice, []))
+        && resultsAfter.diff(resultsBefore).affectedKeys().hasOnly([choice])
+        && resultsAfter[choice] == resultsBefore.get(choice, []).concat([clazz]);
     }
   }
 }

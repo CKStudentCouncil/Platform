@@ -148,6 +148,7 @@ export interface Votable extends DocumentType {
   order: number;
   type: VotableType;
   results: Record<string, string[]>;
+  voters?: Record<string, string>; // class -> the choice it voted for; mirrors `results` so `firestore.rules` can allow one vote per class
 }
 
 export class VotableType {

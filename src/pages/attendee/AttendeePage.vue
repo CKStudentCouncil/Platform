@@ -186,6 +186,8 @@ async function select(choice: string) {
     try {
       const update = {} as any;
       update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
+      // `firestore.rules` accepts a vote only together with the class's entry in `voters` (class -> choice).
+      update[('voters.' + loggedInUserClaims.clazz) as keyof typeof update] = choice;
       await updateDoc(doc(rawVotableCollection(id, activeProposalId.value as string), activeVotableId.value as string), update);
     } catch (e) {
       notifyError('投票失敗', e);

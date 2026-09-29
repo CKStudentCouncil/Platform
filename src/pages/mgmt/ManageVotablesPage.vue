@@ -193,6 +193,10 @@ async function submit() {
       question: target.question,
       choices: target.choices,
       results: target.results,
+      // Rebuilt from `results` on every save, as `firestore.rules` reads it (class -> choice) to allow one vote per class.
+      voters: Object.fromEntries(
+        Object.entries(target.results).flatMap(([choice, classes]) => classes.map((clazz): [string, string] => [clazz, choice])),
+      ),
       type: target.type.firebase,
     };
     if (action.value === 'edit') {
