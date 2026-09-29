@@ -83,15 +83,35 @@ export const getAllUsers = onCall(globalFunctionOptions, async (request) => {
   });
 });
 
+// `register` needs no sign-in, so the register form's checks (src/components/LoginDialog.vue) guard nothing on their own.
+// These are the same rules, applied before any value reaches the account's custom claims.
+const REGISTER_FIELD_RULES = {
+  clazz: /^[1-3][0-2][0-9]$/,
+  schoolNumber: /^[0-9]{8}$/,
+  seatNumber: /^[1-9]?[0-9]$/,
+};
+
+function validateRegistration(data: unknown): User {
+  const user = (data ?? {}) as Partial<User>;
+  for (const [field, rule] of Object.entries(REGISTER_FIELD_RULES) as [keyof typeof REGISTER_FIELD_RULES, RegExp][]) {
+    const value = user[field];
+    if (typeof value !== 'string' || !rule.test(value)) {
+      throw new https.HttpsError('invalid-argument', `Invalid ${field}.`);
+    }
+  }
+  // The form only requires the name to be non-empty.
+  if (typeof user.name !== 'string' || user.name.length === 0) {
+    throw new https.HttpsError('invalid-argument', 'Invalid name.');
+  }
+  return user as User;
+}
+
 export const register = onCall(globalFunctionOptions, async (request) => {
   const activeMeeting = await db.collection('meetings').where('active', '==', true).get();
   if (activeMeeting.size == 0 || !activeMeeting.docs[0]?.data().registration) {
     throw new https.HttpsError('permission-denied', 'Registration disabled.');
   }
-  const user = request.data as User;
-  if (typeof user?.schoolNumber !== 'string') {
-    throw new https.HttpsError('invalid-argument', 'A school number is required.');
-  }
+  const user = validateRegistration(request.data);
   user.role = Role.ClassRep;
   // Register the school address of this number, never an email the caller picked.
   user.email = schoolEmailFromSchoolNumber(user.schoolNumber);
