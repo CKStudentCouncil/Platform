@@ -16,11 +16,12 @@
 import { useRoute, useRouter } from 'vue-router';
 import { ref, watch } from 'vue';
 import { and, arrayUnion, getDocs, query, updateDoc, where } from 'firebase/firestore';
-import { loggedInUserClaims } from 'src/ts/auth.ts';
+import { loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
 import LoginDialog from 'components/LoginDialog.vue';
 import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { notifyError } from 'src/ts/utils.ts';
+import { isRulesDenial, reportListenerError } from 'src/ts/firestore.ts';
 import { Notify } from 'quasar';
 
 const passcode = ref((useRoute().params.passcode as string | undefined) ?? '');
@@ -91,6 +92,16 @@ async function checkPunchedIn() {
       await router.push('/attendee/' + punchedIn.docs[0]?.id);
     }
   } catch (e) {
+    // The session can end while this query is in flight (signing out, or a
+    // token Firebase Auth could no longer refresh). Firestore then re-sends it
+    // unauthenticated and the rules refuse it. Nobody is left to tell — the
+    // account this check was for has just gone — so leave a breadcrumb only.
+    // A denial while still signed in is a genuine rules mismatch and falls
+    // through to be reported.
+    if (!loggedInUser.value && isRulesDenial(e)) {
+      reportListenerError(e, 'PunchInPage checkPunchedIn');
+      return;
+    }
     // This is a convenience redirect rather than something the user asked for,
     // but staying on the passcode screen with no explanation after having
     // already punched in is confusing enough to be worth saying out loud.

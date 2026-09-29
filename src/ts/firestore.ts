@@ -17,6 +17,11 @@ function isFirestoreError(error: unknown): error is FirestoreError {
   return typeof error === 'object' && error !== null && typeof (error as FirestoreError).code === 'string';
 }
 
+/** Whether `error` is Firestore saying the security rules refused the request. */
+export function isRulesDenial(error: unknown): error is FirestoreError {
+  return isFirestoreError(error) && RULES_DENIAL_CODES.includes(error.code);
+}
+
 /**
  * Deal with a failure coming out of a realtime listener.
  *
@@ -31,7 +36,7 @@ function isFirestoreError(error: unknown): error is FirestoreError {
  * @param context - which listener failed, e.g. `'MainLayout activeMeetings'`
  */
 export function reportListenerError(error: unknown, context: string): void {
-  if (isFirestoreError(error) && RULES_DENIAL_CODES.includes(error.code)) {
+  if (isRulesDenial(error)) {
     console.warn(`[firestore] listener "${context}" was denied by the security rules (${error.code}).`);
     Sentry.addBreadcrumb({
       category: 'firestore',
