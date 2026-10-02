@@ -2,6 +2,7 @@ import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
 import * as Sentry from '@sentry/vue';
 import type { Proposal } from 'src/ts/models.ts';
+import { CALLABLE_TRANSPORT_FAILURE_HINT, isCallableTransportFailure } from 'src/ts/functionerrors.ts';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,8 +41,12 @@ export interface NotifyErrorOptions {
 }
 
 export function notifyError(message: string, exception?: any, options?: NotifyErrorOptions): void {
+  // A callable that got no reply is never ours to fix and says nothing about
+  // what failed; see `src/ts/functionerrors.ts`. Tell the user what to try, and
+  // keep it out of Sentry no matter what the caller asked for.
+  const noReply = isCallableTransportFailure(exception);
   Notify.create({
-    message,
+    message: noReply ? `${message}：${CALLABLE_TRANSPORT_FAILURE_HINT}` : message,
     color: 'negative',
     icon: 'report_problem',
     position: 'top',
@@ -53,7 +58,7 @@ export function notifyError(message: string, exception?: any, options?: NotifyEr
       stack: exception?.stack,
       fatal: false,
     });
-    if (options?.report === false) {
+    if (noReply || options?.report === false) {
       Sentry.addBreadcrumb({
         category: 'expected-failure',
         level: 'warning',
