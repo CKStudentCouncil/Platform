@@ -1,6 +1,12 @@
 <template>
   <q-page>
     <div class="q-ma-md">
+      <q-banner v-if="loadError" class="bg-red-1 text-negative q-mb-md" role="alert">
+        {{ loadError }}
+        <template v-slot:action>
+          <q-btn flat label="重試" :loading="loading" :disable="!canLoadProposals" @click="loadProposals" />
+        </template>
+      </q-banner>
       <q-table :columns="columns" :filter="search" :rows="filteredProposals" :title="`${getCurrentReign()} 提案管理`" row-key="id" :loading="loading">
         <template v-slot:top-left>
           <div class="text-h6 q-mr-md">{{ getCurrentReign() }} 提案管理</div>
@@ -152,16 +158,16 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import type { QTableColumn } from 'quasar';
 import { getDocs, doc, updateDoc, deleteDoc, collection, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useFirestore } from 'vuefire';
 import type { ProposalId } from 'src/ts/proposalmodels.ts';
 import { proposalConverter, translateProposalType } from 'src/ts/proposalmodels.ts';
 import { getCurrentReign, notifyError, notifySuccess, generateRandomText, blockJavascriptUrl, getGoogleFileEmbed } from 'src/ts/utils.ts';
-import { getAllUsers } from 'src/ts/auth.ts';
+import { getAllUsers, loggedInUser, loggedInUserClaims } from 'src/ts/auth.ts';
 import { Loading } from 'quasar';
-import { meetingCollectionOfCurrentReign, rawProposalCollection } from 'src/ts/models.ts';
+import { meetingCollectionOfCurrentReign, rawProposalCollection, Role } from 'src/ts/models.ts';
 import type { MeetingId } from 'src/ts/models.ts';
 import type { PersonRecord } from 'src/ts/proposalmodels.ts';
 
@@ -177,7 +183,10 @@ const filterOptions = [
 // ── State ─────────────────────────────────────────────────────────────────────
 const search = ref('');
 const loading = ref(false);
+const loadError = ref('');
 const proposals = ref<(ProposalId & { userId: string })[]>([]);
+const canLoadProposals = computed(() => !!loggedInUser.value && loggedInUserClaims.role >= Number(Role.Secretary));
+let loadGeneration = 0;
 
 const filteredProposals = computed(() => {
   switch (activeFilter.value) {
@@ -266,37 +275,54 @@ function getCollectionRef(type: ProposalType, userId: string) {
 }
 
 async function loadProposals() {
-  loading.value = true;
+  const generation = ++loadGeneration;
+  const userId = loggedInUser.value?.uid;
   proposals.value = [];
+  loadError.value = '';
+  loading.value = false;
+  if (!canLoadProposals.value) return;
+
+  loading.value = true;
+  const isCurrentLoad = () => generation === loadGeneration && userId === loggedInUser.value?.uid && canLoadProposals.value;
 
   try {
     const users = await getAllUsers();
+    if (!isCurrentLoad()) return;
 
     const loadPromises = users.flatMap((user) =>
       PROPOSAL_TYPES.map(async (type) => {
-        try {
-          const collectionRef = getCollectionRef(type, user.uid);
-          const snapshot = await getDocs(collectionRef);
+        const collectionRef = getCollectionRef(type, user.uid);
+        const snapshot = await getDocs(collectionRef);
 
-          return snapshot.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-            type,
-            userId: user.uid,
-          })) as (ProposalId & { userId: string })[];
-        } catch (e) {
-          console.warn(`無法載入 ${user.uid} 的 ${type} 提案:`, e);
-          return [];
-        }
+        return snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+          type,
+          userId: user.uid,
+        })) as (ProposalId & { userId: string })[];
       }),
     );
 
-    const results = await Promise.all(loadPromises);
-    proposals.value = results.flat().sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+    const results = await Promise.allSettled(loadPromises);
+    if (!isCurrentLoad()) return;
+
+    proposals.value = results
+      .flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+    const failures = results.filter((result) => result.status === 'rejected');
+    for (const failure of failures) {
+      console.warn('無法載入提案:', failure.reason);
+    }
+    if (failures.length > 0) {
+      loadError.value =
+        failures.length === results.length ? '提案載入失敗，請確認帳號權限後重試。' : '部分提案載入失敗，顯示結果可能不完整。請確認帳號權限後重試。';
+    }
   } catch (e) {
+    if (!isCurrentLoad()) return;
+    loadError.value = '提案載入失敗，請確認帳號權限後重試。';
     notifyError('載入提案失敗', e);
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
@@ -401,8 +427,10 @@ function viewProposalDetails(proposal: ProposalId & { userId: string }) {
   showDetailsDialog.value = true;
 }
 
-onMounted(() => {
-  void loadProposals();
+watch([() => loggedInUser.value?.uid, () => loggedInUserClaims.role], () => void loadProposals(), { immediate: true });
+
+onBeforeUnmount(() => {
+  loadGeneration++;
 });
 </script>
 

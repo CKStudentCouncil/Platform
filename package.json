@@ -10,6 +10,7 @@
     "lint": "eslint -c ./eslint.config.js \"./src*/**/*.{ts,js,cjs,mjs,vue}\"",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"No test specified\" && exit 0",
+    "test:rules": "firebase emulators:exec --config firebase/firebase.json --only firestore --project demo-platform-rules \"node --test firebase/tests/proposal-rules.test.mjs\"",
     "dev": "quasar dev",
     "build": "quasar build",
     "postinstall": "quasar prepare"

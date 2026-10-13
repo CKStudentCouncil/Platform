@@ -22,6 +22,45 @@ service cloud.firestore {
       allow update: if isAttendee() && castsOwnVote(meetingId, proposalId, votableId);
     }
 
+    // User proposals are stored separately from the proposals on a meeting's agenda.
+    match /proposal/{type}/{userId}/{proposalId} {
+      // Shared co-sign links read one proposal; only its owner and management may list proposals.
+      allow get: if isProposalType(type) && hasRole(25);
+      allow list: if isProposalType(type) && (ownsProposal(userId) || hasRole(100));
+      allow create: if isProposalType(type) && ownsProposal(userId);
+      allow update: if isProposalType(type)
+        && (ownsProposal(userId) || hasRole(100) || (isAttendee() && addsOwnCosignature()));
+      allow delete: if isProposalType(type) && (ownsProposal(userId) || hasRole(100));
+    }
+
+    function isProposalType(type) {
+      return type in ['law', 'general', 'presentation'];
+    }
+
+    function ownsProposal(userId) {
+      return hasRole(25) && request.auth.uid == userId;
+    }
+
+    // A co-signer may append their own class without editing the proposal or earlier signatures.
+    function addsOwnCosignature() {
+      let before = resource.data.get('cosigners', []);
+      let after = request.resource.data.get('cosigners', []);
+      return onlyChanges(['cosigners'])
+        && before is list && after is list
+        && after.size() == before.size() + 1
+        && after == before.concat([after[before.size()]])
+        && isOwnCosigner(after[before.size()]);
+    }
+
+    function isOwnCosigner(cosigner) {
+      return cosigner is map
+        && cosigner.keys().hasAll(['classNum', 'jobTitle', 'name'])
+        && cosigner.keys().hasOnly(['classNum', 'jobTitle', 'name'])
+        && cosigner.classNum == ownClazz()
+        && cosigner.jobTitle is string
+        && cosigner.name is string && cosigner.name.size() > 0;
+    }
+
     function hasRole(minRole) {
       return (request.auth != null) && ('token' in request.auth) && (request.auth.token.role >= minRole);
     }
