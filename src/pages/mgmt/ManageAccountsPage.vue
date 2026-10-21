@@ -106,10 +106,19 @@ const dialog = computed(() => {
 async function load() {
   loading.value = true;
   accounts.length = 0; // Typescript magic
-  for (const acc of await getAllUsers()) {
-    accounts.push(acc);
+  // Every caller is `void load()` or `await load()` inside a dialog callback,
+  // so a rejection here has nowhere to go but the unhandled-rejection hook —
+  // which is how a callable that never got a reply (PLATFORM-G) reached Sentry
+  // with no page, no stack and a spinner that never stopped.
+  try {
+    for (const acc of await getAllUsers()) {
+      accounts.push(acc);
+    }
+  } catch (e) {
+    notifyError('載入帳號失敗', e);
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
 }
 
 function edit(row: any) {

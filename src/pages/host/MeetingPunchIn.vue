@@ -61,6 +61,7 @@ import { getMeeting, rawMeetingCollection } from 'src/ts/models.ts';
 import SignInQRCode from 'components/QRPasscode.vue';
 import { computed, ref } from 'vue';
 import { getAllUsers } from 'src/ts/auth.ts';
+import { notifyError } from 'src/ts/utils.ts';
 
 const props = defineProps({
   bar: {
@@ -94,14 +95,19 @@ async function removeParticipant(participant: string) {
 }
 
 async function getRequirement() {
-  const users = (await getAllUsers()) as any;
-  let count = 0;
-  for (const user of users) {
-    if (user.role == 50) {
-      count++;
+  try {
+    const users = (await getAllUsers()) as any;
+    let count = 0;
+    for (const user of users) {
+      if (user.role == 50) {
+        count++;
+      }
     }
+    totalMembers.value = count + 2; // +議長副議長
+  } catch (e) {
+    // `totalMembers` stays 0, which makes `reachedRequirements` read as met, so say so.
+    notifyError('載入班代人數失敗，無法判斷是否達到開會門檻', e);
   }
-  totalMembers.value = count + 2; // +議長副議長
 }
 
 void getRequirement();
