@@ -63,6 +63,7 @@ import { useFirestore } from 'vuefire';
 import { Dialog, Loading } from 'quasar';
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { isMissingDocument } from 'src/ts/firestore.ts';
 import ListEditor from 'components/ListEditor.vue';
 import { exportVotingData } from 'pages/mgmt/common.ts';
 
@@ -227,7 +228,12 @@ async function rearrange() {
     }
     await Promise.all(tasks);
   } catch (e) {
-    notifyError('重新排序失敗', e);
+    // The list on screen still had a votable that someone else deleted in the
+    // meantime (two editors, or a phone whose listener lagged). Every other row
+    // is still written, so there is nothing for us to fix and nothing to report.
+    notifyError(isMissingDocument(e) ? '重新排序失敗：有投票案件已被其他人刪除，請確認目前順序後再試一次' : '重新排序失敗', e, {
+      report: !isMissingDocument(e),
+    });
     Loading.hide();
     return;
   }

@@ -23,6 +23,18 @@ export function isRulesDenial(error: unknown): error is FirestoreError {
 }
 
 /**
+ * Whether `error` is an `updateDoc()` aimed at a document that no longer exists.
+ *
+ * On a page that edits shared data this is what losing a race looks like: the
+ * list on screen still showed a row that someone else deleted a moment earlier,
+ * and the write that targeted it came back `not-found`. The page can say so and
+ * carry on; it is not a malfunction.
+ */
+export function isMissingDocument(error: unknown): error is FirestoreError {
+  return isFirestoreError(error) && error.code === 'not-found';
+}
+
+/**
  * Deal with a failure coming out of a realtime listener.
  *
  * Every listener needs one of these. Firestore surfaces a denied `onSnapshot`
