@@ -4,7 +4,7 @@ import { getStorage } from 'firebase/storage';
 import { useFirebaseApp, VueFire, VueFireAuth } from 'vuefire';
 import type { Analytics } from 'firebase/analytics';
 import { initializeAnalytics } from 'firebase/analytics';
-import type { HttpsCallable } from '@firebase/functions';
+import type { HttpsCallable, HttpsCallableOptions } from '@firebase/functions';
 import { getFunctions, httpsCallable } from '@firebase/functions';
 import { configure } from 'vue-gtag';
 import { FIREBASE_CONFIG, FIREBASE_REGION } from '../../shared/constants';
@@ -27,8 +27,8 @@ export default defineBoot(({ app }) => {
   });
 });
 
-export function useFunction(name: string): HttpsCallable {
-  return httpsCallable(getFunctions(useFirebaseApp(), FIREBASE_REGION), name);
+export function useFunction(name: string, options?: HttpsCallableOptions): HttpsCallable {
+  return httpsCallable(getFunctions(useFirebaseApp(), FIREBASE_REGION), name, options);
 }
 
 export function useAnalytics(): Analytics {
