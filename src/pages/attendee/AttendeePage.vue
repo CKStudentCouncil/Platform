@@ -75,14 +75,14 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Proposal, ProposalId } from 'src/ts/models.ts';
-import { getMeeting, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
-import { arrayRemove, arrayUnion, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { getMeeting, rawMeetingCollection, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
+import { arrayRemove, arrayUnion, doc, getDocFromServer, getDocs, updateDoc } from 'firebase/firestore';
 import { Loading, QBtn } from 'quasar';
 import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
 import { cleanseName, notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import { useDocument } from 'vuefire';
-import { guardListener } from 'src/ts/firestore.ts';
+import { guardListener, isRulesDenial } from 'src/ts/firestore.ts';
 
 const id = useRoute().params.id as string;
 // `/attendee/<id>` is the QR code students scan on the way into the room, so a
@@ -181,16 +181,57 @@ watch(
   { deep: true },
 );
 
+/**
+ * Why `firestore.rules` turned a vote away, when turning it away was right.
+ *
+ * The rules take a vote only while the host still has that votable open, from a
+ * class that has punched in and has not voted yet. A student can tap a moment
+ * after the host closes the vote, or vote from a second device, and the write
+ * is refused with the same bare `permission-denied` either way. Those refusals
+ * are the rules doing their job: name the reason and keep them out of Sentry.
+ *
+ * A vote that looked valid when the server is asked comes back `null`, and is
+ * reported like any other failure, because that would be this page and the rules
+ * disagreeing. This reads the server rather than the listeners, since a lagging
+ * listener is the usual reason the page offered the vote in the first place.
+ */
+async function explainRefusedVote(proposalId: string, votableId: string): Promise<string | null> {
+  try {
+    const clazz = loggedInUserClaims.clazz;
+    const [meetingSnap, proposalSnap, votableSnap] = await Promise.all([
+      getDocFromServer(doc(rawMeetingCollection(), id)),
+      getDocFromServer(doc(rawProposalCollection(id), proposalId)),
+      getDocFromServer(doc(rawVotableCollection(id, proposalId), votableId)),
+    ]);
+    if (meetingSnap.get('activeProposal') !== proposalId || proposalSnap.get('activeVotable') !== votableId) return '此投票已結束';
+    if (!((meetingSnap.get('participants') ?? []) as string[]).includes(clazz)) return '貴班尚未簽到';
+    const voters = (votableSnap.get('voters') ?? {}) as Record<string, string>;
+    const results = (votableSnap.get('results') ?? {}) as Record<string, string[]>;
+    if (clazz in voters || Object.values(results).some((classes) => classes.includes(clazz))) return '貴班已投過票，無法更改';
+  } catch {
+    // The server could not be asked (offline, or refused again): let the original error be reported.
+  }
+  return null;
+}
+
 async function select(choice: string) {
   if (selectedChoice.value == choice) {
+    // Captured now: the host can close the vote while the write is in flight.
+    const proposalId = activeProposalId.value as string;
+    const votableId = activeVotableId.value as string;
     try {
       const update = {} as any;
       update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
       // `firestore.rules` accepts a vote only together with the class's entry in `voters` (class -> choice).
       update[('voters.' + loggedInUserClaims.clazz) as keyof typeof update] = choice;
-      await updateDoc(doc(rawVotableCollection(id, activeProposalId.value as string), activeVotableId.value as string), update);
+      await updateDoc(doc(rawVotableCollection(id, proposalId), votableId), update);
     } catch (e) {
-      notifyError('投票失敗', e);
+      const reason = isRulesDenial(e) ? await explainRefusedVote(proposalId, votableId) : null;
+      if (reason) {
+        notifyError(`投票失敗：${reason}`, e, { report: false });
+      } else {
+        notifyError('投票失敗', e);
+      }
     }
     selectedChoice.value = null;
   } else {
