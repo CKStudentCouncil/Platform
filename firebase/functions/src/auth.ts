@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions';
+import { https, logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { ROOT_USER_ID } from '../../../shared/constants';
 import { Role, User } from '../../../shared/models';
@@ -23,7 +23,7 @@ export async function checkRole(request: https.CallableRequest, role: Role) {
   }
 }
 
-export async function addUserWithRole(user: User) {
+export async function addUserWithRole(user: User, overwriteExistingClaims = true) {
   let result = null;
   try {
     result = await auth.getUserByEmail(user.email);
@@ -38,6 +38,11 @@ export async function addUserWithRole(user: User) {
       displayName: user.name,
       disabled: false,
     });
+  } else if (!overwriteExistingClaims && Object.keys(result.customClaims ?? {}).length > 0) {
+    // The account is already set up (an officer, or a rep who has registered). A caller who
+    // has not proved they own it must not rewrite its role or identity, so leave it as it is.
+    logger.warn('addUserWithRole: account already has claims, left unchanged', { uid: result.uid });
+    return result;
   }
   await auth.setCustomUserClaims(result.uid, {
     role: user.role,

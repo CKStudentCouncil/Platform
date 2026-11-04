@@ -68,7 +68,7 @@
           <q-space />
           <q-btn v-close-popup dense flat icon="close" round />
         </q-toolbar>
-        <ManageVotablesPage :meeting-id="route.params.id as string" :proposal-id="route.params.proposalId as string" embed />
+        <ManageVotablesPage :meeting-id="meetingId" :proposal-id="proposalId" embed />
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -100,6 +100,9 @@ const props = defineProps({
     default: '',
   }
 });
+// The route only carries these on /meeting_host/:id/agenda/:proposalId. The projector page
+// (/meeting_host/passive) renders this component with props instead, so read the resolved
+// values below rather than `route.params` anywhere else in this file.
 const meetingId = route.params.id as string ?? props.meetingId;
 const proposalId = route.params.proposalId as string ?? props.proposalId;
 const selectedMeeting = getMeeting(meetingId);

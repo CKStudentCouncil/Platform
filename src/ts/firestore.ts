@@ -17,6 +17,23 @@ function isFirestoreError(error: unknown): error is FirestoreError {
   return typeof error === 'object' && error !== null && typeof (error as FirestoreError).code === 'string';
 }
 
+/** Whether `error` is Firestore saying the security rules refused the request. */
+export function isRulesDenial(error: unknown): error is FirestoreError {
+  return isFirestoreError(error) && RULES_DENIAL_CODES.includes(error.code);
+}
+
+/**
+ * Whether `error` is an `updateDoc()` aimed at a document that no longer exists.
+ *
+ * On a page that edits shared data this is what losing a race looks like: the
+ * list on screen still showed a row that someone else deleted a moment earlier,
+ * and the write that targeted it came back `not-found`. The page can say so and
+ * carry on; it is not a malfunction.
+ */
+export function isMissingDocument(error: unknown): error is FirestoreError {
+  return isFirestoreError(error) && error.code === 'not-found';
+}
+
 /**
  * Deal with a failure coming out of a realtime listener.
  *
@@ -31,7 +48,7 @@ function isFirestoreError(error: unknown): error is FirestoreError {
  * @param context - which listener failed, e.g. `'MainLayout activeMeetings'`
  */
 export function reportListenerError(error: unknown, context: string): void {
-  if (isFirestoreError(error) && RULES_DENIAL_CODES.includes(error.code)) {
+  if (isRulesDenial(error)) {
     console.warn(`[firestore] listener "${context}" was denied by the security rules (${error.code}).`);
     Sentry.addBreadcrumb({
       category: 'firestore',
