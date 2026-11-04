@@ -21,8 +21,17 @@ import { cleanseName, notifyError } from 'src/ts/utils.ts';
 
 async function exp() {
   Loading.show();
-  const accounts = await getAllUsers();
-  const meetings = (await getDocs(rawMeetingsOfCurrentReignQuery())).docs;
+  let accounts;
+  let meetings;
+  try {
+    accounts = await getAllUsers();
+    meetings = (await getDocs(rawMeetingsOfCurrentReignQuery())).docs;
+  } catch (e) {
+    // Nothing else in here catches a failed load, and the overlay above would stay up for good.
+    notifyError('匯出失敗', e);
+    Loading.hide();
+    return;
+  }
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('出席情況');
   sheet.columns = [

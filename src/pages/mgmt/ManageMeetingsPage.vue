@@ -327,6 +327,19 @@ async function getAttendanceData(meeting: Meeting) {
   return data;
 }
 
+// The class names below come from users' `clazz` custom claims, which are not
+// guaranteed to be plain class numbers, and the dialog renders its message as
+// HTML. Escape each value so it is shown as text and never parsed as markup.
+// `String()` matches the conversion `Array.prototype.join` applied before.
+function escapeHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function exportAttendance(meeting: Meeting) {
   Loading.show();
   try {
@@ -334,9 +347,9 @@ async function exportAttendance(meeting: Meeting) {
     Dialog.create({
       title: '出席狀況',
       message: `
-      <p>出席：${data.attended.sort().join('、')}；共 ${data.attended.length} 人</p>
-      <p>請假：${data.scheduledAbsence.sort().join('、')}；共 ${data.scheduledAbsence.length} 人</p>
-      <p>缺席：${data.absent.sort().join('、')}；共 ${data.absent.length} 人</p>
+      <p>出席：${data.attended.sort().map(escapeHtml).join('、')}；共 ${data.attended.length} 人</p>
+      <p>請假：${data.scheduledAbsence.sort().map(escapeHtml).join('、')}；共 ${data.scheduledAbsence.length} 人</p>
+      <p>缺席：${data.absent.sort().map(escapeHtml).join('、')}；共 ${data.absent.length} 人</p>
     `,
       persistent: true,
       html: true,

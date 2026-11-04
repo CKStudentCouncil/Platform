@@ -78,6 +78,7 @@ import { useFirestore } from 'vuefire';
 import { computed, reactive, ref } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
 import { generateRandomText, notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { isMissingDocument } from 'src/ts/firestore.ts';
 import ListEditor from 'components/ListEditor.vue';
 import ProposalDisplay from 'components/ProposalDisplay.vue';
 import AttachmentUploader from 'components/AttachmentUploader.vue';
@@ -224,7 +225,11 @@ async function rearrange() {
     }
     await Promise.all(tasks);
   } catch (e) {
-    notifyError('重新排序失敗', e);
+    // Same race as ManageVotablesPage: a proposal someone else deleted is still
+    // on screen. Nothing to fix, nothing to report.
+    notifyError(isMissingDocument(e) ? '重新排序失敗：有提案已被其他人刪除，請確認目前順序後再試一次' : '重新排序失敗', e, {
+      report: !isMissingDocument(e),
+    });
     Loading.hide();
     return;
   }

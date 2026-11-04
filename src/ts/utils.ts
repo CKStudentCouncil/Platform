@@ -2,6 +2,7 @@ import { Notify } from 'quasar';
 import { event } from 'vue-gtag';
 import * as Sentry from '@sentry/vue';
 import type { Proposal } from 'src/ts/models.ts';
+import { CALLABLE_TRANSPORT_FAILURE_HINT, isCallableTransportFailure } from 'src/ts/functionerrors.ts';
 
 export function generateRandomText(length: number, bannedPrefix: string | null): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,8 +41,12 @@ export interface NotifyErrorOptions {
 }
 
 export function notifyError(message: string, exception?: any, options?: NotifyErrorOptions): void {
+  // A callable that got no reply is never ours to fix and says nothing about
+  // what failed; see `src/ts/functionerrors.ts`. Tell the user what to try, and
+  // keep it out of Sentry no matter what the caller asked for.
+  const noReply = isCallableTransportFailure(exception);
   Notify.create({
-    message,
+    message: noReply ? `${message}：${CALLABLE_TRANSPORT_FAILURE_HINT}` : message,
     color: 'negative',
     icon: 'report_problem',
     position: 'top',
@@ -53,7 +58,7 @@ export function notifyError(message: string, exception?: any, options?: NotifyEr
       stack: exception?.stack,
       fatal: false,
     });
-    if (options?.report === false) {
+    if (noReply || options?.report === false) {
       Sentry.addBreadcrumb({
         category: 'expected-failure',
         level: 'warning',
@@ -88,6 +93,49 @@ export function notifySpeakRequests(prop?: Proposal, prevProp?: Proposal): void 
 
 export function cleanseName(name: string | null | undefined): string | null {
   return name?.replace(/ck[0-9]+/, '') ?? null;
+}
+
+/**
+ * Returns `url` unchanged unless it is a `javascript:` URL, in which case it
+ * returns `undefined` so Vue drops the `href` / `src` attribute.
+ *
+ * Proposal attachments are user-supplied strings bound straight into links and
+ * a preview iframe, where a `javascript:` URL would run in this app's origin.
+ * The check uses the same URL parser the browser navigates with, so letter
+ * case, leading whitespace or control characters, and tabs or newlines inside
+ * the scheme are normalised exactly as navigation would. Anything that does not
+ * parse is returned unchanged: the browser cannot navigate to it either.
+ */
+export function blockJavascriptUrl(url: string | undefined): string | undefined {
+  try {
+    if (url && new URL(url, document.baseURI).protocol === 'javascript:') {
+      return undefined;
+    }
+  } catch {
+    // Not a parseable URL, so it cannot be navigated to as `javascript:`.
+  }
+  return url;
+}
+
+/**
+ * Maps a Google Drive / Docs link to its embeddable preview URL. Any other
+ * input is passed through {@link blockJavascriptUrl} before it reaches the
+ * preview iframe's `src`.
+ */
+export function getGoogleFileEmbed(input: string): string | undefined {
+  let file_id = null;
+  const driveCapture = input.match(/https:\/\/drive\.google\.com\/file\/d\/(.*)\/view.*/);
+  if (driveCapture && driveCapture.length > 1) {
+    file_id = driveCapture[1];
+  }
+  const documentCapture = input.match(/https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/(.*)\/edit.*/);
+  if (documentCapture && documentCapture.length > 2) {
+    file_id = documentCapture[2];
+  }
+  if (file_id) {
+    return `https://drive.google.com/file/d/${file_id}/preview`;
+  }
+  return blockJavascriptUrl(input);
 }
 
 export { schoolEmailFromSchoolNumber, getReign, getCurrentReign };

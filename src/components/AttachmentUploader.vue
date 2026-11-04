@@ -16,6 +16,7 @@ import { onBeforeUnmount, ref } from 'vue';
 import { useFunction } from 'boot/vuefire.ts';
 import { Loading } from 'quasar';
 import { notifyError, notifySuccess } from 'src/ts/utils.ts';
+import { UPLOAD_ATTACHMENT_TIMEOUT_MS } from 'src/ts/functionerrors.ts';
 import { MAX_ATTACHMENT_BYTES } from '../../shared/constants';
 
 const files = ref<File[]>([]);
@@ -33,7 +34,7 @@ const error = ref(false);
 const uploading = ref(false);
 // Resolved during setup: the callable is used from async callbacks, where the
 // component's injection context is no longer available.
-const uploadAttachment = useFunction('uploadAttachment');
+const uploadAttachment = useFunction('uploadAttachment', { timeout: UPLOAD_ATTACHMENT_TIMEOUT_MS });
 const megabyteLimit = Math.floor(MAX_ATTACHMENT_BYTES / 1024 / 1024);
 
 /**
