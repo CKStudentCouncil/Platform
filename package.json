@@ -19,7 +19,7 @@
     "@quasar/extras": "^2.0.4",
     "@sentry/vue": "^10.74.0",
     "@volar/language-server": "2.4.28",
-    "@vue/language-server": "^3.3.11",
+    "@vue/language-server": "^3.3.14",
     "exceljs": "^4.4.0",
     "firebase": "^12.19.0",
     "qrcode": "1",
