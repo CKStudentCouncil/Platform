@@ -46,8 +46,13 @@ export default defineBoot(({ app, router }) => {
     replaysOnErrorSampleRate: 1.0,
 
     // Do not attach IP addresses / cookies. User context is set explicitly in
-    // `src/ts/auth.ts` once Firebase auth resolves.
-    sendDefaultPii: false,
+    // `src/ts/auth.ts` once Firebase auth resolves. (`sendDefaultPii` was
+    // replaced by `dataCollection` in @sentry/vue v11.)
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+    },
 
     beforeSend(event, hint) {
       // A missing chunk means the tab is running against a deploy that no
