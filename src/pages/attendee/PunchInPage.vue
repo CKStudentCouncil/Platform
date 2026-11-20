@@ -6,7 +6,7 @@
   <q-page v-else padding>
     <q-input v-model="tempPasscode" label="請輸入簽到碼" />
     <q-btn color="primary" label="確定" @click="submit" />
-    <q-btn v-if="!scanning" color="positive" label="掃描簽到碼" @click="scanning = true" />
+    <q-btn v-if="!scanning" :loading="loadingScanner" color="positive" label="掃描簽到碼" @click="startScanning" />
     <qrcode-stream v-if="scanning" @detect="onDetect" />
   </q-page>
   <LoginDialog v-model="loginDialog" :register="register" />
@@ -22,6 +22,7 @@ import { rawMeetingCollection } from 'src/ts/models.ts';
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { notifyError } from 'src/ts/utils.ts';
 import { isRulesDenial, reportListenerError } from 'src/ts/firestore.ts';
+import { loadQrDecoder } from 'src/ts/qrscanner.ts';
 import { Notify } from 'quasar';
 
 const passcode = ref((useRoute().params.passcode as string | undefined) ?? '');
@@ -29,6 +30,7 @@ const tempPasscode = ref('');
 const loginDialog = ref(false);
 const router = useRouter();
 const scanning = ref(false);
+const loadingScanner = ref(false);
 const register = ref(false);
 // Resolved here rather than inside the handlers: `rawMeetingCollection()` calls
 // VueFire's `useFirestore()`, which is only valid inside `setup()`.
@@ -55,6 +57,22 @@ watch(
 async function submit() {
   passcode.value = tempPasscode.value;
   await punchIn();
+}
+
+// The decoder is fetched before the camera opens, so a phone that cannot get it
+// is told to type the code instead of being left with a live camera that never
+// reads anything. See `src/ts/qrscanner.ts`. Not reported: it is the phone's
+// connection, or a tab left open across a deploy, and reloading fixes both.
+async function startScanning() {
+  loadingScanner.value = true;
+  try {
+    await loadQrDecoder();
+    scanning.value = true;
+  } catch (e) {
+    notifyError('無法載入掃描功能，請重新整理頁面或直接輸入簽到碼', e, { report: false });
+  } finally {
+    loadingScanner.value = false;
+  }
 }
 
 async function punchIn() {
