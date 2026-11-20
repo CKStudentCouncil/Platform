@@ -76,7 +76,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Proposal, ProposalId } from 'src/ts/models.ts';
 import { getMeeting, rawMeetingCollection, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
-import { arrayRemove, arrayUnion, doc, getDocs, runTransaction, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, FieldPath, getDocs, runTransaction, updateDoc } from 'firebase/firestore';
 import * as Sentry from '@sentry/vue';
 import { Loading, QBtn } from 'quasar';
 import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
@@ -233,12 +233,19 @@ async function select(choice: string) {
     // Captured now: the host can close the vote while the write is in flight.
     const proposalId = activeProposalId.value as string;
     const votableId = activeVotableId.value as string;
+    const clazz = loggedInUserClaims.clazz;
     try {
-      const update = {} as any;
-      update[('results.' + choice) as keyof typeof update] = arrayUnion(loggedInUserClaims.clazz);
-      // `firestore.rules` accepts a vote only together with the class's entry in `voters` (class -> choice).
-      update[('voters.' + loggedInUserClaims.clazz) as keyof typeof update] = choice;
-      await updateDoc(doc(rawVotableCollection(id, proposalId), votableId), update);
+      // A choice is free text the secretary typed, so it goes in as a `FieldPath` segment rather than being
+      // concatenated into a dotted string: `'results.' + '1.同意'` would write `results['1']['同意']`, which
+      // `firestore.rules` refuses, and a `/` or `[` in it is rejected before the write is even sent.
+      await updateDoc(
+        doc(rawVotableCollection(id, proposalId), votableId),
+        new FieldPath('results', choice),
+        arrayUnion(clazz),
+        // `firestore.rules` accepts a vote only together with the class's entry in `voters` (class -> choice).
+        new FieldPath('voters', clazz),
+        choice,
+      );
     } catch (e) {
       const reason = isRulesDenial(e) ? await explainRefusedVote(proposalId, votableId) : null;
       if (reason) {

@@ -56,7 +56,7 @@
 
 <script lang="ts" setup>
 import { useRoute, useRouter } from 'vue-router';
-import { arrayRemove, deleteField, doc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, deleteField, doc, FieldPath, updateDoc } from 'firebase/firestore';
 import { getMeeting, getProposal, getVotable, rawProposalCollection, rawVotableCollection, VotableType } from 'src/ts/models.ts';
 import { computed } from 'vue';
 import { notifyError } from 'src/ts/utils.ts';
@@ -120,15 +120,18 @@ const thresholdLabel = computed(() => {
 });
 
 async function removeVoter(choice: string, voter: string) {
-  const update = {} as any;
-  update[('results.' + choice) as keyof typeof update] = arrayRemove(voter);
+  // `FieldPath` segments, not a dotted string: a choice is free text, and one containing a `.` or `/`
+  // would otherwise address a different field (or none) than the one `AttendeePage` wrote the vote to.
   // Keep `voters` (class -> choice, read by `firestore.rules`) in step with `results`, so that a class
   // whose vote was removed may vote again.
   const results: Record<string, string[]> = selectedVotable.value?.results ?? {};
-  if (!Object.entries(results).some(([c, classes]) => c != choice && classes.includes(voter))) {
-    update[('voters.' + voter) as keyof typeof update] = deleteField();
-  }
-  await updateDoc(doc(rawVotableCollection(meetingId, proposalId), votableId), update);
+  const votedElsewhere = Object.entries(results).some(([c, classes]) => c != choice && classes.includes(voter));
+  await updateDoc(
+    doc(rawVotableCollection(meetingId, proposalId), votableId),
+    new FieldPath('results', choice),
+    arrayRemove(voter),
+    ...(votedElsewhere ? [] : [new FieldPath('voters', voter), deleteField()]),
+  );
 }
 
 async function endVote() {
