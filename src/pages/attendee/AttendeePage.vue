@@ -76,7 +76,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Proposal, ProposalId } from 'src/ts/models.ts';
 import { getMeeting, rawMeetingCollection, rawProposalCollection, rawVotableCollection } from 'src/ts/models.ts';
-import { arrayRemove, arrayUnion, doc, getDocFromServer, getDocs, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, getDocs, runTransaction, updateDoc } from 'firebase/firestore';
+import * as Sentry from '@sentry/vue';
 import { Loading, QBtn } from 'quasar';
 import { loggedInUser, loggedInUserClaims, translateRole } from 'src/ts/auth.ts';
 import { cleanseName, notifyError, notifySpeakRequests, notifySuccess } from 'src/ts/utils.ts';
@@ -192,24 +193,37 @@ watch(
  *
  * A vote that looked valid when the server is asked comes back `null`, and is
  * reported like any other failure, because that would be this page and the rules
- * disagreeing. This reads the server rather than the listeners, since a lagging
- * listener is the usual reason the page offered the vote in the first place.
+ * disagreeing. The server really is asked: a lagging listener is the usual reason
+ * the page offered the vote in the first place, so reading through the listeners
+ * would only repeat what the page already believed. That rules out
+ * `getDocFromServer()`, which joins the listener already open on the same
+ * document and replays its last snapshot without touching the network. A
+ * transaction's reads are one-off requests that bypass every listener, and the
+ * rules let any signed-in role read these three documents.
  */
 async function explainRefusedVote(proposalId: string, votableId: string): Promise<string | null> {
   try {
     const clazz = loggedInUserClaims.clazz;
-    const [meetingSnap, proposalSnap, votableSnap] = await Promise.all([
-      getDocFromServer(doc(rawMeetingCollection(), id)),
-      getDocFromServer(doc(rawProposalCollection(id), proposalId)),
-      getDocFromServer(doc(rawVotableCollection(id, proposalId), votableId)),
+    const meetingRef = doc(rawMeetingCollection(), id);
+    const [meetingSnap, proposalSnap, votableSnap] = await runTransaction(meetingRef.firestore, async (transaction) => [
+      await transaction.get(meetingRef),
+      await transaction.get(doc(rawProposalCollection(id), proposalId)),
+      await transaction.get(doc(rawVotableCollection(id, proposalId), votableId)),
     ]);
     if (meetingSnap.get('activeProposal') !== proposalId || proposalSnap.get('activeVotable') !== votableId) return '此投票已結束';
     if (!((meetingSnap.get('participants') ?? []) as string[]).includes(clazz)) return '貴班尚未簽到';
     const voters = (votableSnap.get('voters') ?? {}) as Record<string, string>;
     const results = (votableSnap.get('results') ?? {}) as Record<string, string[]>;
     if (clazz in voters || Object.values(results).some((classes) => classes.includes(clazz))) return '貴班已投過票，無法更改';
-  } catch {
-    // The server could not be asked (offline, or refused again): let the original error be reported.
+  } catch (e) {
+    // The server could not be asked (offline, or refused again): let the original error be reported,
+    // with a breadcrumb so that issue says the reason is unknown rather than that the page checked.
+    Sentry.addBreadcrumb({
+      category: 'vote',
+      level: 'warning',
+      message: 'Could not ask the server why a vote was refused',
+      data: { code: (e as { code?: string } | null)?.code },
+    });
   }
   return null;
 }
